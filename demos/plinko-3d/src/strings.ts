@@ -1,0 +1,20 @@
+// Все строки интерфейса. Язык английский: международная аудитория конференции.
+export const S = {
+  drop: 'DROP',
+  bet: 'BET',
+  risk: 'RISK',
+  rows: 'ROWS',
+  balance: 'BALANCE',
+  rain: '100 BALLS',
+  low: 'LOW',
+  medium: 'MEDIUM',
+  high: 'HIGH',
+  bigWin: 'BIG WIN',
+  megaWin: 'MEGA WIN',
+  totalWin: 'TOTAL WIN',
+  tapToPlay: 'TAP TO PLAY',
+  refill: 'BALANCE REFILLED',
+  presenterBig: 'NEXT: BIG WIN',
+  presenterRain: 'FREE 100 BALLS',
+  exit: 'EXIT',
+} as const;
