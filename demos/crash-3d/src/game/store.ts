@@ -22,3 +22,17 @@ export const useGame = create<GameState>((set) => ({
   setCamLabel: (camLabel) => set({ camLabel }),
   setPresenterOpen: (presenterOpen) => set({ presenterOpen }),
 }))
+
+// shared by the M key and the mute button; persisted across visits
+export function toggleMute(): void {
+  const muted = !useGame.getState().muted
+  useGame.getState().setMuted(muted)
+  safeStorage.set('muted', muted ? '1' : '0')
+}
+
+// per-frame readers: called now and on every store update, returns unsubscribe.
+// the hud writes fast text through refs with this instead of re-rendering each frame
+export function onSnap(fn: (snap: RoundSnapshot) => void): () => void {
+  fn(useGame.getState().snap)
+  return useGame.subscribe((s) => fn(s.snap))
+}

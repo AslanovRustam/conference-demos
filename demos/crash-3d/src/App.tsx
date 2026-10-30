@@ -1,15 +1,14 @@
-import { brandLogo } from '@brand/tokens'
 import { useEffect } from 'react'
 import { installDebug } from './game/debug'
 import { startLoop } from './game/loop'
 import { primaryAction, runtime } from './game/runtime'
-import { useGame } from './game/store'
+import { toggleMute } from './game/store'
 import { bindKeyboard } from './platform/input'
 import { params } from './platform/params'
 import { createCodeDetector } from './platform/presenter'
-import { safeStorage } from './platform/storage'
+import { Hud } from './ui/Hud'
 
-// ui and scene are wired in later tasks: black screen with the logo for now
+// the scene is wired in later tasks: hud over a black screen for now
 export default function App() {
   useEffect(() => {
     const { engine } = runtime
@@ -25,11 +24,7 @@ export default function App() {
       bet: (d) => engine.stepBet(d),
       auto: (d) => engine.stepAuto(d),
       toggleAuto: () => engine.toggleAuto(),
-      mute: () => {
-        const muted = !useGame.getState().muted
-        useGame.getState().setMuted(muted)
-        safeStorage.set('muted', muted ? '1' : '0')
-      },
+      mute: toggleMute,
       exit: () => {},
       anyInput: () => {},
       code: (k) => feed(k, performance.now()),
@@ -40,5 +35,5 @@ export default function App() {
     }
   }, [])
 
-  return <img src={brandLogo.red} alt="Clickable" style={{ position: 'absolute', top: 16, left: 16, height: 24 }} />
+  return <Hud />
 }
