@@ -12,7 +12,7 @@ export const FOV_PLAY = 32
 
 export const CAMERA_HOME = {
   position: [0, 2.5, RADIUS + 7.6] as [number, number, number],
-  target: [0, 1.55, 1.2] as [number, number, number],
+  target: [0, 1.25, 1.2] as [number, number, number],
 }
 
 export const LOGO = { y: 3.7, width: 3.4 } as const

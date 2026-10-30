@@ -1,12 +1,20 @@
-import { useEffect } from 'react'
 import rawConfig from '../games.config.json'
 import { buildSlots, loadManifest, validateConfig } from './config/games'
 import { useControls, wasJustDragged } from './input/useControls'
 import Carousel from './scene/Carousel'
 import LobbyCanvas from './scene/LobbyCanvas'
 import { lobbyStore } from './state/store'
+import Hud from './ui/Hud'
+import LoadingScreen from './ui/LoadingScreen'
 
 const config = validateConfig(rawConfig)
+
+// once per page: StrictMode runs the loading effect twice in dev
+let preparing: Promise<void> | null = null
+function prepare() {
+  preparing ??= loadManifest().then((manifest) => lobbyStore.getState().init(buildSlots(config, manifest)))
+  return preparing
+}
 
 function selectCabinet(index: number) {
   if (wasJustDragged()) return
@@ -17,15 +25,13 @@ function selectCabinet(index: number) {
 
 export default function App() {
   useControls()
-  useEffect(() => {
-    loadManifest().then((manifest) => lobbyStore.getState().init(buildSlots(config, manifest)))
-  }, [])
-
   return (
     <div className="app">
       <LobbyCanvas>
         <Carousel onSelect={selectCabinet} />
       </LobbyCanvas>
+      <Hud />
+      <LoadingScreen prepare={prepare} />
     </div>
   )
 }
