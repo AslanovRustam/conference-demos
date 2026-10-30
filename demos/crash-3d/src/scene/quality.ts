@@ -9,4 +9,7 @@ export const QUALITY = {
   // per-pixel noise fields (roughness, soot; the mottle is twice as coarse) at 1/n of the atlas, pmrem face size
   rocketHullTexture: [2048, 4096] as [number, number], rocketTileTexture: 512, rocketLogoTexture: 2048,
   rocketNoiseDownscale: 4, envMapSize: 512, anisotropy: 16,
+  // engine plume: raymarch samples per pixel through the turbulent flame and through each nozzle's jet,
+  // sides of the bounding cones; screen distortion sources (heat haze, shockwave rings) the post pass takes per frame
+  plumeSteps: 24, plumeJetSteps: 20, plumeSegments: 48, distortionSources: 8,
 } as const

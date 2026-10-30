@@ -5,9 +5,11 @@ import { useMemo, useRef } from 'react'
 import { Vector2 } from 'three'
 import { fx } from '../fx'
 import { QUALITY } from '../quality'
+import { DistortionEffect } from './DistortionEffect'
 import { FlashEffect } from './FlashEffect'
 import { ZoomBlurEffect } from './ZoomBlurEffect'
 
+const Distortion = wrapEffect(DistortionEffect)
 const ZoomBlur = wrapEffect(ZoomBlurEffect)
 const Flash = wrapEffect(FlashEffect)
 
@@ -15,7 +17,8 @@ const Flash = wrapEffect(FlashEffect)
 const CHROMA_MAX = 0.008
 
 // hdr chain; tone mapping turns it into display colors near the end.
-// scene effects from later tasks go before ToneMapping: clouds first, then distortion, lens flare, god rays, dof
+// scene effects from later tasks go before ToneMapping: clouds first (ahead of the distortion, so the haze
+// bends them too), then lens flare, god rays, dof
 export function Effects() {
   const ca = useRef<ChromaticAberrationEffect>(null)
   const caOffset = useMemo(() => new Vector2(), [])
@@ -28,6 +31,8 @@ export function Effects() {
   return (
     // no msaa: multisampled float targets are costly on integrated gpus, SMAA smooths edges instead
     <EffectComposer multisampling={0}>
+      {/* heat haze and shockwave rings bend the scene itself, before any lens effect */}
+      <Distortion />
       {QUALITY.zoomBlur && <ZoomBlur />}
       <Bloom mipmapBlur levels={QUALITY.bloomLevels} luminanceThreshold={1} luminanceSmoothing={0.2} intensity={0.9} radius={0.75} />
       <ChromaticAberration ref={ca} offset={caOffset} radialModulation modulationOffset={0.2} />

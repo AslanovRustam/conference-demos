@@ -5,6 +5,7 @@ import { createEnvMaps } from '../env/environment'
 import { rig } from '../rig'
 import { buildRocketGeometry, DIM, NOZZLES } from './geometry'
 import { createRocketMaterials } from './materials'
+import { Plume } from './Plume'
 import { rocketRefs } from './refs'
 import { disposeRocketTextures, loadRocketTextures } from './textures'
 
@@ -61,11 +62,12 @@ export function Rocket() {
     }
   }, [])
 
+  // before the default priority: the plume and later scene parts read the rocket's world transform
   useFrame(() => {
     if (root.current) root.current.position.y = rig.rocketY
     const maps = env.current
     if (maps) scene.environment = rig.stageF >= SPACE_ENV_STAGE ? maps.space : maps.pad
-  })
+  }, -1)
 
   const c = geo.capsule
   return (
@@ -88,6 +90,7 @@ export function Rocket() {
           }}
         />
       ))}
+      <Plume />
       <group ref={fairing} name="fairing" position-y={DIM.stage2Top}>
         <mesh geometry={geo.fairing} material={mats.hull} castShadow receiveShadow />
       </group>
