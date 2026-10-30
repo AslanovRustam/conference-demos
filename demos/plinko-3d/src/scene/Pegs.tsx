@@ -1,0 +1,139 @@
+import { useFrame } from '@react-three/fiber';
+import { useEffect, useMemo, useRef } from 'react';
+import * as THREE from 'three';
+import { createRng } from '../core/rng';
+import { PEG_RADIUS, boardLayout, pegCount, pegFlatIndex } from '../math/layout';
+import { useSim } from '../sim/SimProvider';
+import { useGame } from '../state/store';
+import { pegGlow } from './fxStore';
+import { createCrystalMaterial } from './materials';
+import { CRYSTAL, pegHue } from './palette';
+
+const CAPACITY = pegCount(16);
+const IDLE_HALO = 0.3; // мягкое лавандовое свечение кристалла в покое
+
+const glowVert = /* glsl */ `
+  varying vec2 vUv;
+  varying vec3 vColor;
+  void main() {
+    vUv = uv;
+    vColor = instanceColor;
+    gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0);
+  }
+`;
+
+const glowFrag = /* glsl */ `
+  varying vec2 vUv;
+  varying vec3 vColor;
+  void main() {
+    float d = length(vUv - 0.5) * 2.0;
+    float core = exp(-d * d * 9.0);
+    float halo = pow(clamp(1.0 - d, 0.0, 1.0), 2.0) * 0.5;
+    gl_FragColor = vec4(vColor * (core + halo), 1.0);
+  }
+`;
+
+export function Pegs() {
+  const { bus } = useSim();
+  const rows = useGame((s) => s.rows);
+  const quality = useGame((s) => s.quality);
+  const crystals = useRef<THREE.InstancedMesh>(null);
+  const glows = useRef<THREE.InstancedMesh>(null);
+
+  // Почти круглый граненый кристалл: визуальная граница близка к физическому радиусу касания
+  const geometry = useMemo(() => new THREE.IcosahedronGeometry(PEG_RADIUS * 1.1, 0).scale(1, 1.1, 1), []);
+  const material = useMemo(() => createCrystalMaterial(quality), [quality]);
+  useEffect(() => () => material.dispose(), [material]);
+
+  // Каждый кристалл чуть повёрнут по-своему, чтобы грани ловили свет по-разному
+  const spins = useMemo(() => {
+    const rng = createRng(1);
+    return Array.from({ length: CAPACITY }, () => ({ y: rng.range(0, Math.PI), x: rng.range(-0.25, 0.25) }));
+  }, []);
+
+  useEffect(
+    () =>
+      bus.on('peg:hit', (e) => {
+        pegGlow.hit(pegFlatIndex(e.row, e.index), e.kind === 'rain' ? 0.6 : 1);
+      }),
+    [bus],
+  );
+
+  useEffect(() => {
+    // Новая пирамида начинается без остатков свечения
+    pegGlow.clear();
+  }, [rows]);
+
+  const tmp = useMemo(
+    () => ({
+      m: new THREE.Matrix4(),
+      q: new THREE.Quaternion(),
+      e: new THREE.Euler(),
+      p: new THREE.Vector3(),
+      s: new THREE.Vector3(),
+      c: new THREE.Color(),
+      tint: new THREE.Color(),
+      halo: new THREE.Color(),
+      idle: new THREE.Color(CRYSTAL.idleGlow),
+      white: new THREE.Color('#ffffff'),
+    }),
+    [],
+  );
+
+  useFrame(({ clock }, dt) => {
+    const mesh = crystals.current;
+    const halo = glows.current;
+    if (!mesh || !halo) return;
+    pegGlow.decay(dt);
+    const { pegs } = boardLayout(rows);
+    const t = clock.elapsedTime;
+    for (let i = 0; i < pegs.length; i++) {
+      const peg = pegs[i];
+      const glow = pegGlow.values[peg.flat];
+      const spin = spins[peg.flat];
+      tmp.p.set(peg.x, peg.y, 0);
+      tmp.e.set(spin.x, spin.y + t * 0.15, 0);
+      tmp.q.setFromEuler(tmp.e);
+      const s = 1 + 0.35 * glow;
+      tmp.s.set(s, s, s);
+      mesh.setMatrixAt(i, tmp.m.compose(tmp.p, tmp.q, tmp.s));
+      tmp.c.setHSL(pegHue(peg.flat, t), 1, 0.65);
+      tmp.tint.copy(tmp.c).lerp(tmp.white, 1 - glow).multiplyScalar(1 + 2 * glow);
+      mesh.setColorAt(i, tmp.tint);
+
+      tmp.q.identity();
+      const hs = 1.15 + 0.6 * glow;
+      tmp.s.set(hs, hs, hs);
+      tmp.p.set(peg.x, peg.y, 0.05);
+      halo.setMatrixAt(i, tmp.m.compose(tmp.p, tmp.q, tmp.s));
+      tmp.halo.copy(tmp.c).multiplyScalar(glow * 1.6);
+      tmp.halo.r += tmp.idle.r * IDLE_HALO;
+      tmp.halo.g += tmp.idle.g * IDLE_HALO;
+      tmp.halo.b += tmp.idle.b * IDLE_HALO;
+      halo.setColorAt(i, tmp.halo);
+    }
+    mesh.count = pegs.length;
+    halo.count = pegs.length;
+    mesh.instanceMatrix.needsUpdate = true;
+    halo.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+    if (halo.instanceColor) halo.instanceColor.needsUpdate = true;
+  });
+
+  return (
+    <>
+      <instancedMesh ref={crystals} args={[geometry, material, CAPACITY]} frustumCulled={false} />
+      <instancedMesh ref={glows} args={[undefined, undefined, CAPACITY]} frustumCulled={false} renderOrder={2}>
+        <planeGeometry args={[1, 1]} />
+        <shaderMaterial
+          vertexShader={glowVert}
+          fragmentShader={glowFrag}
+          transparent
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+          toneMapped={false}
+        />
+      </instancedMesh>
+    </>
+  );
+}

@@ -3,7 +3,7 @@ import type { Rows } from '../core/types';
 // Мировые единицы: шаг между кристаллами в ряду равен 1
 export const SPACING = 1;
 export const ROW_HEIGHT = 0.92;
-export const PEG_RADIUS = 0.12;
+export const PEG_RADIUS = 0.15;
 export const BALL_RADIUS = 0.2;
 export const SLOT_DROP = 0.95;
 export const GEM_TOP = 0.18;
