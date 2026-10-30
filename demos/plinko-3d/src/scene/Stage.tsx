@@ -5,9 +5,12 @@ import { Background } from './Background';
 import { CAMERA_FOV, CameraRig } from './CameraRig';
 import { Lighting } from './Lighting';
 import { Balls } from './Balls';
+import { FloatingWins } from './FloatingWins';
 import { Pegs } from './Pegs';
+import { Shards } from './Shards';
 import { Slots } from './Slots';
 import { Trails } from './Trails';
+import { WinFx } from './WinFx';
 
 export function Stage({ children }: { children?: ReactNode }) {
   return (
@@ -25,6 +28,9 @@ export function Stage({ children }: { children?: ReactNode }) {
       <Slots />
       <Trails />
       <Balls />
+      <Shards />
+      <FloatingWins />
+      <WinFx />
       {children}
     </Canvas>
   );

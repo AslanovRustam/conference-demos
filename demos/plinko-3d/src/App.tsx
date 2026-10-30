@@ -6,6 +6,10 @@ import { SimContext, createSim } from './sim/SimProvider';
 export function App() {
   const [sim] = useState(() => createSim({ seed: seedFromSearch(location.search) ?? Date.now() }));
 
+  useEffect(() => {
+    if (import.meta.env.DEV) (window as unknown as { __sim: typeof sim }).__sim = sim;
+  }, [sim]);
+
   // Временный ввод до появления интерфейса (задача 13)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
