@@ -86,7 +86,7 @@ button {
   box-shadow: 0 0 0.8rem var(--red);
 }
 
-/* hud */
+/* hud — the Clickable landing language: logo top-left, red-dot tag, big title, red pill CTA, round outlined controls */
 .hud {
   position: absolute;
   inset: 0;
@@ -96,67 +96,135 @@ button {
 .hud button {
   pointer-events: auto;
 }
-.hud-mute {
+.hud-logo {
   position: absolute;
-  top: 2rem;
-  right: 2.4rem;
-  font-size: 1.9rem;
-  width: 3.2rem;
-  height: 3.2rem;
+  top: 2.2rem;
+  left: 3rem;
+  height: 1.7rem;
+}
+.hud-round {
   display: grid;
   place-items: center;
+  width: 3.4rem;
+  height: 3.4rem;
+  border-radius: 50%;
+  font-size: 1.35rem;
   color: var(--text);
-  opacity: 0.75;
+  background: rgba(13, 13, 13, 0.35);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(8px);
+  transition: background 0.2s, box-shadow 0.2s, color 0.2s;
+}
+.hud-round:hover {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+}
+.hud-round:active {
+  background: var(--ck-red-pressed);
+  box-shadow: none;
+}
+.hud-mute {
+  position: absolute;
+  top: 1.7rem;
+  right: 3rem;
 }
 .hud-mute[aria-pressed='true'] {
   color: var(--red);
-  opacity: 1;
 }
-.hud-arrow {
+.hud-nav {
   position: absolute;
-  top: 50%;
-  translate: 0 -50%;
-  width: 4.2rem;
-  height: 5.6rem;
-  font: 400 4rem/1 var(--ck-font-body);
-  color: var(--text);
-  background: rgba(255, 25, 35, 0.14);
-  border-left: 0.12rem solid var(--red);
-  --ck-chamfer: 1.2rem;
-}
-.hud-arrow:active {
-  background: var(--ck-red-pressed);
-}
-.hud-arrow--prev {
-  left: 2.4rem;
-}
-.hud-arrow--next {
-  right: 2.4rem;
+  right: 3rem;
+  bottom: 3rem;
+  display: flex;
+  gap: 0.8rem;
 }
 .hud-caption {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 2.2rem;
-  text-align: center;
+  left: 3rem;
+  bottom: 3rem;
+  max-width: 34rem;
 }
-.hud-title {
-  font: 900 3.1rem/1 var(--ck-font-display);
-  letter-spacing: 0.04em;
-  color: var(--text);
-  text-shadow: 0 0 1.2rem rgba(255, 25, 35, 0.9), 0 0 0.25rem rgba(255, 25, 35, 0.9);
-}
-.hud-subtitle {
-  margin-top: 0.7rem;
-  font: 600 1.15rem/1.2 var(--ck-font-body);
-  letter-spacing: 0.08em;
+.hud-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.95rem;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+  background: rgba(13, 13, 13, 0.4);
+  font: 500 0.72rem/1 var(--ck-font-body);
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.78);
 }
+.hud-tag i {
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 0.6rem var(--red);
+}
+.hud-title {
+  margin-top: 1rem;
+  font: 900 3.4rem/0.95 var(--ck-font-display);
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+.hud-subtitle {
+  margin-top: 0.7rem;
+  font: 500 1.05rem/1.35 var(--ck-font-body);
+  color: rgba(255, 255, 255, 0.66);
+}
+.hud-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.4rem;
+  margin-top: 1.6rem;
+}
+.hud-play {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  height: 3.6rem;
+  padding: 0 2.2rem;
+  border-radius: 999px;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--ck-red-button);
+  color: #fff;
+  font: italic 900 1.15rem/1 var(--ck-font-display);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  box-shadow: 0 1.1rem 2.5rem -0.8rem rgba(255, 25, 35, 0.55);
+  transition: background 0.25s, transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.hud-play::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.35) 50%, transparent 70%);
+  transform: translateX(-120%);
+  transition: transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.hud-play:hover {
+  background: var(--ck-red-pressed);
+}
+.hud-play:hover::after {
+  transform: translateX(120%);
+}
+.hud-play:disabled {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.4);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  cursor: default;
+}
+.hud-play:disabled::after {
+  display: none;
+}
 .hud-hint {
-  margin-top: 1.4rem;
-  font: 500 0.85rem/1 var(--ck-font-body);
-  letter-spacing: 0.16em;
+  font: 500 0.72rem/1 var(--ck-font-body);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
 }

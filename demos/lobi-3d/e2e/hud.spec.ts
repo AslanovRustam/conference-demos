@@ -36,3 +36,40 @@ test('HUD hides outside the lobby phase', async ({ page }) => {
   await page.evaluate(() => (window as any).__lobby.setState({ phase: 'entering' }))
   await expect(page.getByTestId('hud')).toBeHidden()
 })
+
+test('PLAY opens the active game', async ({ page }) => {
+  await openLobby(page)
+  const s = await lobby(page)
+  const index = s.slots.findIndex((x: { kind: string }) => x.kind === 'game')
+  await page.evaluate((i) => (window as any).__lobby.getState().focus(i, true), index)
+  await expect(page.getByTestId('play')).toBeEnabled()
+  await page.getByTestId('play').click()
+  expect((await lobby(page)).phase).toBe('entering')
+})
+
+test('PLAY is disabled on COMING SOON', async ({ page }) => {
+  await openLobby(page)
+  const s = await lobby(page)
+  const index = s.slots.findIndex((x: { kind: string }) => x.kind === 'soon')
+  await page.evaluate((i) => (window as any).__lobby.getState().focus(i, true), index)
+  await expect(page.getByTestId('play')).toBeDisabled()
+  await expect(page.getByTestId('hud-tag')).toHaveText('COMING SOON')
+  await page.getByTestId('play').click({ force: true })
+  expect((await lobby(page)).phase).toBe('lobby')
+})
+
+test('PLAY then Enter opens one frame', async ({ page }) => {
+  await openLobby(page)
+  const s = await lobby(page)
+  const index = s.slots.findIndex((x: { kind: string; game?: { id: string } }) => x.game?.id === 'test-game')
+  await page.evaluate((i) => (window as any).__lobby.getState().focus(i, true), index)
+  await page.getByTestId('play').click()
+  await page.keyboard.press('Enter')
+  await expect(page.getByTestId('game-frame')).toHaveCount(1)
+})
+
+test('logo and game tag are shown', async ({ page }) => {
+  await openLobby(page)
+  await expect(page.getByTestId('hud-logo')).toBeVisible()
+  await expect(page.getByTestId('hud-tag')).toHaveText(/GAME \d{2} \/ \d{2}|COMING SOON/)
+})
