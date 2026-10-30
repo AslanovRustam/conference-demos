@@ -23,6 +23,9 @@ export type GameEvents = {
   'celebrate:tick': Empty;
   'celebrate:end': { kind: CelebrateKind };
   'ui:click': Empty;
+  'intro:crack': Empty;
+  'intro:shatter': Empty;
+  'intro:done': Empty;
 };
 
 export function createBus<E>(): EventBus<E> {

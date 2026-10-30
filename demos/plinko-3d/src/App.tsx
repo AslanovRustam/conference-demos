@@ -8,7 +8,8 @@ import { bindUnlock } from './audio/unlock';
 import { IDLE_MS } from './config';
 import { seedFromSearch } from './core/rng';
 import { createAttractInput } from './platform/attractInput';
-import { isEmbed } from './platform/embed';
+import { isEmbed, parseLobbyMessage } from './platform/embed';
+import { introStore, useIntro } from './intro/introStore';
 import { IdleTimer } from './platform/idle';
 import { presenterAction } from './platform/presenter';
 import { detectQuality } from './platform/quality';
@@ -26,12 +27,23 @@ const EMBED = isEmbed(location.search);
 export function App() {
   const [sim] = useState(() => createSim({ seed: seedFromSearch(location.search) ?? Date.now() }));
   const mode = useGame((s) => s.mode);
+  const introStarted = useIntro((s) => s.startedAt !== null);
 
   useEffect(() => {
     if (import.meta.env.DEV) (window as unknown as { __sim: typeof sim }).__sim = sim;
     sim.store.getState().setQuality(detectQuality());
-    // В лобби заставка не нужна: игра открывается сразу
-    if (EMBED) sim.store.getState().setMode('play');
+  }, [sim]);
+
+  // Лобби: «игру показали» запускает раскол кристалла, mute лобби становится mute игры
+  useEffect(() => {
+    if (!EMBED) return;
+    const onMessage = (e: MessageEvent) => {
+      const msg = parseLobbyMessage(e, location.origin, window.parent);
+      if (msg?.type === 'visible') introStore.getState().lobbyVisible();
+      if (msg?.type === 'mute') sim.store.getState().setMuted(msg.muted);
+    };
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
   }, [sim]);
 
   // Звук: движок создаётся по первому жесту, mute синхронизирован со стором
@@ -66,6 +78,12 @@ export function App() {
       const action = presenterAction(e);
       if (action === 'forceBig') return sim.controller.forceBigNext();
       if (action === 'freeRain') return sim.controller.rain({ mode: 'free' });
+      // На ноутбуке кристалл интро раскалывается и с клавиатуры
+      const intro = introStore.getState();
+      if ((e.code === 'Space' || e.code === 'Enter') && sim.store.getState().mode === 'splash' && intro.ready) {
+        e.preventDefault();
+        return intro.start();
+      }
       if (e.code !== 'Space' || e.repeat || sim.store.getState().mode !== 'play') return;
       e.preventDefault();
       sim.controller.drop();
@@ -125,7 +143,7 @@ export function App() {
       </Hud>
       <AnimatePresence>{mode === 'attract' && <AttractOverlay key="attract" />}</AnimatePresence>
       <AnimatePresence>
-        {mode === 'splash' && <Splash key="splash" onStart={() => sim.store.getState().setMode('play')} />}
+        {mode === 'splash' && !introStarted && <Splash key="splash" onStart={() => introStore.getState().start()} />}
       </AnimatePresence>
     </SimContext.Provider>
   );

@@ -6,7 +6,9 @@ test('no black frames while balls bounce (high quality)', async ({ page, isMobil
   test.skip(isMobile);
   test.setTimeout(90_000);
   await page.goto('/?seed=21&quality=high');
-  await page.getByText('TAP TO PLAY').click({ timeout: 30_000 });
+  await expect(page.getByText('TAP TO PLAY')).toBeVisible({ timeout: 30_000 });
+  await page.getByTestId('splash').click();
+  await expect(page.locator('.hud[data-mode="play"]')).toBeAttached({ timeout: 15_000 });
   const black = await page.evaluate(async () => {
     await new Promise((r) => setTimeout(r, 1500));
     const canvas = document.querySelector('canvas')!;

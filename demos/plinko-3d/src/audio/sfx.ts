@@ -11,6 +11,10 @@ export interface Sfx {
   riser(): void;
   refill(): void;
   uiClick(): void;
+  /** интро: по кристаллу бегут трещины */
+  crack(): void;
+  /** интро: кристалл разлетается на осколки */
+  shatter(): void;
 }
 
 // Негармоничные партиалы дают «стеклянный» тембр колокольчика
@@ -179,6 +183,18 @@ export function createSfx(engine: AudioEngine): Sfx {
     },
     uiClick() {
       tone('triangle', 1300, 0.04, 0.03);
+    },
+    crack() {
+      // Нарастающий хруст: шумовой свип, низкий гул и редкие стеклянные щелчки
+      shimmer(0.06, 0.9, 300, 2400);
+      tone('sine', 70, 0.18, 0.9, 0, 45);
+      for (let i = 0; i < 6; i++) bell(2200 + Math.random() * 1800, 0.05, 0.15, 0.1 + i * 0.13 + Math.random() * 0.05);
+    },
+    shatter() {
+      // Удар и стеклянный каскад вниз по пентатонике
+      tone('sine', 110, 0.35, 1.2, 0, 38);
+      shimmer(0.16, 1.4, 9000, 1500);
+      for (let i = 0; i < 14; i++) bell(rowFrequency(15 - i), 0.08, 0.9, 0.03 + i * 0.045);
     },
   };
 }

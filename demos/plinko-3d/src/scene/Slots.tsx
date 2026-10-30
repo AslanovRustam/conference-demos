@@ -14,6 +14,8 @@ import { fxHooks, slotView } from './fxStore';
 import { createGemMaterial } from './materials';
 import { gemColor } from './palette';
 import { useRowsTransition } from './rowsTransition';
+import { introStore } from '../intro/introStore';
+import { gemReveal } from '../intro/timeline';
 
 export const GEM_FONT_URL = clickableWoff;
 
@@ -96,6 +98,9 @@ export function Slots() {
     const now = performance.now() / 1000;
     const t = clock.elapsedTime;
     const appear = transition.scaleFor(shown, now);
+    // В интро камни появляются волной от центра, когда пирамида уже собрана
+    const intro = introStore.getState().phaseNow();
+    const reveal = (k: number) => (intro.phase === 'done' ? 1 : intro.phase === 'gems' ? gemReveal(intro.t, k, slots.length) : 0);
     const ease = 1 - Math.exp(-dt * 8);
     const waiting = anticipation(system.balls, slots.length);
     let swapped: string[] | null = null;
@@ -104,7 +109,7 @@ export function Slots() {
       const h = (hot.current[k] = Math.max(0, (hot.current[k] ?? 0) - dt / FLASH_SECONDS));
       const a = waiting[k];
       const b = breath(k, t);
-      const scale = (1 + 0.15 * h + 0.12 * a) * appear;
+      const scale = (1 + 0.15 * h + 0.12 * a) * appear * reveal(k);
       const g = groups.current[k];
       if (g) {
         g.position.set(slot.x, slot.y + h * 0.15 + a * 0.14, 0);

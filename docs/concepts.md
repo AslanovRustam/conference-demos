@@ -338,7 +338,7 @@ conference-demos/
 |---|---|---|---|
 | C1 | 3D-слот | `demos/slot-3d/` | не начато |
 | C2 | Crash «Ракета» | `demos/crash-rocket/` | не начато |
-| C3 | Plinko 3D | `demos/plinko-3d/` | не начато |
+| C3 | Plinko 3D | `demos/plinko-3d/` | готово: офлайн-PWA, тесты, доработки после показа |
 | C4 | 3D-лобби | `demos/lobby/` | не начато |
 | C5 | Mines из кристаллов | `demos/mines-crystal/` | не начато |
 | C6 | Пенальти | `demos/penalty/` | не начато |

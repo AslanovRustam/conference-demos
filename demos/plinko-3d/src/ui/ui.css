@@ -547,3 +547,74 @@
   font-size: calc(11 * var(--u)) !important;
   letter-spacing: 0.1em;
 }
+
+/* Интро: прозрачный слой над 3D-кристаллом */
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  cursor: pointer;
+  font-family: var(--ck-font-body);
+  color: #fff;
+}
+
+.intro-cover {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 18px;
+  background: radial-gradient(ellipse at 50% 42%, #2a1660 0%, #1b0f3d 42%, #06030f 100%);
+  pointer-events: none;
+}
+
+.intro-cover-logo {
+  height: clamp(26px, 5vw, 56px);
+}
+
+.intro-title {
+  position: absolute;
+  top: calc(env(safe-area-inset-top) + 7vh);
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: var(--ck-font-display);
+  font-weight: 900;
+  font-size: clamp(44px, 9vw, 110px);
+  letter-spacing: 0.1em;
+  line-height: 1;
+  background: linear-gradient(180deg, #ffffff 10%, #c9b8ff 60%, #6a4fd6 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 30px rgba(201, 184, 255, 0.55));
+  pointer-events: none;
+}
+
+.intro-tap {
+  position: absolute;
+  bottom: calc(env(safe-area-inset-bottom) + 9vh);
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: var(--ck-font-display);
+  font-weight: 900;
+  font-size: clamp(18px, 3vw, 30px);
+  letter-spacing: 0.22em;
+  text-shadow: 0 0 24px rgba(201, 184, 255, 0.9);
+  pointer-events: none;
+}
+
+/* Интерфейс прячется, пока идёт интро */
+.hud {
+  transition: opacity 0.6s ease;
+}
+
+.hud.hud-hidden {
+  opacity: 0;
+}
+
+.hud.hud-hidden * {
+  pointer-events: none !important;
+}

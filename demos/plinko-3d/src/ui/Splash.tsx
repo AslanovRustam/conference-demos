@@ -1,60 +1,39 @@
 import { brandLogo } from '@brand/tokens';
-import { useProgress } from '@react-three/drei';
 import { AnimatePresence, motion } from 'motion/react';
-import { useEffect, useState } from 'react';
+import { useIntro } from '../intro/introStore';
 import { S } from '../strings';
 
-const MIN_SPLASH_MS = 900; // логотип не должен мелькнуть и исчезнуть
-
+/**
+ * Поверх 3D-интро: пока сцена грузится, тёмная обложка с логотипом; потом виден кристалл,
+ * заголовок и приглашение к тапу. Тап раскалывает кристалл.
+ */
 export function Splash({ onStart }: { onStart(): void }) {
-  const { active, progress } = useProgress();
-  const [fontsReady, setFontsReady] = useState(false);
-  const [minTime, setMinTime] = useState(false);
-
-  useEffect(() => {
-    void document.fonts.ready.then(() => setFontsReady(true));
-    const t = setTimeout(() => setMinTime(true), MIN_SPLASH_MS);
-    return () => clearTimeout(t);
-  }, []);
-
-  const ready = fontsReady && minTime && !active;
-  const shown = ready ? 100 : Math.min(95, Math.max(progress, minTime ? 60 : 20));
+  const ready = useIntro((s) => s.ready);
 
   return (
     <motion.div
-      className="splash"
+      className="intro"
       data-testid="splash"
       initial={{ opacity: 1 }}
-      exit={{ opacity: 0, transition: { duration: 0.5 } }}
+      exit={{ opacity: 0, transition: { duration: 0.35 } }}
       onPointerDown={(e) => {
         e.stopPropagation();
         if (ready) onStart();
       }}
     >
-      <motion.img
-        className="splash-logo"
-        src={brandLogo.red}
-        alt="Clickable"
-        draggable={false}
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-      />
-      <div className="splash-title">PLINKO</div>
-      <AnimatePresence mode="wait">
-        {ready ? (
-          <motion.div
-            key="tap"
-            className="splash-tap"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0.45, 1, 0.45] }}
-            transition={{ duration: 1.6, repeat: Infinity }}
-          >
+      <motion.div className="intro-cover" animate={{ opacity: ready ? 0 : 1 }} transition={{ duration: 0.9 }}>
+        <img className="intro-cover-logo" src={brandLogo.red} alt="Clickable" draggable={false} />
+        <div className="splash-bar">
+          <motion.div initial={{ width: '15%' }} animate={{ width: ready ? '100%' : '75%' }} transition={{ duration: ready ? 0.3 : 2.5 }} />
+        </div>
+      </motion.div>
+      <motion.div className="intro-title" initial={{ opacity: 0, y: -10 }} animate={{ opacity: ready ? 1 : 0, y: ready ? 0 : -10 }} transition={{ duration: 0.8, delay: 0.2 }}>
+        PLINKO
+      </motion.div>
+      <AnimatePresence>
+        {ready && (
+          <motion.div key="tap" className="intro-tap" initial={{ opacity: 0 }} animate={{ opacity: [0.45, 1, 0.45] }} transition={{ duration: 1.6, repeat: Infinity, delay: 0.6 }}>
             {S.tapToPlay}
-          </motion.div>
-        ) : (
-          <motion.div key="bar" className="splash-bar" exit={{ opacity: 0 }}>
-            <div style={{ width: `${shown}%` }} />
           </motion.div>
         )}
       </AnimatePresence>

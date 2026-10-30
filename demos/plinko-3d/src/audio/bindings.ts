@@ -31,6 +31,8 @@ export function bindAudio(bus: EventBus<GameEvents>, sfx: Sfx, music: Music | nu
     bus.on('celebrate:tick', () => sfx.tick()),
     bus.on('balance:refill', () => sfx.refill()),
     bus.on('ui:click', () => sfx.uiClick()),
+    bus.on('intro:crack', () => sfx.crack()),
+    bus.on('intro:shatter', () => sfx.shatter()),
   ];
   return () => offs.forEach((off) => off());
 }

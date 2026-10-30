@@ -12,6 +12,8 @@ function fakeSfx() {
     riser: () => calls.push('riser'),
     refill: () => calls.push('refill'),
     uiClick: () => calls.push('click'),
+    crack: () => calls.push('crack'),
+    shatter: () => calls.push('shatter'),
   };
   return { sfx, calls };
 }
@@ -37,4 +39,13 @@ test('rain landings are silent, player landings sound', () => {
   bus.emit('ball:land', { ballId: 1, slot: 0, multiplier: 2, tier: 'normal', win: 200, kind: 'rain' });
   bus.emit('ball:land', { ballId: 2, slot: 0, multiplier: 2, tier: 'normal', win: 200, kind: 'player' });
   expect(calls).toEqual(['land:normal']);
+});
+
+test('intro crack and shatter have their own sounds', () => {
+  const bus = createBus<GameEvents>();
+  const { sfx, calls } = fakeSfx();
+  bindAudio(bus, sfx, null, () => 0);
+  bus.emit('intro:crack', {});
+  bus.emit('intro:shatter', {});
+  expect(calls).toEqual(['crack', 'shatter']);
 });

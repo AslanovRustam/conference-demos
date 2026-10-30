@@ -1,14 +1,14 @@
 import { useFrame } from '@react-three/fiber';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
-import { createRng } from '../core/rng';
 import { boardLayout, pegCount, pegFlatIndex } from '../math/layout';
 import { useSim } from '../sim/SimProvider';
 import { useGame } from '../state/store';
 import { pegGlow } from './fxStore';
 import { createCrystalMaterial } from './materials';
 import { CRYSTAL, pegHue } from './palette';
-import { HIT_PULSE, PEG_VISUAL_RADIUS, PEG_VISUAL_STRETCH_Y } from './pegShape';
+import { HIT_PULSE, PEG_VISUAL_RADIUS, PEG_VISUAL_STRETCH_Y, pegEuler } from './pegShape';
+import { introStore } from '../intro/introStore';
 import { useRowsTransition } from './rowsTransition';
 
 const CAPACITY = pegCount(16);
@@ -19,7 +19,11 @@ const glowVert = /* glsl */ `
   varying vec3 vColor;
   void main() {
     vUv = uv;
-    vColor = instanceColor;
+    #ifdef USE_INSTANCING_COLOR
+      vColor = instanceColor;
+    #else
+      vColor = vec3(0.0);
+    #endif
     gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0);
   }
 `;
@@ -47,12 +51,6 @@ export function Pegs() {
   const geometry = useMemo(() => new THREE.IcosahedronGeometry(PEG_VISUAL_RADIUS, 0).scale(1, PEG_VISUAL_STRETCH_Y, 1), []);
   const material = useMemo(() => createCrystalMaterial(quality), [quality]);
   useEffect(() => () => material.dispose(), [material]);
-
-  // Каждый кристалл чуть повёрнут по-своему, чтобы грани ловили свет по-разному
-  const spins = useMemo(() => {
-    const rng = createRng(1);
-    return Array.from({ length: CAPACITY }, () => ({ y: rng.range(0, Math.PI), x: rng.range(-0.25, 0.25) }));
-  }, []);
 
   useEffect(
     () =>
@@ -88,17 +86,21 @@ export function Pegs() {
     const halo = glows.current;
     if (!mesh || !halo) return;
     pegGlow.decay(dt);
+    // Пока идёт интро, пирамиду изображают осколки кристалла (IntroShards)
+    const phase = introStore.getState().phaseNow().phase;
+    const visible = phase === 'gems' || phase === 'done';
+    mesh.visible = visible;
+    halo.visible = visible;
+    if (!visible) return;
     const { pegs } = boardLayout(transition.shown);
     const t = clock.elapsedTime;
     const now = performance.now() / 1000;
     for (let i = 0; i < pegs.length; i++) {
       const peg = pegs[i];
       const glow = pegGlow.values[peg.flat];
-      const spin = spins[peg.flat];
       const appear = transition.scaleFor(peg.row, now);
       tmp.p.set(peg.x, peg.y, 0);
-      tmp.e.set(spin.x, spin.y + t * 0.15, 0);
-      tmp.q.setFromEuler(tmp.e);
+      tmp.q.setFromEuler(pegEuler(peg.flat, t, tmp.e));
       const s = (1 + HIT_PULSE * glow) * appear;
       tmp.s.set(s, s, s);
       mesh.setMatrixAt(i, tmp.m.compose(tmp.p, tmp.q, tmp.s));

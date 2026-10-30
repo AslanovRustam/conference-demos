@@ -6,6 +6,10 @@ import { SimDriver } from '../sim/SimProvider';
 import { useGame } from '../state/store';
 import { Background } from './Background';
 import { Balls } from './Balls';
+import { IntroCrystal } from './intro/IntroCrystal';
+import { IntroDirector } from './intro/IntroDirector';
+import { IntroShards } from './intro/IntroShards';
+import { ReadyBall } from './ReadyBall';
 import { CAMERA_FOV, CameraRig } from './CameraRig';
 import { CelebrationFx } from './CelebrationFx';
 import { Effects } from './Effects';
@@ -57,6 +61,10 @@ export function Stage({ children }: { children?: ReactNode }) {
       <SlotFx />
       <Trails />
       <Balls />
+      <ReadyBall />
+      <IntroCrystal />
+      <IntroShards />
+      <IntroDirector />
       <Shards />
       <FloatingWins />
       <WinFx />

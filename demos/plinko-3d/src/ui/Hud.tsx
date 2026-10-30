@@ -4,6 +4,7 @@ import { ControlPanel } from './ControlPanel';
 import { History } from './History';
 import { hudInsets, orientationOf, readSafeArea, uiScale } from './layoutMetrics';
 import { TopBar } from './TopBar';
+import { useGame } from '../state/store';
 import './ui.css';
 
 function useViewport() {
@@ -18,6 +19,7 @@ function useViewport() {
 
 export function Hud({ logoProps, children }: { logoProps?: React.HTMLAttributes<HTMLImageElement>; children?: ReactNode }) {
   const v = useViewport();
+  const mode = useGame((s) => s.mode);
   const orientation = orientationOf(v);
   const ins = hudInsets(v, readSafeArea());
   const style = {
@@ -29,7 +31,7 @@ export function Hud({ logoProps, children }: { logoProps?: React.HTMLAttributes<
   } as CSSProperties;
 
   return (
-    <div className={`hud ${orientation}`} style={style}>
+    <div className={`hud ${orientation}${mode === 'splash' ? ' hud-hidden' : ''}`} data-mode={mode} style={style}>
       {orientation === 'portrait' ? (
         <>
           <header className="hud-top">

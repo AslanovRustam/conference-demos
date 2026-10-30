@@ -1,13 +1,14 @@
 import { expect, test, type Page } from '@playwright/test';
 
-// Заставка реагирует только когда всё загружено: ждём надпись и жмём на неё
+// Интро реагирует, когда всё загружено: ждём приглашение, тапаем по кристаллу и ждём конца раскола
 async function start(page: Page, mobile = false) {
   await page.goto('/?seed=1');
-  const tap = page.getByText('TAP TO PLAY');
-  await expect(tap).toBeVisible({ timeout: 30_000 });
-  if (mobile) await tap.tap();
-  else await tap.click();
-  await expect(page.getByTestId('splash')).toHaveCount(0);
+  await expect(page.getByText('TAP TO PLAY')).toBeVisible({ timeout: 30_000 });
+  const overlay = page.getByTestId('splash');
+  if (mobile) await overlay.tap();
+  else await overlay.click();
+  await expect(overlay).toHaveCount(0);
+  await expect(page.locator('.hud[data-mode="play"]')).toBeAttached({ timeout: 15_000 });
 }
 
 const balanceOf = async (page: Page) => Number((await page.getByTestId('balance').innerText()).replace(/,/g, ''));
