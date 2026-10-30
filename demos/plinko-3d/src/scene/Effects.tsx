@@ -34,7 +34,7 @@ export function Effects() {
 
   if (quality === 'high') {
     return (
-      <EffectComposer multisampling={4}>
+      <EffectComposer multisampling={2}>
         <Bloom ref={bloom} mipmapBlur luminanceThreshold={0.75} luminanceSmoothing={0.2} intensity={BLOOM.high} />
         <ChromaticAberration ref={ca} offset={caOffset} radialModulation={false} modulationOffset={0} />
         <Vignette darkness={0.6} offset={0.3} />

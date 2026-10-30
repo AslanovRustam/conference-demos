@@ -3,6 +3,7 @@ import { bindAudio } from './audio/bindings';
 import { createAudioEngine } from './audio/engine';
 import { createSfx } from './audio/sfx';
 import { seedFromSearch } from './core/rng';
+import { detectQuality } from './platform/quality';
 import { Stage } from './scene/Stage';
 import { SimContext, createSim } from './sim/SimProvider';
 import { Hud } from './ui/Hud';
@@ -12,6 +13,7 @@ export function App() {
 
   useEffect(() => {
     if (import.meta.env.DEV) (window as unknown as { __sim: typeof sim }).__sim = sim;
+    sim.store.getState().setQuality(detectQuality());
     // До заставки (задача 19) игра стартует сразу
     sim.store.getState().setMode('play');
   }, [sim]);

@@ -47,9 +47,16 @@ export function Shards() {
     };
   }, [state, tmp]);
 
+  const idle = useRef(false);
+
   useFrame((_, dt) => {
     const m = mesh.current;
     if (!m) return;
+    // Все осколки погасли и уже спрятаны: кадр можно не пересчитывать
+    let alive = false;
+    for (let i = 0; i < POOL && !alive; i++) alive = state.life[i] > 0;
+    if (!alive && idle.current) return;
+    idle.current = !alive;
     for (let i = 0; i < POOL; i++) {
       const life = state.life[i];
       if (life <= 0) {
