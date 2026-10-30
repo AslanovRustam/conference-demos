@@ -76,6 +76,18 @@ describe('enter and exit', () => {
     expect(s.getState()).toMatchObject({ phase: 'lobby', openSlot: null, cameraArrived: false, gameReady: false })
   })
 
+  test('requestExit(true) lands in attract mode', () => {
+    const s = entered()
+    s.getState().requestExit(true)
+    s.getState().exitDone()
+    expect(s.getState()).toMatchObject({ phase: 'lobby', attract: true })
+    s.getState().setAttract(false)
+    s.getState().enter()
+    s.getState().requestExit()
+    s.getState().exitDone()
+    expect(s.getState().attract).toBe(false)
+  })
+
   test('exitDone outside exiting is ignored', () => {
     const s = ready()
     s.getState().exitDone()

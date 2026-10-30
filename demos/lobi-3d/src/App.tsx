@@ -1,5 +1,5 @@
-import rawConfig from '../games.config.json'
-import { buildSlots, loadManifest, validateConfig, type GameEntry } from './config/games'
+import { buildSlots, loadManifest, type GameEntry } from './config/games'
+import { config } from './config/lobbyConfig'
 import { useAttract, useControls, wasJustDragged } from './input/useControls'
 import ExitButton from './game/ExitButton'
 import GameFrame from './game/GameFrame'
@@ -11,8 +11,6 @@ import { lobbyStore } from './state/store'
 import FpsMeter from './ui/FpsMeter'
 import Hud from './ui/Hud'
 import LoadingScreen from './ui/LoadingScreen'
-
-const config = validateConfig(rawConfig)
 
 // dev only: a stub game with the full lobby contract, to work on transitions without real games
 const devExtras: GameEntry[] = import.meta.env.DEV

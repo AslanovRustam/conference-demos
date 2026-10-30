@@ -24,6 +24,8 @@ export interface LobbyState {
   gameReady: boolean
   muted: boolean
   attract: boolean
+  /** set when an idle game sends the stand back to the lobby: land straight in attract mode */
+  attractAfterExit: boolean
   showFps: boolean
 
   init(slots: Slot[]): void
@@ -34,7 +36,7 @@ export interface LobbyState {
   enter(): boolean
   markCameraArrived(): void
   markGameReady(): void
-  requestExit(): void
+  requestExit(toAttract?: boolean): void
   exitDone(): void
   toggleMute(): void
   setAttract(on: boolean): void
@@ -61,6 +63,7 @@ export function createLobbyStore() {
       gameReady: false,
       muted: false,
       attract: false,
+      attractAfterExit: false,
       showFps: params.fps,
 
       init: (slots) => set({ slots, phase: 'lobby', carouselTarget: 0, activeIndex: 0 }),
@@ -114,14 +117,15 @@ export function createLobbyStore() {
         reveal()
       },
 
-      requestExit: () => {
+      requestExit: (toAttract = false) => {
         const phase = get().phase
-        if (phase === 'entering' || phase === 'playing') set({ phase: 'exiting' })
+        if (phase === 'entering' || phase === 'playing') set({ phase: 'exiting', attractAfterExit: toAttract })
       },
 
       exitDone: () => {
-        if (get().phase !== 'exiting') return
-        set({ phase: 'lobby', openSlot: null, cameraArrived: false, gameReady: false })
+        const s = get()
+        if (s.phase !== 'exiting') return
+        set({ phase: 'lobby', openSlot: null, cameraArrived: false, gameReady: false, attract: s.attractAfterExit, attractAfterExit: false })
       },
 
       toggleMute: () => set({ muted: !get().muted }),

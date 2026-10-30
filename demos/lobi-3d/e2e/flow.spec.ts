@@ -80,3 +80,36 @@ test('corner exit button', async ({ page }) => {
   await page.getByTestId('exit-button').click()
   await expect.poll(() => phase(page), REVEAL).toBe('lobby')
 })
+
+test('idle in game returns to lobby in attract', async ({ page }) => {
+  await page.goto('/?idle=2')
+  await expect.poll(() => phase(page)).toBe('lobby')
+  const n = await testGameNumber(page)
+  await page.evaluate((n) => (window as any).__lobby.getState().openGame(n), n)
+  await expect(frame(page)).toHaveAttribute('data-revealed', 'true', REVEAL)
+  await expect.poll(() => phase(page), REVEAL).toBe('lobby')
+  expect((await lobby(page)).attract).toBe(true)
+})
+
+test('input in game keeps it open', async ({ page }) => {
+  await page.goto('/?idle=3')
+  await expect.poll(() => phase(page)).toBe('lobby')
+  const n = await testGameNumber(page)
+  await page.evaluate((n) => (window as any).__lobby.getState().openGame(n), n)
+  await expect(frame(page)).toHaveAttribute('data-revealed', 'true', REVEAL)
+  for (let i = 0; i < 8; i++) {
+    await page.mouse.move(300 + i * 20, 300)
+    await page.waitForTimeout(500)
+  }
+  expect(await phase(page)).toBe('playing')
+})
+
+test('mute reaches the game', async ({ page }) => {
+  await openLobby(page)
+  await page.keyboard.press('m')
+  const n = await testGameNumber(page)
+  await page.evaluate((n) => (window as any).__lobby.getState().openGame(n), n)
+  await expect(frame(page)).toHaveAttribute('data-revealed', 'true', REVEAL)
+  const received = await gameFrame(page).evaluate(() => (window as any).__received)
+  expect(received).toContainEqual({ type: 'clickable:mute', muted: true })
+})

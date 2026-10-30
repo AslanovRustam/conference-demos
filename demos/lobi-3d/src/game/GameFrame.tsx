@@ -6,7 +6,10 @@ import { probeCanvasFrames } from '../bridge/probe'
 import { parseGameMessage, sendToGame } from '../bridge/protocol'
 import { createReadiness, type Readiness } from '../bridge/readiness'
 import type { Slot } from '../config/games'
+import { config } from '../config/lobbyConfig'
 import { mapKey } from '../input/hotkeys'
+import { createIdleTimer } from '../input/idle'
+import { params } from '../state/params'
 import { lobbyStore, useLobby, type Phase } from '../state/store'
 
 const REVEAL_TIMEOUT_MS = 15000
@@ -73,6 +76,31 @@ function Frame({ slot, phase }: { slot: GameSlot; phase: Phase }) {
     // in plain fullscreen Chrome leaves fullscreen on Esc; keyboard lock keeps Esc for us
     const keyboard = (navigator as Navigator & { keyboard?: { lock?: (keys: string[]) => Promise<void> } }).keyboard
     if (document.fullscreenElement) keyboard?.lock?.(['Escape']).catch(() => {})
+  }, [phase])
+
+  // a visitor who walked away mid-game: back to the lobby, straight into attract mode
+  useEffect(() => {
+    if (phase !== 'playing') return
+    const sec = params.idleReturnSec ?? slot.game.idleReturnSec ?? config.idleReturnSec
+    if (!sec) return
+    const idle = createIdleTimer(sec * 1000, () => lobbyStore.getState().requestExit(true))
+    const poke = () => idle.poke()
+    idle.start()
+    window.addEventListener(GAME_ACTIVITY, poke)
+    window.addEventListener('pointermove', poke)
+    return () => {
+      idle.stop()
+      window.removeEventListener(GAME_ACTIVITY, poke)
+      window.removeEventListener('pointermove', poke)
+    }
+  }, [phase, slot])
+
+  // keep the game's sound in step with the lobby's mute while it is on screen
+  useEffect(() => {
+    if (phase !== 'playing') return
+    return lobbyStore.subscribe((s, prev) => {
+      if (s.muted !== prev.muted) sendToGame(ref.current?.contentWindow, { type: 'clickable:mute', muted: s.muted }, location.origin)
+    })
   }, [phase])
 
   useEffect(() => {
