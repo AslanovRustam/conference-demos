@@ -7,9 +7,13 @@ import { toggleMute } from './game/store'
 import { bindKeyboard } from './platform/input'
 import { params } from './platform/params'
 import { createCodeDetector } from './platform/presenter'
+import { loadCloudNoise } from './scene/clouds/noise'
 import { QUALITY } from './scene/quality'
 import { Stage } from './scene/Stage'
 import { Hud } from './ui/Hud'
+
+// the cloud noise takes a moment in its workers: start it with the page, the stage waits for it while it loads
+void loadCloudNoise()
 
 // the 3d stage fills the screen, the dom hud sits on top
 export default function App() {

@@ -2,6 +2,7 @@ import { useFrame } from '@react-three/fiber'
 import { useEffect, useMemo, useRef } from 'react'
 import { PointLight, Vector2, Vector3, type Mesh } from 'three'
 import { fx, type DistortionSource } from '../fx'
+import { FX_NEAR_LAYER } from '../layers'
 import { rig } from '../rig'
 import { NOZZLES } from './geometry'
 import { flicker, PLUME_REF_R, plumeExpansion, plumeGeometry, plumeMaterial, setPlume, type PlumeMaterial } from './plumeShader'
@@ -101,7 +102,10 @@ export function Plume() {
       // the vertex shader stretches the unit cone over tens of meters, the geometry bounds know nothing of it
       frustumCulled={false}
       ref={(m) => {
-        if (m) meshes.current[i] = m
+        if (!m) return
+        meshes.current[i] = m
+        // drawn once more by the clouds pass, so the clouds behind the flame stay behind it
+        m.layers.enable(FX_NEAR_LAYER)
       }}
     />
   )

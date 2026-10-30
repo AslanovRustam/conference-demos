@@ -17,11 +17,13 @@ import {
   ShaderMaterial,
   SpotLight,
   Vector3,
+  ZeroFactor,
   type BufferGeometry,
   type Group,
 } from 'three'
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
 import { envLit } from '../env/envSync'
+import { FX_PAD_LAYER } from '../layers'
 import { QUALITY } from '../quality'
 import { rig } from '../rig'
 import { floodPos, FLOODS, GROUND_Y, HIDE_ALT_M, type FloodSpec } from './layout'
@@ -180,15 +182,20 @@ function build(): Built {
       transparent: true,
       depthWrite: false,
       side: DoubleSide,
+      // pure additive light: the target's alpha stays (the clouds pass reads alpha as coverage)
       blending: CustomBlending,
       blendSrc: OneFactor,
       blendDst: OneFactor,
+      blendSrcAlpha: ZeroFactor,
+      blendDstAlpha: OneFactor,
     })
     const beam = new Mesh(geo, mat)
     beam.position.copy(head)
     beam.quaternion.setFromUnitVectors(UP, dir)
     beam.renderOrder = -2 // before the smoke, which may hide it
     beam.frustumCulled = false
+    // drawn once more by the clouds pass while the camera is under the deck, so the deck stays behind it
+    beam.layers.enable(FX_PAD_LAYER)
     beams.push(beam)
   }
 

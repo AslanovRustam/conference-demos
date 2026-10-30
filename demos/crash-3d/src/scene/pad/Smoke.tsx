@@ -4,6 +4,7 @@ import { Color, Mesh, Vector3, type InstancedInterleavedBuffer } from 'three'
 import { createRng, type Rng } from '../../core/rng'
 import type { Phase } from '../../core/types'
 import { useGame } from '../../game/store'
+import { FX_PAD_LAYER } from '../layers'
 import { QUALITY } from '../quality'
 import { rig } from '../rig'
 import { hullRadiusAt } from '../rocket/geometry'
@@ -236,6 +237,8 @@ export function Smoke() {
     mesh.frustumCulled = false
     // after the beams (they shine through thin smoke), before the plume (the flame glows through the clouds)
     mesh.renderOrder = -1
+    // drawn once more by the clouds pass while the camera is under the deck, so the deck stays behind it
+    mesh.layers.enable(FX_PAD_LAYER)
     const steamN = Math.round(cap * QUALITY.steamShare)
     return {
       mesh,

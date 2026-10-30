@@ -1,11 +1,13 @@
 import { useFrame, useThree } from '@react-three/fiber'
 import { Bloom, ChromaticAberration, EffectComposer, Noise, SMAA, ToneMapping, Vignette, wrapEffect } from '@react-three/postprocessing'
 import { BlendFunction, ToneMappingMode, type ChromaticAberrationEffect } from 'postprocessing'
-import { useEffect, useMemo, useRef } from 'react'
+import { use, useEffect, useMemo, useRef } from 'react'
 import { Vector2, type PerspectiveCamera } from 'three'
+import { loadCloudNoise } from '../clouds/noise'
 import { sunRaysSource } from '../far/Sun'
 import { fx } from '../fx'
 import { QUALITY } from '../quality'
+import { CloudsEffect } from './CloudsEffect'
 import { DistortionEffect } from './DistortionEffect'
 import { FlashEffect } from './FlashEffect'
 import { LensFlareEffect } from './LensFlareEffect'
@@ -39,6 +41,20 @@ function SunLens() {
   )
 }
 
+// the volumetric cloud deck; suspends the scene until its noise is generated (part of loading)
+function Clouds() {
+  const noise = use(loadCloudNoise())
+  const camera = useThree((s) => s.camera)
+  const scene = useThree((s) => s.scene)
+  const clouds = useMemo(() => new CloudsEffect(noise), [noise])
+  useEffect(() => {
+    clouds.mainCamera = camera
+    clouds.mainScene = scene
+  }, [clouds, camera, scene])
+  useEffect(() => () => clouds.dispose(), [clouds])
+  return <primitive object={clouds} dispose={null} />
+}
+
 // hdr chain; tone mapping turns it into display colors near the end.
 // scene effects go before ToneMapping: clouds first (task 11, ahead of the distortion, so the haze bends them too),
 // then the sun's rays and flare (before the bloom, so it spreads their hot cores), dof
@@ -54,6 +70,7 @@ export function Effects() {
   return (
     // no msaa: multisampled float targets are costly on integrated gpus, SMAA smooths edges instead
     <EffectComposer multisampling={0}>
+      <Clouds />
       {/* heat haze and shockwave rings bend the scene itself, before any lens effect */}
       <Distortion />
       {QUALITY.zoomBlur && <ZoomBlur />}
