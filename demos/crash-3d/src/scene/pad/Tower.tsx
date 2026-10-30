@@ -13,9 +13,9 @@ import {
   type Group,
 } from 'three'
 import { useGame } from '../../game/store'
+import { envLit } from '../env/envSync'
 import { QUALITY } from '../quality'
 import { rig } from '../rig'
-import { padLit } from './envSync'
 import { ARM_SWING, armFrame, ARMS, GROUND_Y, TOWER } from './layout'
 
 // the service tower: a square steel lattice (instanced beams) with swing arms to the rocket that move away
@@ -191,9 +191,9 @@ export function Tower() {
 
   useEffect(() => {
     const lit = [built.materials[0], built.materials[1]] as MeshStandardMaterial[]
-    for (const m of lit) padLit.add(m)
+    for (const m of lit) envLit.add(m)
     return () => {
-      for (const m of lit) padLit.delete(m)
+      for (const m of lit) envLit.delete(m)
       built.unit.dispose()
       built.sphere.dispose()
       for (const m of built.materials) m.dispose()

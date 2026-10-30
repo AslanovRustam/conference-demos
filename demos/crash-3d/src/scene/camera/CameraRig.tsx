@@ -1,6 +1,7 @@
 import { useFrame } from '@react-three/fiber'
-import type { Camera } from 'three'
+import { Vector3, type Camera } from 'three'
 import { params, type DebugCam } from '../../platform/params'
+import { lightState } from '../env/lightState'
 import { GROUND_Y } from '../pad/layout'
 import { rig } from '../rig'
 
@@ -11,7 +12,7 @@ const LOOK_Y = 26 // just above the middle of the 48 m rocket
 // debug close-ups (?debug=1&cam=...): fixed poses near the hull, heights relative to the rocket base.
 // close: the livery band and stage 1; base: engines, fins and soot; top: capsule and escape tower;
 // plume: the engines from a little below, with the first 20 m of the exhaust
-const DEBUG_POSES: Record<Exclude<DebugCam, 'pad'>, { dist: number; yaw: number; eyeY: number; lookY: number }> = {
+const DEBUG_POSES: Record<Exclude<DebugCam, 'pad' | 'sun'>, { dist: number; yaw: number; eyeY: number; lookY: number }> = {
   close: { dist: 30, yaw: 0.42, eyeY: 13, lookY: 17 },
   base: { dist: 14, yaw: 0.62, eyeY: 0.6, lookY: 2.6 },
   top: { dist: 11, yaw: 0.3, eyeY: 45.2, lookY: 44.4 },
@@ -34,11 +35,30 @@ function padShot(camera: Camera) {
   camera.lookAt(0, eye + Math.tan(pitch) * dist, 0)
 }
 
+// debug look into the sun (?debug=1&cam=sun): from 80 m back along the sun's direction, past the rocket's nose, a
+// little to the side so the sun peeks out next to it (wherever the sun is, even below the horizon)
+const SUN_BACK = 80
+const SUN_SIDE = 2.4
+const NOSE_Y = 40
+const nose = new Vector3()
+const side = new Vector3()
+function sunShot(camera: Camera) {
+  const s = lightState.sunDir
+  nose.set(0, rig.rocketY + NOSE_Y, 0)
+  side.set(-s.z, 0, s.x).normalize()
+  camera.position.copy(nose).addScaledVector(s, -SUN_BACK).addScaledVector(side, SUN_SIDE)
+  camera.lookAt(nose)
+}
+
 // simple follow camera until the director arrives (task 12): a slow side orbit locked to the rocket
 export function CameraRig() {
   useFrame(({ camera }) => {
     if (params.cam === 'pad') {
       padShot(camera)
+      return
+    }
+    if (params.cam === 'sun') {
+      sunShot(camera)
       return
     }
     const debug = params.cam ? DEBUG_POSES[params.cam] : null

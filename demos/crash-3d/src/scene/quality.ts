@@ -21,4 +21,7 @@ export const QUALITY = {
   towerBay: 4, distantLights: 520, steamShare: 0.22,
   // wet apron: the mirrored scene pass (only while the apron is in view) at this fraction of the drawing buffer
   padReflection: { enabled: true, scale: 0.5 },
+  // sky: scattering samples per view ray (run per vertex), the dome grid (azimuth segments x elevation rows, rows
+  // crowd the horizon); shadow map of the key light on the rocket; radial samples per pixel of the god rays
+  skySteps: 24, skyGrid: [192, 128] as [number, number], keyShadowMap: 2048, godRaysSamples: 60,
 } as const

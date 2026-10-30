@@ -14,6 +14,11 @@ test('the pad wide shot is a debug camera too', () => {
   expect(parseParams('?cam=pad').cam).toBeNull()
 })
 
+test('the sun shot is a debug camera too', () => {
+  expect(parseParams('?debug=1&cam=sun').cam).toBe('sun')
+  expect(parseParams('?cam=sun').cam).toBeNull()
+})
+
 test('rejects garbage and out-of-range values', () => {
   expect(parseParams('?debug=1&seed=abc').seed).toBeNull()
   expect(parseParams('?debug=1&freeze=0.5').freeze).toBeNull()

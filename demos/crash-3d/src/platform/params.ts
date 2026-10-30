@@ -1,5 +1,6 @@
-// debug cameras (scene/camera/CameraRig.tsx): close-ups on the rocket, and a wide shot of the pad and the rocket
-export const DEBUG_CAMS = ['close', 'base', 'top', 'plume', 'pad'] as const
+// debug cameras (scene/camera/CameraRig.tsx): close-ups on the rocket, a wide shot of the pad and the rocket, and a
+// look past the rocket's nose into the sun (flare, god rays)
+export const DEBUG_CAMS = ['close', 'base', 'top', 'plume', 'pad', 'sun'] as const
 export type DebugCam = (typeof DEBUG_CAMS)[number]
 
 export interface Params {

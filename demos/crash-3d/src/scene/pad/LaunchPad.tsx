@@ -16,11 +16,11 @@ import {
   type PerspectiveCamera,
 } from 'three'
 import { createRng } from '../../core/rng'
+import { envLit } from '../env/envSync'
 import { QUALITY } from '../quality'
 import { rig } from '../rig'
 import { flicker } from '../rocket/plumeShader'
 import { groundReach } from './emission'
-import { padLit, syncPadEnv } from './envSync'
 import { Floodlights } from './Floodlights'
 import { GROUND_Y, HARDSTAND_R, HIDE_ALT_M, TRENCH_FLOOR_Y } from './layout'
 import { concreteGeometry, groundGeometry, hardstandGeometry, steelGeometry, tableGeometry, trenchGeometry } from './padGeometry'
@@ -58,12 +58,12 @@ function useMaterials(t: PadTextures, reflection: PlanarReflection) {
   }, [t, reflection])
 }
 
-// pad materials take part in the environment sync (envSync.ts) while mounted
+// pad materials take part in the environment sync (env/envSync.ts) while mounted
 function usePadLit(mats: MeshStandardMaterial[]) {
   useLayoutEffect(() => {
-    for (const m of mats) padLit.add(m)
+    for (const m of mats) envLit.add(m)
     return () => {
-      for (const m of mats) padLit.delete(m)
+      for (const m of mats) envLit.delete(m)
     }
   }, [mats])
 }
@@ -249,7 +249,7 @@ function DistantLights() {
     points.frustumCulled = false
     const hangarGeo = new BoxGeometry(HANGAR.w, HANGAR.h, HANGAR.d)
     const hangarMat = new MeshStandardMaterial({ color: new Color(0.008, 0.008, 0.009), roughness: 0.9, envMapIntensity: 0.05 })
-    padLit.add(hangarMat)
+    envLit.add(hangarMat)
     return { points, geo, mat, hangarGeo, hangarMat }
   }, [])
   useEffect(
@@ -257,7 +257,7 @@ function DistantLights() {
       built.geo.dispose()
       built.mat.dispose()
       built.hangarGeo.dispose()
-      padLit.delete(built.hangarMat)
+      envLit.delete(built.hangarMat)
       built.hangarMat.dispose()
     },
     [built],
@@ -302,8 +302,7 @@ export function LaunchPad() {
   useEffect(() => () => disposePadTextures(), [])
 
   // after the rig (-10), before the rest of the pad reads its own transform
-  useFrame(({ scene }) => {
-    syncPadEnv(scene.environment)
+  useFrame(() => {
     if (root.current) root.current.position.y = -rig.nearOffset
     if (visual.current) visual.current.visible = rig.altM <= HIDE_ALT_M
   }, -1)

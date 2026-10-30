@@ -21,9 +21,9 @@ import {
   type Group,
 } from 'three'
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
+import { envLit } from '../env/envSync'
 import { QUALITY } from '../quality'
 import { rig } from '../rig'
-import { padLit } from './envSync'
 import { floodPos, FLOODS, GROUND_Y, HIDE_ALT_M, type FloodSpec } from './layout'
 import { notReflected } from './reflection'
 
@@ -233,9 +233,9 @@ export function Floodlights() {
     }
   }, [built])
   useEffect(() => {
-    padLit.add(built.hardwareMaterial)
+    envLit.add(built.hardwareMaterial)
     return () => {
-      padLit.delete(built.hardwareMaterial)
+      envLit.delete(built.hardwareMaterial)
       built.dispose()
     }
   }, [built])

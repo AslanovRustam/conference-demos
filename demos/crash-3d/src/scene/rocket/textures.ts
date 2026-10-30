@@ -213,9 +213,11 @@ const RINGS: number[] = [DIM.skirtTop, DIM.stage1Top, DIM.interTop, DIM.stage2To
 // the livery: a red band with the wordmark down the front (+z) and the back (-z) of stage 1
 const BAND = { y0: 7.55, y1: 26.65, width: 2.9 }
 
-// brand red as a paint albedo: the filmic tone mapping (agx) washes bright reds out to salmon, so the
-// paint is the brand hue at a lower value; under the pad lights it renders close to the brand red
-export const LIVERY_RED_SCALE = 0.21
+// brand red as a paint albedo: the filmic tone mapping (agx) washes bright reds out to salmon and cannot reach
+// the brand red's chroma at all; it is most saturated at a mid value, so the paint is the brand hue at a lower value.
+// tuned under the final lights (task 10): the floodlit pad and the sun key in space land the band in agx's strongest
+// red; brighter and the sunlit side turns salmon, darker and the floodlit side turns maroon
+export const LIVERY_RED_SCALE = 0.19
 function liveryRed(): string {
   const c = new Color(brandColors.red).multiplyScalar(LIVERY_RED_SCALE)
   return `#${c.getHexString()}`
