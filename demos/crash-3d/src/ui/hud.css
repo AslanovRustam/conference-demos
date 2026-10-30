@@ -1038,3 +1038,126 @@ html {
     --mult: calc(9 * var(--mu));
   }
 }
+
+/* ------------------------------------------------------------ attract + presenter */
+
+/* the logo doubles as the presenter's hidden door (hold 2 s) */
+.hud-logo-hold {
+  position: relative;
+  display: block;
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.hud-presenter-dot {
+  position: absolute;
+  top: 0;
+  right: -0.5rem;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--red);
+}
+
+/* the idle loop plays itself: no controls, a call to action where the button was */
+.hud-bets,
+.hud-main {
+  transition:
+    opacity 0.3s var(--ease),
+    visibility 0.3s;
+}
+.hud[data-attract] .hud-bets,
+.hud[data-attract] .hud-main {
+  opacity: 0;
+  visibility: hidden;
+}
+.hud-attract {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: auto;
+  cursor: pointer;
+}
+.attract-cta {
+  position: absolute;
+  left: 50%;
+  bottom: var(--btn-b);
+  height: var(--btn-h);
+  display: flex;
+  align-items: center;
+  transform: translateX(-50%);
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.32em;
+  white-space: nowrap;
+  animation: attract-pulse 2.4s ease-in-out infinite;
+}
+.attract-cta--touch {
+  display: none;
+}
+@media (pointer: coarse) {
+  .attract-cta--keys {
+    display: none;
+  }
+  .attract-cta--touch {
+    display: flex;
+  }
+}
+@keyframes attract-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+/* leaving attract: the jump back to the pad hides behind a short dip from black */
+.hud-dip {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  animation: hud-dip 0.3s ease-out;
+}
+@keyframes hud-dip {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.hud-presenter {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  pointer-events: auto;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(6px);
+}
+.presenter-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: min(20rem, calc(100vw - 2rem));
+}
+.presenter-btn {
+  --ck-chamfer: 0.8rem;
+  height: 3.4rem;
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-shadow: none;
+}
+.presenter-btn--boom {
+  background: var(--red);
+}

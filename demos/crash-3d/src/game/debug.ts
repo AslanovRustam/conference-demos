@@ -18,9 +18,17 @@ export function installDebug(): void {
   }
 }
 
-// screenshots and e2e wait for this: the stage calls it once the scene has loaded and
-// 30 frames have rendered; the hud fonts must be in too
+let stageReady = false
+
+// the scene is on screen (the attract idle clock waits for it)
+export function isStageReady(): boolean {
+  return stageReady
+}
+
+// the stage calls it once the scene has loaded and 30 frames have rendered. screenshots and e2e wait for
+// window.__crashReady; the hud fonts must be in too
 export function markReady(): void {
+  stageReady = true
   if (!params.debug) return
   void document.fonts.ready.then(() => {
     window.__crashReady = true

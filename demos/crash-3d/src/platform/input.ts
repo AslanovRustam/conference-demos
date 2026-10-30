@@ -5,51 +5,55 @@ export interface KeyHandlers {
   toggleAuto(): void
   mute(): void
   exit(): void
-  anyInput(): void
+  // true when the key only woke the game (attract): no action then, codes still count
+  anyInput(): boolean | void
   code(key: string): void
 }
+
+const SCROLL_KEYS = new Set(['Space', 'Enter', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'])
 
 export function bindKeyboard(
   target: Pick<Window, 'addEventListener' | 'removeEventListener'>,
   h: KeyHandlers,
 ): () => void {
-  const onKey = (e: KeyboardEvent) => {
-    // held keys must not re-fire actions
-    if (e.repeat) return
-    h.anyInput()
-    switch (e.code) {
+  const act = (code: string) => {
+    switch (code) {
       case 'Space':
       case 'Enter':
-        e.preventDefault()
         h.primary()
         return
       case 'ArrowUp':
-        e.preventDefault()
         h.bet(1)
         return
       case 'ArrowDown':
-        e.preventDefault()
         h.bet(-1)
         return
       case 'ArrowRight':
-        e.preventDefault()
         h.auto(1)
         return
       case 'ArrowLeft':
-        e.preventDefault()
         h.auto(-1)
         return
       case 'KeyA':
         h.toggleAuto()
-        break
+        return
       case 'KeyM':
         h.mute()
-        break
+        return
       case 'Escape':
         h.exit()
         return
     }
-    if (typeof e.key === 'string' && /^[a-zA-Z]$/.test(e.key)) h.code(e.key.toUpperCase())
+  }
+  const onKey = (e: KeyboardEvent) => {
+    // held keys must not re-fire actions; ctrl / meta / alt combos belong to the browser
+    if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return
+    // no page scroll, no click on a focused button
+    if (SCROLL_KEYS.has(e.code)) e.preventDefault()
+    if (h.anyInput() !== true) act(e.code)
+    // letters by physical key, so codes work on any layout
+    const letter = /^Key([A-Z])$/.exec(e.code)
+    if (letter) h.code(letter[1])
   }
   target.addEventListener('keydown', onKey)
   return () => target.removeEventListener('keydown', onKey)

@@ -5,9 +5,12 @@ interface FakeKey {
   code?: string
   key?: string
   repeat?: boolean
+  ctrlKey?: boolean
+  metaKey?: boolean
+  altKey?: boolean
 }
 
-function setupKeys() {
+function setupKeys(wakes = false) {
   let listener: ((e: unknown) => void) | null = null
   const target = {
     addEventListener: (_t: string, fn: (e: unknown) => void) => {
@@ -25,7 +28,10 @@ function setupKeys() {
     toggleAuto: () => void calls.toggleAuto++,
     mute: () => void calls.mute++,
     exit: () => void calls.exit++,
-    anyInput: () => void calls.anyInput++,
+    anyInput: () => {
+      calls.anyInput++
+      return wakes
+    },
     code: (k) => void calls.code.push(k),
   }
   const unbind = bindKeyboard(target as unknown as Window, handlers)
@@ -88,4 +94,28 @@ test('typing HYPER and NUKE triggers no auto toggle and no mute', () => {
   expect(calls.code.join('')).toBe('HYPERNUKE')
   expect(calls.toggleAuto).toBe(0)
   expect(calls.mute).toBe(0)
+})
+
+test('codes come from the physical key, so they work on a cyrillic layout', () => {
+  const { fire, calls } = setupKeys()
+  for (const [code, key] of [['KeyH', 'р'], ['KeyY', 'н'], ['KeyP', 'з'], ['KeyE', 'у'], ['KeyR', 'к']]) fire({ code, key })
+  expect(calls.code.join('')).toBe('HYPER')
+})
+
+test('ctrl, meta and alt combos belong to the browser', () => {
+  const { fire, calls, preventDefault } = setupKeys()
+  fire({ code: 'KeyM', key: 'm', ctrlKey: true })
+  fire({ code: 'KeyA', key: 'a', metaKey: true })
+  fire({ code: 'Space', key: ' ', altKey: true })
+  expect(calls).toMatchObject({ mute: 0, toggleAuto: 0, primary: 0, anyInput: 0, code: [] })
+  expect(preventDefault).not.toHaveBeenCalled()
+})
+
+test('a key that wakes the game from attract does nothing else but still counts towards a code', () => {
+  const { fire, calls, preventDefault } = setupKeys(true)
+  fire({ code: 'Space', key: ' ' })
+  fire({ code: 'KeyM', key: 'm' })
+  expect(calls).toMatchObject({ primary: 0, mute: 0, anyInput: 2, code: ['M'] })
+  // space still must not press a focused button or scroll
+  expect(preventDefault).toHaveBeenCalledTimes(1)
 })

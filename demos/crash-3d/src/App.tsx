@@ -2,7 +2,8 @@ import { Canvas } from '@react-three/fiber'
 import { useEffect } from 'react'
 import { bindAudio, bindVisibility } from './audio/bindings'
 import { createAudio } from './audio/core'
-import { installDebug } from './game/debug'
+import { createAttractMode } from './game/attractMode'
+import { installDebug, isStageReady } from './game/debug'
 import { startLoop } from './game/loop'
 import { primaryAction, runtime } from './game/runtime'
 import { toggleMute, useGame } from './game/store'
@@ -34,7 +35,14 @@ export default function App() {
     const unsubMute = useGame.subscribe((s, prev) => {
       if (s.muted !== prev.muted) audio.setMuted(s.muted)
     })
-    const stopLoop = startLoop(() => audio.update(rig))
+    // the stand's idle loop; any key or touch pokes it, the first one after attract only wakes the game
+    const attract = createAttractMode(engine, undefined, () => !isStageReady())
+    const wake = () => void attract.input()
+    window.addEventListener('pointerdown', wake, true)
+    const stopLoop = startLoop(() => {
+      attract.tick()
+      audio.update(rig)
+    })
     const feed = createCodeDetector({
       HYPER: () => engine.arm('warp'),
       NUKE: () => engine.arm('instant'),
@@ -46,12 +54,14 @@ export default function App() {
       toggleAuto: () => engine.toggleAuto(),
       mute: toggleMute,
       exit: () => {},
-      anyInput: () => {},
+      anyInput: () => attract.input(),
       code: (k) => feed(k, performance.now()),
     })
     return () => {
       stopLoop()
       unbind()
+      attract.dispose()
+      window.removeEventListener('pointerdown', wake, true)
       window.removeEventListener('pointerdown', unlock, true)
       window.removeEventListener('keydown', unlock, true)
       unbindAudio()
