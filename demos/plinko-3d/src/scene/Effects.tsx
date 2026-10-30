@@ -1,5 +1,5 @@
 import { useFrame } from '@react-three/fiber';
-import { Bloom, ChromaticAberration, EffectComposer, ToneMapping, Vignette } from '@react-three/postprocessing';
+import { Bloom, ChromaticAberration, EffectComposer, SMAA, ToneMapping, Vignette } from '@react-three/postprocessing';
 import { ToneMappingMode, type BloomEffect, type ChromaticAberrationEffect } from 'postprocessing';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
@@ -32,13 +32,15 @@ export function Effects() {
     if (ca.current) ca.current.offset.set(p.ca * env, p.ca * env * 0.6);
   });
 
+  // Без MSAA: мультисэмплинг постобработки давал целиком чёрные кадры при вспышках (мигание экрана)
   if (quality === 'high') {
     return (
-      <EffectComposer multisampling={2}>
+      <EffectComposer multisampling={0}>
         <Bloom ref={bloom} mipmapBlur luminanceThreshold={0.75} luminanceSmoothing={0.2} intensity={BLOOM.high} />
         <ChromaticAberration ref={ca} offset={caOffset} radialModulation={false} modulationOffset={0} />
         <Vignette darkness={0.6} offset={0.3} />
         <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
+        <SMAA />
       </EffectComposer>
     );
   }
