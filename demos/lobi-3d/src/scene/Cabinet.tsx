@@ -80,7 +80,7 @@ export default function Cabinet({ index, slot, active, distance, onSelect }: Pro
         <boxGeometry args={[SCREEN.w + 0.12, SCREEN.h + 0.12, 0.02]} />
         <meshStandardMaterial color="#050506" metalness={0.4} roughness={0.6} />
       </mesh>
-      <CabinetScreen index={index} slot={slot} loading={loading} dim={dimFor(distance)} flash={flash} z={FRONT + 0.017} />
+      <CabinetScreen index={index} slot={slot} loading={loading} near={distance === 0} dim={dimFor(distance)} flash={flash} z={FRONT + 0.017} />
       {/* vertical edge strips */}
       {[-1, 1].map((side) => (
         <mesh key={side} position={[(side * w) / 2, BASE + h / 2, FRONT]} material={neon}>

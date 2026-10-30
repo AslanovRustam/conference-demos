@@ -40,11 +40,11 @@ const fragment = /* glsl */ `
         vec4 t = texture2D(uTitle, uv);
         col = mix(col, t.rgb * 1.6, t.a);
       }
-      if (uMode == 2) {
-        float x = fract(uTime * 0.7);
-        float bar = step(abs(uv.y - 0.16), 0.012) * step(abs(uv.x - x), 0.12);
-        col += vec3(1.6) * bar;
-      }
+    }
+    if (uMode == 2) {
+      float x = fract(uTime * 0.7);
+      float bar = step(abs(uv.y - 0.16), 0.012) * step(abs(uv.x - x), 0.12);
+      col = mix(col * 0.55, vec3(1.6), bar);
     }
     col *= 0.86 + 0.14 * sin(uv.y * 700.0 - uTime * 8.0);
     col += (hash(floor(uv * vec2(480.0, 270.0)) + fract(uTime)) - 0.5) * 0.05;

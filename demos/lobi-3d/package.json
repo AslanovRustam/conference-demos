@@ -13,7 +13,8 @@
     "serve": "vite preview --host --port 4173 --strictPort",
     "test": "vitest run",
     "test:watch": "vitest",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "record:previews": "node scripts/record-previews.ts"
   },
   "dependencies": {
     "@react-three/drei": "10.7.9",

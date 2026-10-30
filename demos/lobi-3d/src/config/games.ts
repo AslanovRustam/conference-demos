@@ -11,6 +11,8 @@ export interface GameEntry {
   url?: string
   preview?: string
   poster?: string
+  /** seconds to skip at the start of the preview loop (the game's own loading) */
+  previewStart?: number
   idleReturnSec?: number
   /** the game shows its own exit button in embed mode, so the lobby hides its corner button */
   ownExit?: boolean
@@ -28,6 +30,9 @@ export interface GamesManifest {
   builtAt: string
   games: Record<string, { ok: boolean; reason?: string }>
 }
+
+/** previews/index.json, written by scripts/record-previews.ts */
+export type PreviewIndex = Record<string, { video: string; poster: string; start: number }>
 
 export type Slot =
   | { kind: 'game'; key: string; game: GameEntry; url: string }
@@ -75,6 +80,31 @@ export function buildSlots(config: LobbyConfig, manifest: GamesManifest | null, 
   for (const game of extras) slots.push({ kind: 'game', key: `game:${game.id}`, game, url: gameUrl(game) })
   for (let n = 0; slots.length < config.minSlots; n++) slots.push({ kind: 'soon', key: `pad:${n}`, title: null })
   return slots
+}
+
+/** Recorded previews fill in what games.config.json leaves empty. */
+export function applyPreviews(slots: Slot[], index: PreviewIndex | null): Slot[] {
+  if (!index) return slots
+  return slots.map((slot) => {
+    const rec = slot.kind === 'game' ? index[slot.game.id] : undefined
+    if (!rec || slot.kind !== 'game') return slot
+    const game = { ...slot.game }
+    game.preview ??= rec.video
+    game.poster ??= rec.poster
+    game.previewStart ??= rec.start
+    return { ...slot, game }
+  })
+}
+
+export async function loadPreviews(fetchFn: typeof fetch = fetch): Promise<PreviewIndex | null> {
+  try {
+    const res = await fetchFn('previews/index.json', { cache: 'no-store' })
+    if (!res.ok) return null
+    const data: unknown = await res.json()
+    return isRecord(data) ? (data as PreviewIndex) : null
+  } catch {
+    return null
+  }
 }
 
 export async function loadManifest(fetchFn: typeof fetch = fetch): Promise<GamesManifest | null> {

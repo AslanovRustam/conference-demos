@@ -1,5 +1,5 @@
 import { useLobbySound } from './audio/useLobbySound'
-import { buildSlots, loadManifest, type GameEntry } from './config/games'
+import { applyPreviews, buildSlots, loadManifest, loadPreviews, type GameEntry } from './config/games'
 import { config } from './config/lobbyConfig'
 import { useAttract, useControls, wasJustDragged } from './input/useControls'
 import ExitButton from './game/ExitButton'
@@ -21,7 +21,9 @@ const devExtras: GameEntry[] = import.meta.env.DEV
 // once per page: StrictMode runs the loading effect twice in dev
 let preparing: Promise<void> | null = null
 function prepare() {
-  preparing ??= loadManifest().then((manifest) => lobbyStore.getState().init(buildSlots(config, manifest, devExtras)))
+  preparing ??= Promise.all([loadManifest(), loadPreviews()]).then(([manifest, previews]) =>
+    lobbyStore.getState().init(applyPreviews(buildSlots(config, manifest, devExtras), previews)),
+  )
   return preparing
 }
 

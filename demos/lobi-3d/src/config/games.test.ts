@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { buildSlots, gameUrl, validateConfig, type GameEntry } from './games'
+import { applyPreviews, buildSlots, gameUrl, validateConfig, type GameEntry } from './games'
 
 const g = (id: string, title = id): GameEntry => ({ id, title, subtitle: '' })
 
@@ -45,5 +45,24 @@ describe('buildSlots', () => {
   test('does not pad when games exceed minSlots', () => {
     const cfg = { minSlots: 6, idleReturnSec: 90, games: 'abcdefg'.split('').map((id) => g(id)) }
     expect(buildSlots(cfg, { builtAt: '', games: {} })).toHaveLength(7)
+  })
+})
+
+describe('applyPreviews', () => {
+  test('fills preview, poster and start from the recorded index, config wins', () => {
+    const cfg = { minSlots: 3, idleReturnSec: 90, games: [g('a'), { ...g('b'), preview: 'custom.mp4' }] }
+    const slots = buildSlots(cfg, { builtAt: '', games: { a: { ok: true }, b: { ok: true } } })
+    const out = applyPreviews(slots, {
+      a: { video: 'previews/a.webm', poster: 'previews/a.jpg', start: 1.2 },
+      b: { video: 'previews/b.webm', poster: 'previews/b.jpg', start: 0.8 },
+    })
+    expect(out[0].kind === 'game' && out[0].game).toMatchObject({ preview: 'previews/a.webm', poster: 'previews/a.jpg', previewStart: 1.2 })
+    expect(out[1].kind === 'game' && out[1].game).toMatchObject({ preview: 'custom.mp4', poster: 'previews/b.jpg' })
+    expect(out[2]).toBe(slots[2])
+  })
+
+  test('null index leaves slots untouched', () => {
+    const slots = buildSlots({ minSlots: 1, idleReturnSec: 90, games: [g('a')] }, { builtAt: '', games: { a: { ok: true } } })
+    expect(applyPreviews(slots, null)).toBe(slots)
   })
 })
