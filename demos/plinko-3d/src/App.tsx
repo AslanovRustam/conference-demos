@@ -2,6 +2,7 @@ import { AnimatePresence } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { bindAudio } from './audio/bindings';
 import { createAudioEngine } from './audio/engine';
+import { createMusic } from './audio/music';
 import { createSfx } from './audio/sfx';
 import { IDLE_MS } from './config';
 import { seedFromSearch } from './core/rng';
@@ -35,15 +36,17 @@ export function App() {
   const [audio] = useState(() => createAudioEngine());
   useEffect(() => {
     const sfx = createSfx(audio);
-    const offAudio = bindAudio(sim.bus, sfx, null);
+    const music = createMusic(audio);
+    const offAudio = bindAudio(sim.bus, sfx, music);
     audio.setMuted(sim.store.getState().muted);
     const offMuted = sim.store.subscribe((s, prev) => {
       if (s.muted !== prev.muted) audio.setMuted(s.muted);
     });
-    const unlock = () => void audio.unlock();
+    const unlock = () => void audio.unlock().then(() => music.start());
     window.addEventListener('pointerdown', unlock, { capture: true });
     window.addEventListener('keydown', unlock, { capture: true });
     return () => {
+      music.stop();
       offAudio();
       offMuted();
       window.removeEventListener('pointerdown', unlock, { capture: true });
