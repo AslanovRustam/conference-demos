@@ -27,7 +27,7 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
 `
 
 // radial blur from the screen center; strength is the streak length as a fraction of the
-// distance to the center, read from fx.zoomBlur every frame (0 = off, no extra samples)
+// distance to the center, read from fx.zoomBlur + fx.zoomPulse every frame (0 = off, no extra samples)
 export class ZoomBlurEffect extends Effect {
   private strength: Uniform<number>
 
@@ -47,6 +47,6 @@ export class ZoomBlurEffect extends Effect {
   }
 
   override update(): void {
-    this.strength.value = Math.max(0, fx.zoomBlur)
+    this.strength.value = Math.max(0, fx.zoomBlur) + Math.max(0, fx.zoomPulse)
   }
 }

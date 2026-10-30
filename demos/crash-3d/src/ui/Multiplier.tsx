@@ -4,7 +4,8 @@ import { S } from '../strings'
 import { formatMult } from './format'
 
 // big live multiplier; digits are written straight into the dom every frame.
-// after a cash out it holds the player's multiplier, and a pale line keeps counting where the rocket got to
+// after a cash out it holds the player's multiplier, and a pale line keeps counting where the rocket got to.
+// on a crash it turns red: CRASHED @ 4.37× (or the pale line does, if the player got out in time)
 export function Multiplier() {
   const phase = useGame((s) => s.snap.phase)
   const cashed = useGame((s) => s.snap.cashedAt !== null)
@@ -32,16 +33,26 @@ export function Multiplier() {
   }, [])
 
   const idle = phase === 'betting' || phase === 'countdown'
-  const showGhost = cashed && (phase === 'ejected' || phase === 'crashed')
+  const crashed = phase === 'crashed'
+  const showGhost = cashed && (phase === 'ejected' || crashed)
   return (
-    <div ref={root} className="hud-mult" data-idle={idle || undefined} data-faded={phase === 'result' || undefined}>
+    <div
+      ref={root}
+      className="hud-mult"
+      data-idle={idle || undefined}
+      data-faded={phase === 'result' || undefined}
+      data-crashed={(crashed && !cashed) || undefined}
+    >
+      <div className="mult-crash-word" aria-hidden={!(crashed && !cashed)}>
+        {S.crashedAt}
+      </div>
       <div className="mult-value">
         <span ref={num} className="mult-num" />
         <span className="mult-x">{S.times}</span>
       </div>
       <div className="hud-label mult-label">{S.multiplier}</div>
-      <div className="mult-ghost" data-on={showGhost || undefined} aria-hidden={!showGhost}>
-        {S.rocketReached} <span ref={ghost} className="mult-ghost-num" />
+      <div className="mult-ghost" data-on={showGhost || undefined} data-crashed={(showGhost && crashed) || undefined} aria-hidden={!showGhost}>
+        {crashed ? S.crashedAt : S.rocketReached} <span ref={ghost} className="mult-ghost-num" />
         <span className="mult-ghost-x">{S.times}</span>
       </div>
     </div>

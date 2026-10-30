@@ -17,7 +17,9 @@ export function isPrewarmed(): boolean {
   return done
 }
 
-export async function prewarm(gl: WebGLRenderer, scene: Scene, camera: Camera): Promise<void> {
+// a synchronous compile: compileAsync polls the programs until they are ready and never resolves if one of them
+// is released meanwhile (a material disposed by a strict-mode remount), which would hold the ready flag forever
+export function prewarm(gl: WebGLRenderer, scene: Scene, camera: Camera): void {
   const shown: Object3D[] = []
   for (const root of parts) {
     root.traverse((o) => {
@@ -35,7 +37,7 @@ export async function prewarm(gl: WebGLRenderer, scene: Scene, camera: Camera): 
     }
   }
   try {
-    await gl.compileAsync(scene, camera)
+    gl.compile(scene, camera)
   } finally {
     for (const o of shown) o.visible = false
     done = true

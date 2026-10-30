@@ -27,25 +27,24 @@ const [query = '', out = 'shots/shot.png'] = argv.filter((a, i) => !skip.has(i) 
 
 mkdirSync(dirname(out), { recursive: true })
 
-// real Chrome with ANGLE/D3D11 so the scene renders on the GPU
-const browser = await chromium.launch({
+// real Chrome with ANGLE/D3D11 on the discrete GPU; a persistent profile keeps the compiled shaders between runs
+// (a fresh profile compiles every shader again: ~60 s before the first frame on this machine)
+const context = await chromium.launchPersistentContext('shots/.chrome-profile', {
   channel: 'chrome',
   headless: true,
   args: ['--use-angle=d3d11', '--ignore-gpu-blocklist', '--force_high_performance_gpu'],
+  ...(portrait
+    ? { viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true }
+    : { viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 }),
 })
 try {
-  const context = await browser.newContext(
-    portrait
-      ? { viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true }
-      : { viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 },
-  )
-  const page = await context.newPage()
+  const page = context.pages()[0] ?? (await context.newPage())
   await page.goto(base + query)
-  await page.waitForFunction(() => window.__crashReady === true, null, { timeout: 60_000 })
+  await page.waitForFunction(() => window.__crashReady === true, null, { timeout: 180_000 })
   if (evalArg) await page.evaluate(evalArg.value)
   await page.waitForTimeout(atArg ? Number(atArg.value) * 1000 : 1000)
   await page.screenshot({ path: out })
   console.log('saved', out)
 } finally {
-  await browser.close()
+  await context.close()
 }

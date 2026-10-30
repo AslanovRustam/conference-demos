@@ -304,6 +304,56 @@ html {
   margin-left: 0.08em;
   color: rgba(255, 25, 35, 0.7);
 }
+.mult-ghost[data-crashed],
+.mult-ghost[data-crashed] .mult-ghost-num {
+  color: var(--red);
+}
+
+/* the crash: the number goes red with CRASHED @ over it, and the block takes a short hit */
+.mult-crash-word {
+  height: 0;
+  overflow: hidden;
+  opacity: 0;
+  color: var(--red);
+  font-family: var(--ck-font-display);
+  font-weight: 900;
+  font-size: calc(var(--mult) * 0.3);
+  letter-spacing: 0.02em;
+  line-height: 1;
+  transition: opacity 0.2s var(--ease);
+}
+.hud-mult[data-crashed] .mult-crash-word {
+  height: auto;
+  margin-bottom: calc(var(--mult) * 0.08);
+  opacity: 1;
+}
+.hud-mult[data-crashed] .mult-num {
+  color: var(--red);
+  text-shadow: 0 0 2.4rem rgba(255, 25, 35, 0.35);
+}
+.hud-mult[data-crashed] .mult-value,
+.hud-mult[data-crashed] .mult-crash-word {
+  animation: mult-hit 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+@keyframes mult-hit {
+  10%,
+  90% {
+    transform: translate3d(-0.04em, 0, 0);
+  }
+  20%,
+  80% {
+    transform: translate3d(0.06em, 0.02em, 0);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translate3d(-0.09em, -0.02em, 0);
+  }
+  40%,
+  60% {
+    transform: translate3d(0.09em, 0.01em, 0);
+  }
+}
 
 /* ------------------------------------------------------------ cash out */
 

@@ -75,7 +75,7 @@ export function Effects() {
   const caOffset = useMemo(() => new Vector2(), [])
 
   useFrame(() => {
-    const o = Math.max(0, fx.chroma) * CHROMA_MAX
+    const o = Math.min(1, Math.max(0, fx.chroma) + Math.max(0, fx.chromaPulse)) * CHROMA_MAX
     ca.current?.offset.set(o, o * 0.6)
   })
 

@@ -2,7 +2,7 @@ import { Group, Mesh, Object3D, Scene, type Camera, type WebGLRenderer } from 't
 import { expect, test } from 'vitest'
 import { isPrewarmed, prewarm, registerPrewarm } from './prewarm'
 
-test('hidden mid-round parts are shown for the compile pass and hidden again', async () => {
+test('hidden mid-round parts are shown for one synchronous compile pass and hidden again', () => {
   const scene = new Scene()
   const holder = new Group()
   holder.visible = false
@@ -15,7 +15,7 @@ test('hidden mid-round parts are shown for the compile pass and hidden again', a
 
   let seen: boolean[] = []
   const gl = {
-    compileAsync: async (s: Scene) => {
+    compile: (s: Scene) => {
       const vis: Object3D[] = []
       s.traverseVisible((o) => vis.push(o))
       seen = [holder, chute, flash].map((o) => vis.includes(o))
@@ -23,7 +23,7 @@ test('hidden mid-round parts are shown for the compile pass and hidden again', a
   } as unknown as WebGLRenderer
 
   expect(isPrewarmed()).toBe(false)
-  await prewarm(gl, scene, {} as Camera)
+  prewarm(gl, scene, {} as Camera)
   expect(seen).toEqual([true, true, true])
   expect([holder.visible, chute.visible, flash.visible]).toEqual([false, false, true])
   expect(isPrewarmed()).toBe(true)

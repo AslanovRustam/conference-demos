@@ -4,6 +4,7 @@ import { Suspense, useEffect, useRef } from 'react'
 import { markReady } from '../game/debug'
 import { params } from '../platform/params'
 import { CameraRig } from './camera/CameraRig'
+import { Explosion } from './crash/Explosion'
 import { Eject } from './eject/Capsule'
 import { Lights } from './env/Lights'
 import { FarField } from './far/FarField'
@@ -24,7 +25,7 @@ function Prewarm() {
   const scene = useThree((s) => s.scene)
   const camera = useThree((s) => s.camera)
   useEffect(() => {
-    void prewarm(gl, scene, camera)
+    prewarm(gl, scene, camera)
   }, [gl, scene, camera])
   return null
 }
@@ -57,6 +58,7 @@ export function Stage() {
         <LaunchPad />
         <Rocket />
         <Eject />
+        <Explosion />
         <Effects />
         <Prewarm />
         <Ready />
