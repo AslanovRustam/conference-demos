@@ -6,11 +6,11 @@
 
 ```bash
 npm install
-npm run dev      # разработка, http://localhost:5173
+npm run dev      # разработка, http://localhost:5183
 npm test         # юнит-тесты (vitest)
-npm run e2e      # сквозные тесты (Playwright: собирает и запускает preview на :4173)
+npm run e2e      # сквозные тесты (Playwright: собирает и запускает preview на :4183)
 npm run build    # сборка в dist/
-npm run preview  # просмотр сборки, http://localhost:4173
+npm run preview  # просмотр сборки, http://localhost:4183
 npm run icons    # пересобрать иконки PWA из public/icon.svg
 ```
 
@@ -18,7 +18,7 @@ npm run icons    # пересобрать иконки PWA из public/icon.svg
 
 ## Показ на конференции
 
-**Ноутбук.** `npm run build && npm run preview`, открыть http://localhost:4173 в Chrome, кнопка полноэкранного режима в верхней панели. Интернет не нужен.
+**Ноутбук.** `npm run build && npm run preview`, открыть http://localhost:4183 в Chrome, кнопка полноэкранного режима в верхней панели. Интернет не нужен.
 
 **Телефон.** `dist/` выкладывается на любой статический хостинг (пути относительные, подпапка тоже подходит). Один раз открыть ссылку при интернете, после этого игра работает без сети:
 - Chrome на Android: меню → «Установить приложение» (откроется на весь экран);

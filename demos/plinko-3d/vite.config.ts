@@ -41,7 +41,9 @@ export default defineConfig({
   ],
   resolve: { alias: { '@brand': brandDir } },
   // dev-сервер по умолчанию не отдаёт файлы вне папки проекта
-  server: { fs: { allow: [searchForWorkspaceRoot(process.cwd()), brandDir] } },
+  // Свои порты: 4173/5173 по умолчанию заняты другими демо (лобби), а у PWA на общем адресе путаются кэши
+  server: { port: 5183, fs: { allow: [searchForWorkspaceRoot(process.cwd()), brandDir] } },
+  preview: { port: 4183 },
   test: {
     environment: 'node',
     globals: true,

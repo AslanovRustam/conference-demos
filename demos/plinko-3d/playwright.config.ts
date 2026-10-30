@@ -7,14 +7,14 @@ export default defineConfig({
   workers: 1,
   reporter: 'list',
   use: {
-    baseURL: 'http://localhost:4173',
+    baseURL: 'http://localhost:4183',
     serviceWorkers: 'allow',
     // Без этих флагов headless Chromium рисует WebGL программно (SwiftShader) и игра идёт в замедленном времени
     launchOptions: { args: ['--enable-gpu', '--use-angle=d3d11', '--ignore-gpu-blocklist'] },
   },
   webServer: {
-    command: 'npm run build && npm run preview -- --port 4173 --strictPort',
-    port: 4173,
+    command: 'npm run build && npm run preview -- --port 4183 --strictPort',
+    port: 4183,
     timeout: 180_000,
     reuseExistingServer: false,
   },
