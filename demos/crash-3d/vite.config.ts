@@ -12,8 +12,9 @@ export default defineConfig({
   base: './',
   plugins: [react()],
   resolve: { alias: { '@brand': brandDir } },
-  // the dev server does not serve files outside the project unless allowed
-  server: { fs: { allow: [searchForWorkspaceRoot(process.cwd()), brandDir] } },
+  // the dev server does not serve files outside the project unless allowed.
+  // own port: sibling demos default to 5173 on the same machine
+  server: { port: 5183, strictPort: true, fs: { allow: [searchForWorkspaceRoot(process.cwd()), brandDir] } },
   // single-page demo with three.js and textures: one big bundle loads fine offline
   build: { chunkSizeWarningLimit: 4000 },
   worker: { format: 'es' },

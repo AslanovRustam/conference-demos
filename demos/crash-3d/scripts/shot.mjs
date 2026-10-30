@@ -12,7 +12,8 @@ if (argv.includes('--help')) {
 
 const portrait = argv.includes('--portrait')
 const baseIdx = argv.indexOf('--base')
-const base = baseIdx >= 0 ? argv[baseIdx + 1] : 'http://localhost:5173/'
+// 127.0.0.1, not localhost: localhost may resolve to ::1 where another app listens
+const base = baseIdx >= 0 ? argv[baseIdx + 1] : 'http://127.0.0.1:5183/'
 const skip = new Set(baseIdx >= 0 ? [baseIdx, baseIdx + 1] : [])
 const [query = '', out = 'shots/shot.png'] = argv.filter((a, i) => !skip.has(i) && !a.startsWith('--'))
 

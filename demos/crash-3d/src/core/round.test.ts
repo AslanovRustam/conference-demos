@@ -1,5 +1,6 @@
 import { expect, test } from 'vitest'
 import { Emitter, type GameEvent } from './events'
+import { payoutFor } from './payout'
 import { RoundEngine } from './round'
 import { timeAt } from './curve'
 
@@ -40,16 +41,26 @@ test('a second launch or launch outside betting is ignored', () => {
   expect(engine.snapshot().balance).toBe(9_900)
 })
 
-test('manual cash out pays floor(bet × multiplier) once', () => {
+test('manual cash out pays bet × multiplier (whole credits) once', () => {
   const { engine } = setup([0.25]) // crash ×5
   engine.launch()
   run(engine, 3 + timeAt(1.5))
   expect(engine.cashOut()).toBe(true)
   const s = engine.snapshot()
   expect(s.phase).toBe('ejected')
-  expect(s.payout).toBe(Math.floor(100 * s.cashedAt!))
+  expect(s.payout).toBe(payoutFor(100, s.cashedAt!))
   expect(s.balance).toBe(9_900 + s.payout)
   expect(engine.cashOut()).toBe(false)
+})
+
+test('cash out at 1.15 credits exactly 115 (integer-cent payout)', () => {
+  const { engine } = setup([0.25]) // crash ×5
+  engine.launch()
+  run(engine, 3.05)
+  while (engine.snapshot().multiplier < 1.15) engine.tick(1 / 600)
+  expect(engine.snapshot().multiplier).toBe(1.15)
+  expect(engine.cashOut()).toBe(true)
+  expect(engine.snapshot()).toMatchObject({ cashedAt: 1.15, payout: 115, balance: 9_900 + 115 })
 })
 
 test('without cash out the rocket crashes exactly at the crash point and the bet is lost', () => {

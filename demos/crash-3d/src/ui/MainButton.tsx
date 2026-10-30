@@ -1,6 +1,7 @@
 import type { PointerEvent } from 'react'
 import { useEffect, useRef } from 'react'
 import { COUNTDOWN_S } from '../core/config'
+import { payoutFor } from '../core/payout'
 import type { RoundSnapshot } from '../core/types'
 import { primaryAction } from '../game/runtime'
 import { onSnap, useGame } from '../game/store'
@@ -16,8 +17,8 @@ function view(snap: RoundSnapshot): [string, string, number] {
     case 'countdown':
       return [`${S.tMinus}${Math.max(1, Math.ceil(snap.countdown - 1e-9))}`, '', 1 - snap.countdown / COUNTDOWN_S]
     case 'flight':
-      // same rounding as the engine payout
-      return [S.cashOut, `${S.dot} ${formatCredits(Math.floor(snap.bet * snap.multiplier))}`, 1]
+      // the exact amount the engine would pay right now
+      return [S.cashOut, `${S.dot} ${formatCredits(payoutFor(snap.bet, snap.multiplier))}`, 1]
     case 'ejected':
       return [S.cashedOut, cashed, 0]
     default:

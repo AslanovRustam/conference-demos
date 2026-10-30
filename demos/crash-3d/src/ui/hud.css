@@ -7,6 +7,12 @@ html {
     font-size: min(calc(100vw / 120), calc(100vh / 67.5));
   }
 }
+/* rotated phones: the base formula gives ~5.8px at 844×390, so keep a readable floor */
+@media (min-aspect-ratio: 1/1) and (pointer: coarse), (min-aspect-ratio: 1/1) and (max-height: 500px) {
+  html {
+    font-size: max(9px, min(calc(100vw / 120), calc(100vh / 67.5)));
+  }
+}
 
 /* ------------------------------------------------------------ layer */
 
@@ -655,6 +661,10 @@ html {
     min-width: 44px;
     min-height: 44px;
   }
+  /* the row grows with its touch targets so it never reaches into the button */
+  .bet-group {
+    min-height: 44px;
+  }
 }
 
 /* ============================================================ landscape */
@@ -665,7 +675,8 @@ html {
     --edge-l: max(4.5rem, calc(1rem + var(--safe-l)));
     --edge-r: max(4.5rem, calc(1rem + var(--safe-r)));
     --top: calc(var(--bar) + 2.25rem);
-    --btn-w: 33.75rem;
+    /* 40vw only bites under the rotated-phone floor (33.75rem is 28vw otherwise) */
+    --btn-w: min(33.75rem, 40vw);
     --btn-base: 7.5rem;
     --btn-b: calc(var(--bar) + 2.25rem);
     --label: 1.05rem;
@@ -899,5 +910,23 @@ html {
   }
   .banner-track {
     width: 22rem;
+  }
+}
+
+/* rotated phones under the 9px floor: the multiplier follows the screen height so it
+   clears the bet row; laptops and tablets keep --mu = 1rem */
+@media (min-aspect-ratio: 1/1) and (pointer: coarse), (min-aspect-ratio: 1/1) and (max-height: 500px) {
+  .hud-mult {
+    --mu: min(1rem, calc(100vh / 55));
+    --mult: calc(14.25 * var(--mu));
+  }
+  .hud-mult[data-digits='2'] {
+    --mult: calc(12.5 * var(--mu));
+  }
+  .hud-mult[data-digits='3'] {
+    --mult: calc(10.5 * var(--mu));
+  }
+  .hud-mult[data-digits='4'] {
+    --mult: calc(9 * var(--mu));
   }
 }

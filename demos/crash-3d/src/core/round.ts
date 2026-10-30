@@ -17,6 +17,7 @@ import {
 import { multiplierAt, timeAt } from './curve'
 import { sampleCrashPoint } from './crashPoint'
 import type { Emitter } from './events'
+import { payoutFor } from './payout'
 import { floor2, type Rng } from './rng'
 import { stageAt, type StageId } from './stages'
 import type { HistoryEntry, Phase, PresenterForce, RarePlan, RoundSnapshot } from './types'
@@ -108,7 +109,7 @@ export class RoundEngine {
   cashOut(auto = false): boolean {
     if (this.phase !== 'flight' || this.frozen) return false
     const value = auto ? this.autoValue()! : floor2(multiplierAt(this.t))
-    this.payout = Math.floor(this.bet * value)
+    this.payout = payoutFor(this.bet, value)
     this.cashedAt = value
     if (!this.scripted) this.balance += this.payout
     const rem = this.crashTime - this.t
