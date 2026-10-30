@@ -31,3 +31,30 @@ test('the game is fully faded out before it is blanked on exit', async ({ page }
   await page.keyboard.press('Escape')
   await expect.poll(() => page.evaluate(() => (window as any).__opacityAtBlank), REVEAL).toBe('0')
 })
+
+test('a janky main thread on exit still blanks the game only after it has faded', async ({ page }) => {
+  await openTestGame(page)
+  await expect(page.getByTestId('game-frame')).toHaveAttribute('data-revealed', 'true', REVEAL)
+  await page.evaluate(() => {
+    const f = document.querySelector('[data-testid=game-frame]') as HTMLIFrameElement
+    new MutationObserver(() => {
+      if (f.getAttribute('src') === 'about:blank') (window as any).__opacityAtBlank = getComputedStyle(f).opacity
+    }).observe(f, { attributes: true, attributeFilter: ['src'] })
+  })
+  // right after React commits the fade-out (blanking timer already armed, no style recalc yet),
+  // hog the main thread past the timer, as a heavy game teardown or a slow machine would
+  await page.evaluate(() => {
+    const f = document.querySelector('[data-testid=game-frame]') as HTMLIFrameElement
+    const jank = new MutationObserver(() => {
+      if (!f.style.opacity.startsWith('0')) return
+      jank.disconnect()
+      const until = performance.now() + 600
+      while (performance.now() < until) {
+        // busy
+      }
+    })
+    jank.observe(f, { attributes: true, attributeFilter: ['style'] })
+    ;(window as any).__lobby.getState().requestExit()
+  })
+  await expect.poll(() => page.evaluate(() => (window as any).__opacityAtBlank), REVEAL).toBe('0')
+})

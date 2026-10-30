@@ -11,6 +11,8 @@ test('sounds follow lobby events and the mute key', async ({ page }) => {
   await page.keyboard.press('ArrowRight')
   await expect.poll(async () => (await sfx(page)).plays.tick ?? 0).toBeGreaterThanOrEqual(1)
   expect((await sfx(page)).context).toBe('running')
+  // the carousel tick is the supplied recording, decoded once the context exists
+  await expect.poll(async () => (await sfx(page)).tickSample).toBe(true)
 
   const s = await lobby(page)
   const soon = s.slots.findIndex((x: { kind: string }) => x.kind === 'soon')

@@ -72,13 +72,15 @@ test('Escape during the flight aborts', async ({ page }) => {
   await expect(frame(page)).toHaveCount(0)
 })
 
-test('corner exit button', async ({ page }) => {
+test('no lobby button is drawn over a running game', async ({ page }) => {
   await openTestGame(page, 'noexit=1')
   await expect(frame(page)).toHaveAttribute('data-revealed', 'true', REVEAL)
-  await page.mouse.move(400, 400)
-  await page.mouse.move(420, 410)
-  await page.getByTestId('exit-button').click()
-  await expect.poll(() => phase(page), REVEAL).toBe('lobby')
+  // keep moving: the old corner button showed on every move and hid 3 s after the last one
+  for (let i = 0; i < 8; i++) {
+    await page.mouse.move(400 + i * 15, 400 + (i % 2) * 10)
+    await page.waitForTimeout(300)
+  }
+  expect(await page.getByTestId('exit-button').count()).toBe(0)
 })
 
 test('idle in game returns to lobby in attract', async ({ page }) => {

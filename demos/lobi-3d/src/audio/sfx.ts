@@ -1,12 +1,16 @@
-// Lobby sound effects, synthesised with Web Audio so nothing has to be downloaded. Each effect
-// builds a few short-lived nodes. The context is created on the first user gesture (Chrome's
-// autoplay policy); before that every call is a silent no-op.
+// Lobby sound effects. The carousel tick is a recording chosen by the customer (bundled, so it
+// works offline); the rest is synthesised with Web Audio, a few short-lived nodes per effect.
+// The context is created on the first user gesture (Chrome's autoplay policy); before that
+// every call is a silent no-op.
+import tickUrl from './assets/carousel-tick.mp3?url'
 
 type Name = 'tick' | 'select' | 'whooshIn' | 'whooshOut' | 'denied'
 
 let ctx: AudioContext | null = null
 let out: GainNode | null = null // mute × level
 let noise: AudioBuffer | null = null
+let tickSample: AudioBuffer | null = null
+let lastTick: AudioBufferSourceNode | null = null
 let muted = false
 let level = 1
 const plays: Partial<Record<Name, number>> = {}
@@ -28,7 +32,32 @@ function setup(): AudioContext {
   noise = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate)
   const data = noise.getChannelData(0)
   for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1
+  const c = ctx
+  fetch(tickUrl)
+    .then((r) => r.arrayBuffer())
+    .then((b) => c.decodeAudioData(b))
+    .then((buf) => void (tickSample = buf))
+    .catch(() => {}) // the synthesised tick below stays as the fallback
   return ctx
+}
+
+/** The recorded tick; a new turn cuts the previous one so holding an arrow does not pile them up. */
+function playTickSample(c: AudioContext, buf: AudioBuffer) {
+  if (lastTick) {
+    try {
+      lastTick.stop()
+    } catch {
+      // already ended
+    }
+  }
+  const src = c.createBufferSource()
+  src.buffer = buf
+  const g = c.createGain()
+  g.gain.value = 0.8
+  src.connect(g)
+  g.connect(out!)
+  src.start()
+  lastTick = src
 }
 
 function env(c: AudioContext, peak: number, attack: number, decay: number, at = c.currentTime): GainNode {
@@ -68,9 +97,9 @@ function sweep(c: AudioContext, from: number, to: number, dur: number, peak: num
 }
 
 const effects: Record<Name, (c: AudioContext) => void> = {
-  // a soft, low "thock" like a heavy dial detent: short filtered noise for the contact plus a
-  // falling low sine for the body (the old bright square-wave click sounded like a toy)
+  // fallback until the recording is decoded: a soft, low "thock" like a heavy dial detent
   tick(c) {
+    if (tickSample) return playTickSample(c, tickSample)
     const at = c.currentTime
     const src = c.createBufferSource()
     src.buffer = noise
@@ -141,7 +170,7 @@ export const sfx = {
   whooshOut: () => play('whooshOut'),
   denied: () => play('denied'),
   /** for automated checks */
-  snapshot: () => ({ context: ctx?.state ?? 'none', muted, level, plays: { ...plays } }),
+  snapshot: () => ({ context: ctx?.state ?? 'none', muted, level, tickSample: tickSample !== null, plays: { ...plays } }),
 }
 
 // lets automated browser checks read what played; stripped from production builds

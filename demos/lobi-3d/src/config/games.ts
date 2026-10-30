@@ -14,8 +14,6 @@ export interface GameEntry {
   /** seconds to skip at the start of the preview loop (the game's own loading) */
   previewStart?: number
   idleReturnSec?: number
-  /** the game shows its own exit button in embed mode, so the lobby hides its corner button */
-  ownExit?: boolean
   /** extra wait after the game's readiness signal (ready message or first canvas frames) before revealing it */
   revealDelayMs?: number
 }

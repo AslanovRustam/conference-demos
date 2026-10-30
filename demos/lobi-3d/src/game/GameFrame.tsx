@@ -13,11 +13,12 @@ import { params } from '../state/params'
 import { lobbyStore, useLobby } from '../state/store'
 
 const REVEAL_TIMEOUT_MS = 15000
-/** iframe opacity transition; the frame is blanked only after it has fully faded */
+/** iframe opacity transition; the frame is blanked when it has fully faded (transitionend) */
 const FADE_MS = 250
-const BLANK_AFTER_MS = FADE_MS + 60
+/** in case transitionend never arrives */
+const FADE_SAFETY_MS = FADE_MS + 1500
 
-/** Fired on the lobby window for any input inside the game (exit button, idle timer). */
+/** Fired on the lobby window for any input inside the game (feeds the idle-return timer). */
 export const GAME_ACTIVITY = 'lobby:game-activity'
 const ACTIVITY_EVENTS = ['pointerdown', 'pointermove', 'keydown', 'touchstart', 'wheel'] as const
 
@@ -71,7 +72,7 @@ function Frame({ slot, revealed, closing, onGone }: FrameProps) {
       win.addEventListener('keydown', onKey)
       for (const type of ACTIVITY_EVENTS) win.addEventListener(type, activity, { passive: true })
     } catch {
-      // not same-origin: the game must use clickable:exit, and the corner button still works
+      // not same-origin: the game must use clickable:exit
     }
   }
 
@@ -114,13 +115,29 @@ function Frame({ slot, revealed, closing, onGone }: FrameProps) {
 
   useEffect(() => {
     if (!closing) return
-    const t = setTimeout(() => {
+    const iframe = ref.current
+    let done = false
+    const finish = () => {
+      if (done) return
+      done = true
       // blank first so the game stops its audio and GPU work before the node goes away
       if (ref.current) ref.current.src = 'about:blank'
       window.focus()
       onGone()
-    }, BLANK_AFTER_MS)
-    return () => clearTimeout(t)
+    }
+    // Blank on transitionend, not on a fixed timer: with a busy main thread the timer can fire
+    // before the browser has even started the fade, and the game would flash out mid-frame.
+    const onEnd = (e: TransitionEvent) => {
+      if (e.propertyName === 'opacity') finish()
+    }
+    iframe?.addEventListener('transitionend', onEnd)
+    // never revealed (exit during the flight): nothing to fade; otherwise a safety net only
+    const visible = iframe ? parseFloat(getComputedStyle(iframe).opacity) > 0.01 : false
+    const safety = setTimeout(finish, visible ? FADE_SAFETY_MS : 0)
+    return () => {
+      clearTimeout(safety)
+      iframe?.removeEventListener('transitionend', onEnd)
+    }
   }, [closing]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (

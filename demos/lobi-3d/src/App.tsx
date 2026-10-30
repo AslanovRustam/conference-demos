@@ -2,7 +2,6 @@ import { useLobbySound } from './audio/useLobbySound'
 import { applyPreviews, buildSlots, loadManifest, loadPreviews, type GameEntry } from './config/games'
 import { config } from './config/lobbyConfig'
 import { useAttract, useControls, wasJustDragged } from './input/useControls'
-import ExitButton from './game/ExitButton'
 import GameFrame from './game/GameFrame'
 import CameraRig from './scene/CameraRig'
 import Carousel from './scene/Carousel'
@@ -46,7 +45,6 @@ export default function App() {
       </LobbyCanvas>
       <Hud />
       <GameFrame />
-      <ExitButton />
       <FpsMeter />
       <LoadingScreen prepare={prepare} />
     </div>

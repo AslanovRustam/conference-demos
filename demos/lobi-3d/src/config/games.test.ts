@@ -12,8 +12,8 @@ describe('validateConfig', () => {
   })
 
   test('accepts the shipped games.config.json shape', () => {
-    const cfg = validateConfig({ minSlots: 6, idleReturnSec: 90, games: [{ ...g('slot-3d'), source: '../slot-3d', ownExit: true }] })
-    expect(cfg.games[0]).toMatchObject({ id: 'slot-3d', ownExit: true })
+    const cfg = validateConfig({ minSlots: 6, idleReturnSec: 90, games: [{ ...g('slot-3d'), source: '../slot-3d', revealDelayMs: 2500 }] })
+    expect(cfg.games[0]).toMatchObject({ id: 'slot-3d', revealDelayMs: 2500 })
   })
 })
 
