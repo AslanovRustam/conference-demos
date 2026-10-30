@@ -573,37 +573,123 @@
   height: clamp(26px, 5vw, 56px);
 }
 
-.intro-title {
+.intro-heading {
   position: absolute;
-  top: calc(env(safe-area-inset-top) + 7vh);
+  top: calc(env(safe-area-inset-top) + 6vh);
   left: 0;
   right: 0;
-  text-align: center;
-  font-family: var(--ck-font-display);
-  font-weight: 900;
-  font-size: clamp(44px, 9vw, 110px);
-  letter-spacing: 0.1em;
-  line-height: 1;
-  background: linear-gradient(180deg, #ffffff 10%, #c9b8ff 60%, #6a4fd6 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 0 30px rgba(201, 184, 255, 0.55));
+  display: grid;
+  justify-items: center;
+  gap: clamp(10px, 1.6vh, 18px);
   pointer-events: none;
 }
 
+/* Подзаголовок между тонкими линиями, как на ювелирной упаковке */
+.intro-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 1.1em;
+  font-weight: 500;
+  font-size: clamp(10px, 1.15vw, 14px);
+  letter-spacing: 0.55em;
+  /* компенсирует разрядку после последней буквы, иначе строка съезжает влево */
+  padding-left: 0.55em;
+  color: rgba(222, 212, 255, 0.72);
+}
+
+.intro-eyebrow::before,
+.intro-eyebrow::after {
+  content: '';
+  width: clamp(28px, 6vw, 90px);
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(222, 212, 255, 0.6));
+}
+
+.intro-eyebrow::after {
+  background: linear-gradient(270deg, transparent, rgba(222, 212, 255, 0.6));
+}
+
+/* Заголовок — полированный металл, по которому раз в несколько секунд проходит блик */
+.intro-title {
+  font-family: var(--ck-font-display);
+  font-weight: 900;
+  font-size: clamp(40px, 7.4vw, 96px);
+  letter-spacing: 0.26em;
+  padding-left: 0.26em;
+  line-height: 1;
+  background: linear-gradient(100deg, #b7a9ec 0%, #f4f0ff 18%, #cfc4ff 34%, #7d6cc4 50%, #ffffff 58%, #c3b6f5 72%, #f4f0ff 86%, #b7a9ec 100%);
+  background-size: 240% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 18px rgba(143, 116, 255, 0.45));
+  animation: intro-sheen 7s ease-in-out infinite;
+}
+
+@keyframes intro-sheen {
+  0%,
+  100% {
+    background-position: 100% 0;
+  }
+  50% {
+    background-position: 0% 0;
+  }
+}
+
+/* Приглашение — стеклянная капсула с тонкой рамкой и медленным дыханием */
+/* Центрирование без transform: его перезаписывает анимация появления */
 .intro-tap {
   position: absolute;
   bottom: calc(env(safe-area-inset-bottom) + 9vh);
   left: 0;
   right: 0;
-  text-align: center;
-  font-family: var(--ck-font-display);
-  font-weight: 900;
-  font-size: clamp(18px, 3vw, 30px);
-  letter-spacing: 0.22em;
-  text-shadow: 0 0 24px rgba(201, 184, 255, 0.9);
+  display: flex;
+  justify-content: center;
   pointer-events: none;
+}
+
+.intro-tap span {
+  display: block;
+  padding: clamp(12px, 1.6vh, 16px) clamp(28px, 3vw, 40px);
+  padding-right: calc(clamp(28px, 3vw, 40px) - 0.45em);
+  border-radius: 999px;
+  border: 1px solid rgba(201, 184, 255, 0.4);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+  box-shadow: 0 0 32px rgba(143, 116, 255, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  font-weight: 600;
+  font-size: clamp(11px, 1.1vw, 14px);
+  letter-spacing: 0.45em;
+  white-space: nowrap;
+  color: #f4f0ff;
+  animation: intro-breathe 2.4s ease-in-out infinite;
+}
+
+@keyframes intro-breathe {
+  0%,
+  100% {
+    opacity: 0.7;
+    box-shadow: 0 0 22px rgba(143, 116, 255, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 40px rgba(143, 116, 255, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  }
+}
+
+/* На телефоне камень выше середины экрана: приглашение ближе к нему */
+@media (max-aspect-ratio: 3/4) {
+  .intro-tap {
+    bottom: calc(env(safe-area-inset-bottom) + 22vh);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-title,
+  .intro-tap span {
+    animation: none;
+  }
 }
 
 /* Интерфейс прячется, пока идёт интро */

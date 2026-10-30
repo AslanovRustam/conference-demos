@@ -9,10 +9,12 @@ import { useSim } from '../../sim/SimProvider';
 import { useGame } from '../../state/store';
 import { createCrystalMaterial } from '../materials';
 import { PEG_VISUAL_RADIUS, PEG_VISUAL_STRETCH_Y, pegEuler } from '../pegShape';
-import { crystalFrame } from './IntroCrystal';
+import { BRILLIANT, brilliantRadiusAt } from './brilliant';
+import { CRYSTAL_TILT, crystalFrame } from './IntroCrystal';
 
 const EXTRA = 70; // лишние осколки просто разлетаются и гаснут
 const DRAG = 4;
+const X_AXIS = new THREE.Vector3(1, 0, 0);
 
 interface Shard {
   start: THREE.Vector3;
@@ -41,11 +43,14 @@ export function IntroShards() {
     const rng = createRng(7);
     const { cx, cy, scale } = crystalFrame(rows);
     return Array.from({ length: count }, () => {
-      // Случайная точка внутри кристалла-бипирамиды
-      const y = rng.range(-0.9, 0.9);
-      const r = 0.55 * (1 - Math.abs(y)) * Math.sqrt(rng.next());
+      // Случайная точка внутри бриллианта (площадка наклонена к зрителю, как у камня в интро)
+      const y = rng.range(BRILLIANT.culet, BRILLIANT.table);
+      const r = brilliantRadiusAt(y) * Math.sqrt(rng.next());
       const a = rng.range(0, Math.PI * 2);
-      const start = new THREE.Vector3(cx + Math.cos(a) * r * scale, cy + y * scale, Math.sin(a) * r * scale * 0.4);
+      const start = new THREE.Vector3(Math.cos(a) * r, y, Math.sin(a) * r)
+        .applyAxisAngle(X_AXIS, CRYSTAL_TILT)
+        .multiplyScalar(scale)
+        .add(new THREE.Vector3(cx, cy, 0));
       // Разлёт во все стороны (а не вдоль высокого кристалла), с лёгким уклоном к зрителю
       const phi = rng.range(0, Math.PI * 2);
       const cosT = rng.range(-1, 1);

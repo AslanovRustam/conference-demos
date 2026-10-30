@@ -13,6 +13,7 @@ export const S = {
   megaWin: 'MEGA WIN',
   totalWin: 'TOTAL WIN',
   tapToPlay: 'TAP TO PLAY',
+  introEyebrow: 'CRYSTAL EDITION',
   refill: 'BALANCE REFILLED',
   presenterBig: 'NEXT: BIG WIN',
   presenterRain: 'FREE 100 BALLS',

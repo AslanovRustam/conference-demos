@@ -27,13 +27,14 @@ export function Splash({ onStart }: { onStart(): void }) {
           <motion.div initial={{ width: '15%' }} animate={{ width: ready ? '100%' : '75%' }} transition={{ duration: ready ? 0.3 : 2.5 }} />
         </div>
       </motion.div>
-      <motion.div className="intro-title" initial={{ opacity: 0, y: -10 }} animate={{ opacity: ready ? 1 : 0, y: ready ? 0 : -10 }} transition={{ duration: 0.8, delay: 0.2 }}>
-        PLINKO
+      <motion.div className="intro-heading" initial={{ opacity: 0, y: -10 }} animate={{ opacity: ready ? 1 : 0, y: ready ? 0 : -10 }} transition={{ duration: 1, delay: 0.2 }}>
+        <div className="intro-eyebrow">{S.introEyebrow}</div>
+        <div className="intro-title">PLINKO</div>
       </motion.div>
       <AnimatePresence>
         {ready && (
-          <motion.div key="tap" className="intro-tap" initial={{ opacity: 0 }} animate={{ opacity: [0.45, 1, 0.45] }} transition={{ duration: 1.6, repeat: Infinity, delay: 0.6 }}>
-            {S.tapToPlay}
+          <motion.div key="tap" className="intro-tap" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.7 }}>
+            <span>{S.tapToPlay}</span>
           </motion.div>
         )}
       </AnimatePresence>
