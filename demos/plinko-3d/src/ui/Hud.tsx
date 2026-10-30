@@ -1,4 +1,5 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { BigWinOverlay } from './BigWinOverlay';
 import { ControlPanel } from './ControlPanel';
 import { History } from './History';
 import { hudInsets, orientationOf, readSafeArea, uiScale } from './layoutMetrics';
@@ -52,6 +53,7 @@ export function Hud({ logoProps, children }: { logoProps?: React.HTMLAttributes<
           </aside>
         </>
       )}
+      <BigWinOverlay />
       {children}
     </div>
   );

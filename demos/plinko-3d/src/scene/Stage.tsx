@@ -5,6 +5,8 @@ import { Background } from './Background';
 import { CAMERA_FOV, CameraRig } from './CameraRig';
 import { Lighting } from './Lighting';
 import { Balls } from './Balls';
+import { CelebrationFx } from './CelebrationFx';
+import { Effects } from './Effects';
 import { FloatingWins } from './FloatingWins';
 import { Pegs } from './Pegs';
 import { Shards } from './Shards';
@@ -31,6 +33,8 @@ export function Stage({ children }: { children?: ReactNode }) {
       <Shards />
       <FloatingWins />
       <WinFx />
+      <CelebrationFx />
+      <Effects />
       {children}
     </Canvas>
   );
