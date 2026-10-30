@@ -426,3 +426,34 @@
   font-variant-numeric: tabular-nums;
   text-shadow: 0 0 24px rgba(201, 184, 255, 0.8);
 }
+
+/* Скрытая панель ведущего */
+.presenter {
+  position: absolute;
+  z-index: 5;
+  top: calc(env(safe-area-inset-top) + 72px);
+  left: 12px;
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  pointer-events: auto;
+  border-radius: 12px;
+  background: rgba(6, 3, 15, 0.92);
+  border: 1px solid rgba(201, 184, 255, 0.35);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.presenter button {
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(201, 184, 255, 0.12) !important;
+  font-weight: 700 !important;
+  font-size: 12px !important;
+  letter-spacing: 0.08em;
+  text-align: left;
+}
+
+.landscape .presenter {
+  top: calc(150 * var(--u));
+  left: calc(24 * var(--u));
+}

@@ -1,12 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { bindAudio } from './audio/bindings';
 import { createAudioEngine } from './audio/engine';
 import { createSfx } from './audio/sfx';
 import { seedFromSearch } from './core/rng';
+import { presenterAction } from './platform/presenter';
 import { detectQuality } from './platform/quality';
 import { Stage } from './scene/Stage';
 import { SimContext, createSim } from './sim/SimProvider';
 import { Hud } from './ui/Hud';
+import { PresenterPanel } from './ui/PresenterPanel';
+import { useLongPress } from './ui/useLongPress';
 
 export function App() {
   const [sim] = useState(() => createSim({ seed: seedFromSearch(location.search) ?? Date.now() }));
@@ -38,9 +41,17 @@ export function App() {
     };
   }, [audio, sim]);
 
+  // Режим ведущего: долгое нажатие на логотип или Shift+B / Shift+R
+  const [presenterOpen, setPresenterOpen] = useState(false);
+  const closePresenter = useCallback(() => setPresenterOpen(false), []);
+  const logoPress = useLongPress(() => setPresenterOpen(true));
+
   // Пробел бросает шарик, но только в режиме игры
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      const action = presenterAction(e);
+      if (action === 'forceBig') return sim.controller.forceBigNext();
+      if (action === 'freeRain') return sim.controller.rain({ mode: 'free' });
       if (e.code !== 'Space' || e.repeat || sim.store.getState().mode !== 'play') return;
       e.preventDefault();
       sim.controller.drop();
@@ -60,7 +71,9 @@ export function App() {
       >
         <Stage />
       </div>
-      <Hud />
+      <Hud logoProps={logoPress}>
+        <PresenterPanel open={presenterOpen} onClose={closePresenter} />
+      </Hud>
     </SimContext.Provider>
   );
 }
