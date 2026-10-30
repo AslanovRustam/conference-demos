@@ -15,7 +15,8 @@ export const CAMERA_HOME = {
   target: [0, 1.25, 1.2] as [number, number, number],
 }
 
-export const LOGO = { y: 3.7, width: 3.4 } as const
+/** glass sphere with the glowing Clickable mark, above the middle of the ring */
+export const CORE = { y: 3.6, radius: 0.85 } as const
 
 /** how strongly cabinets beside the front one turn toward the viewer (0 = face straight out) */
 export const TURN_TO_VIEWER = 0.55

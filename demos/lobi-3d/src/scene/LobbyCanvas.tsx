@@ -1,10 +1,13 @@
 import { Canvas } from '@react-three/fiber'
 import type { ReactNode } from 'react'
 import { useLobby } from '../state/store'
+import ChipOrbit from './ChipOrbit'
 import Effects from './Effects'
+import GlassCore from './GlassCore'
 import Hall, { LOUNGE_BG } from './Hall'
 import { CAMERA_HOME, FOV_HOME } from './layout'
 import Precompile from './Precompile'
+import Sparks from './Sparks'
 import StudioEnvironment from './StudioEnvironment'
 
 export default function LobbyCanvas({ children }: { children?: ReactNode }) {
@@ -22,6 +25,9 @@ export default function LobbyCanvas({ children }: { children?: ReactNode }) {
       <fogExp2 attach="fog" args={[LOUNGE_BG, 0.045]} />
       <StudioEnvironment />
       <Hall />
+      <GlassCore />
+      <ChipOrbit />
+      <Sparks />
       {children}
       <Precompile />
       <Effects />
