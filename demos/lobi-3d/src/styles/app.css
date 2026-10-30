@@ -67,6 +67,8 @@ button {
   justify-content: center;
   gap: 2.4rem;
   background: #000;
+  /* the store ignores input until it is ready, and the fade-out must not swallow the first clicks */
+  pointer-events: none;
 }
 .loading-logo {
   width: 22rem;
