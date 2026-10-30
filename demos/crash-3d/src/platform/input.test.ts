@@ -81,3 +81,11 @@ test('unbind removes the listener', () => {
   unbind()
   expect(isBound()).toBe(false)
 })
+
+test('typing HYPER and NUKE triggers no auto toggle and no mute', () => {
+  const { fire, calls } = setupKeys()
+  for (const ch of 'HYPERNUKE') fire({ code: `Key${ch}`, key: ch.toLowerCase() })
+  expect(calls.code.join('')).toBe('HYPERNUKE')
+  expect(calls.toggleAuto).toBe(0)
+  expect(calls.mute).toBe(0)
+})

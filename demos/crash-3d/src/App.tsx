@@ -17,8 +17,8 @@ export default function App() {
     if (params.freeze !== null) engine.freezeAt(params.freeze)
     const stopLoop = startLoop(() => {})
     const feed = createCodeDetector({
-      WARP: () => engine.arm('warp'),
-      BOOM: () => engine.arm('instant'),
+      HYPER: () => engine.arm('warp'),
+      NUKE: () => engine.arm('instant'),
     })
     const unbind = bindKeyboard(window, {
       primary: primaryAction,

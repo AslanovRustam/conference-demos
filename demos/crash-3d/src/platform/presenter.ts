@@ -1,4 +1,4 @@
-// typed codes (WARP / BOOM) must be finished within windowMs
+// typed codes (HYPER / NUKE) must be finished within windowMs
 export function createCodeDetector(
   codes: Record<string, () => void>,
   windowMs = 2000,
