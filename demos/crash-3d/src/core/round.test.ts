@@ -227,6 +227,20 @@ test('freezeAt holds the rocket at a multiplier', () => {
   expect(engine.snapshot()).toMatchObject({ phase: 'flight', multiplier: 4.2, frozen: true })
 })
 
+test('freezeAt(1) holds the countdown: no liftoff, no bet, no launch', () => {
+  const { engine, events } = setup([0.5])
+  engine.freezeAt(1)
+  const held = engine.snapshot()
+  expect(held).toMatchObject({ phase: 'countdown', multiplier: 1, frozen: true, balance: 10_000, t: 0 })
+  expect(held.countdown).toBeGreaterThan(0)
+  expect(held.countdown).toBeLessThan(3)
+  run(engine, 5)
+  expect(engine.snapshot()).toMatchObject({ phase: 'countdown', countdown: held.countdown, frozen: true })
+  expect(events.map((e) => e.type)).not.toContain('liftoff')
+  expect(engine.launch()).toBe(false)
+  expect(engine.cashOut()).toBe(false)
+})
+
 test('entering attract resets balance, bet and auto for the next visitor', () => {
   const { engine } = setup([0.99])
   engine.stepBet(1)

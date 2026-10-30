@@ -9,7 +9,7 @@ export const NEAR_CAP_M = 6000
 export const CLOUD_BASE_M = 1200
 export const CLOUD_TOP_M = 2600
 
-const THRUST_RAMP_S = 1.5 // engines spool up over the last part of the countdown
+export const THRUST_RAMP_S = 1.5 // engines spool up over the last part of the countdown
 const SLOWMO_MIN = 0.3
 const SLOWMO_S = 1.5
 const SPEED_FADE = 3 // 1/s, how fast the sense of speed dies after the crash

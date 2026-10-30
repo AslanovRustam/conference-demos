@@ -12,4 +12,13 @@ export const QUALITY = {
   // engine plume: raymarch samples per pixel through the turbulent flame and through each nozzle's jet,
   // sides of the bounding cones; screen distortion sources (heat haze, shockwave rings) the post pass takes per frame
   plumeSteps: 24, plumeJetSteps: 20, plumeSegments: 48, distortionSources: 8,
+  // launch pad: hardstand atlas (the noise fields are painted at half of it), mount deck, tiling concrete and soil;
+  // floodlights used from the layout (4-6 spot lights), how many of them cast shadows and their map size;
+  // lattice bay height of the service tower (smaller: more beams); far-away lights of the complex.
+  // smoke: steam vents get this share of smokeParticles, the exhaust clouds the rest.
+  padTexture: 2048, padDeckTexture: 1024, padTileTexture: 512,
+  floodlights: 6, floodShadows: 4, floodShadowMap: 2048, beamSegments: 40,
+  towerBay: 4, distantLights: 520, steamShare: 0.22,
+  // wet apron: the mirrored scene pass at this fraction of the drawing buffer
+  padReflection: 0.5,
 } as const

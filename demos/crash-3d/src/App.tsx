@@ -45,6 +45,7 @@ export default function App() {
         style={{ position: 'fixed', inset: 0 }}
         dpr={QUALITY.dpr}
         flat
+        shadows="percentage"
         gl={{ antialias: false, powerPreference: 'high-performance', stencil: false }}
         camera={{ near: 0.5, far: 30000, fov: 40 }}
       >

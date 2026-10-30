@@ -22,6 +22,9 @@ import { floor2, type Rng } from './rng'
 import { stageAt, type StageId } from './stages'
 import type { HistoryEntry, Phase, PresenterForce, RarePlan, RoundSnapshot } from './types'
 
+// freezeAt(1) holds the countdown here: arms swung away, engines still cold (they spool up over the last 1.5 s)
+const FREEZE_COUNTDOWN_AGE = 1.4
+
 interface Opts {
   rng: Rng
   emitter: Emitter
@@ -122,6 +125,7 @@ export class RoundEngine {
   tick(dt: number): void {
     dt = Math.min(dt, MAX_DT)
     if (!(dt > 0)) return
+    if (this.frozen && this.phase === 'countdown') return
     this.phaseAge += dt
     switch (this.phase) {
       case 'countdown':
@@ -186,9 +190,17 @@ export class RoundEngine {
     this.payout = 0
     this.crashPoint = MAX_MULT
     this.crashTime = timeAt(MAX_MULT)
-    this.t = timeAt(m)
     this.frozen = true
     this.lastStage = 0
+    // m = 1 is the pad: hold the countdown instead of a rocket that never leaves
+    if (m === 1) {
+      this.t = 0
+      this.setPhase('countdown')
+      this.phaseAge = FREEZE_COUNTDOWN_AGE
+      this.lastCountdown = Math.ceil(COUNTDOWN_S - FREEZE_COUNTDOWN_AGE)
+      return
+    }
+    this.t = timeAt(m)
     this.setPhase('flight')
     this.emitStages()
   }
