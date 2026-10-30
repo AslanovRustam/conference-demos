@@ -4,6 +4,8 @@
 export type GameMessage = { type: 'clickable:exit' } | { type: 'clickable:ready' }
 export type LobbyMessage = { type: 'clickable:visible' } | { type: 'clickable:mute'; muted: boolean }
 
+import type { GameEntry } from '../config/games'
+
 const GAME_TYPES = new Set(['clickable:exit', 'clickable:ready'])
 
 export function parseGameMessage(
@@ -20,4 +22,15 @@ export function parseGameMessage(
 
 export function sendToGame(target: Window | null | undefined, msg: LobbyMessage, origin: string): void {
   target?.postMessage(msg, origin)
+}
+
+/**
+ * What the game is told when it appears. A game opens on its own start screen and waits for the
+ * visitor; one that treats clickable:visible as "start now" (plinko-3d today) gets sendVisible: false.
+ */
+export function revealMessages(game: GameEntry, muted: boolean): LobbyMessage[] {
+  const out: LobbyMessage[] = []
+  if (game.sendVisible !== false) out.push({ type: 'clickable:visible' })
+  out.push({ type: 'clickable:mute', muted })
+  return out
 }

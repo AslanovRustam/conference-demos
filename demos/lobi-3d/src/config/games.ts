@@ -14,6 +14,8 @@ export interface GameEntry {
   /** seconds to skip at the start of the preview loop (the game's own loading) */
   previewStart?: number
   idleReturnSec?: number
+  /** false: do not send clickable:visible (for a game that auto-starts on it instead of waiting for a tap) */
+  sendVisible?: boolean
   /** extra wait after the game's readiness signal (ready message or first canvas frames) before revealing it */
   revealDelayMs?: number
 }

@@ -20,3 +20,10 @@ test('sendToGame posts with the lobby origin', () => {
   expect(postMessage).toHaveBeenCalledWith({ type: 'clickable:mute', muted: true }, 'http://x')
   expect(() => sendToGame(null, { type: 'clickable:visible' }, 'http://x')).not.toThrow()
 })
+
+test('on reveal the game gets visible + mute, unless its config opts out of visible', async () => {
+  const { revealMessages } = await import('./protocol')
+  const g = { id: 'a', title: 'A', subtitle: '' }
+  expect(revealMessages(g, true)).toEqual([{ type: 'clickable:visible' }, { type: 'clickable:mute', muted: true }])
+  expect(revealMessages({ ...g, sendVisible: false }, false)).toEqual([{ type: 'clickable:mute', muted: false }])
+})

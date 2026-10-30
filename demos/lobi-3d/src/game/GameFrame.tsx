@@ -3,7 +3,7 @@
 // camera has arrived and the game is ready, so the visitor never sees a blank frame.
 import { useEffect, useRef, useState } from 'react'
 import { probeCanvasFrames } from '../bridge/probe'
-import { parseGameMessage, sendToGame } from '../bridge/protocol'
+import { parseGameMessage, revealMessages, sendToGame } from '../bridge/protocol'
 import { createReadiness, type Readiness } from '../bridge/readiness'
 import type { Slot } from '../config/games'
 import { config } from '../config/lobbyConfig'
@@ -80,8 +80,7 @@ function Frame({ slot, revealed, closing, onGone }: FrameProps) {
     if (!revealed) return
     const iframe = ref.current
     const win = iframe?.contentWindow
-    sendToGame(win, { type: 'clickable:visible' }, location.origin)
-    sendToGame(win, { type: 'clickable:mute', muted: lobbyStore.getState().muted }, location.origin)
+    for (const msg of revealMessages(slot.game, lobbyStore.getState().muted)) sendToGame(win, msg, location.origin)
     iframe?.focus()
     // in plain fullscreen Chrome leaves fullscreen on Esc; keyboard lock keeps Esc for us
     const keyboard = (navigator as Navigator & { keyboard?: { lock?: (keys: string[]) => Promise<void> } }).keyboard

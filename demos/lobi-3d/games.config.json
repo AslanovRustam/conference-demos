@@ -3,7 +3,7 @@
   "idleReturnSec": 90,
   "games": [
     { "id": "crash-3d", "title": "ROCKET", "subtitle": "Crash game. Cash out before it blows", "source": "../crash-3d", "revealDelayMs": 2500 },
-    { "id": "plinko-3d", "title": "PLINKO 3D", "subtitle": "Neon plinko with real physics", "source": "../plinko-3d", "revealDelayMs": 2500 },
+    { "id": "plinko-3d", "title": "PLINKO 3D", "subtitle": "Neon plinko with real physics", "source": "../plinko-3d", "revealDelayMs": 2500, "sendVisible": false },
     { "id": "slot-3d", "title": "CLICKABLE VAULT", "subtitle": "3D slot with cascades and free spins", "source": "../slot-3d", "revealDelayMs": 2500 }
   ]
 }
