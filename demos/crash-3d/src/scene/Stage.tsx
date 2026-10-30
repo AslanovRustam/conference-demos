@@ -1,7 +1,7 @@
 import { Stats } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { Suspense, useRef } from 'react'
-import type { Group, Mesh } from 'three'
+import type { Mesh } from 'three'
 import { markReady } from '../game/debug'
 import { params } from '../platform/params'
 import { CameraRig } from './camera/CameraRig'
@@ -9,6 +9,7 @@ import { FarField } from './far/FarField'
 import { Effects } from './post/Effects'
 import { rig } from './rig'
 import { RigUpdater } from './RigUpdater'
+import { Rocket } from './rocket/Rocket'
 
 const READY_FRAMES = 30
 
@@ -19,22 +20,6 @@ function Ready() {
     if (++frames.current === READY_FRAMES) markReady()
   })
   return null
-}
-
-// placeholder until the rocket (task 7): a white 48 m cylinder standing on its base at rig.rocketY
-function PlaceholderRocket() {
-  const group = useRef<Group>(null)
-  useFrame(() => {
-    if (group.current) group.current.position.y = rig.rocketY
-  })
-  return (
-    <group ref={group}>
-      <mesh position-y={24}>
-        <cylinderGeometry args={[2.3, 2.3, 48, 48]} />
-        <meshStandardMaterial color="#f4f4f2" roughness={0.45} />
-      </mesh>
-    </group>
-  )
 }
 
 // placeholder until the launch pad (task 9): dark ground that sinks by the near-field offset
@@ -51,12 +36,15 @@ function PlaceholderGround() {
   )
 }
 
-// placeholder until the lights (task 10): faint night fill plus a cold moon key
+// placeholder until the lights (task 10 replaces all of this): a faint night fill, a warm floodlight key
+// from the front-left (it lights the livery) and a cold moon rim from behind; tuned in task 7 to judge
+// the rocket materials. reflections come from the rocket's own environment maps
 function PlaceholderLights() {
   return (
     <>
-      <hemisphereLight args={['#33415c', '#07080b', 0.6]} />
-      <directionalLight color="#c4d4ff" intensity={2.2} position={[-300, 500, 400]} />
+      <hemisphereLight args={['#33415c', '#07080b', 0.2]} />
+      <directionalLight color="#ffe3c4" intensity={5} position={[-95, 120, 370]} />
+      <directionalLight color="#a9bcff" intensity={2.6} position={[205, 255, -225]} />
     </>
   )
 }
@@ -72,7 +60,7 @@ export function Stage() {
         <FarField>{/* sky, stars, sun, moon, earth, nebulae, warp: tasks 10, 16, 17 */}</FarField>
         <PlaceholderLights />
         <PlaceholderGround />
-        <PlaceholderRocket />
+        <Rocket />
         <Effects />
         <Ready />
       </Suspense>
