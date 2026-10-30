@@ -1,6 +1,4 @@
 import { brandLogo } from '@brand/tokens'
-import { useEffect } from 'react'
-import { markReady } from '../game/debug'
 import { AltitudeScale } from './AltitudeScale'
 import { Balance } from './Balance'
 import { Banner } from './Banner'
@@ -16,8 +14,6 @@ import { Telemetry } from './Telemetry'
 
 // broadcast hud over the scene; layout switches on aspect ratio in hud.css
 export function Hud() {
-  useEffect(() => markReady(), [])
-
   return (
     <div className="hud">
       <div className="hud-shade" aria-hidden />

@@ -18,14 +18,11 @@ export function installDebug(): void {
   }
 }
 
-// provisional (ruling R2): the hud marks the page ready for screenshots once fonts are in;
-// task 6 moves this to "scene loaded"
+// screenshots and e2e wait for this: the stage calls it once the scene has loaded and
+// 30 frames have rendered; the hud fonts must be in too
 export function markReady(): void {
   if (!params.debug) return
-  // one frame so the first layout has requested its fonts
-  requestAnimationFrame(() =>
-    document.fonts.ready.then(() => {
-      window.__crashReady = true
-    }),
-  )
+  void document.fonts.ready.then(() => {
+    window.__crashReady = true
+  })
 }
