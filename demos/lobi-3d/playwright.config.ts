@@ -4,7 +4,8 @@ const PORT = 5291
 
 export default defineConfig({
   testDir: 'e2e',
-  timeout: 60_000,
+  // software WebGL on a busy machine can take tens of seconds per 1080p test
+  timeout: 120_000,
   expect: { timeout: 10_000 },
   fullyParallel: false,
   workers: 1,
@@ -20,6 +21,7 @@ export default defineConfig({
     command: `npm run dev -- --port ${PORT} --strictPort`,
     url: `http://localhost:${PORT}`,
     reuseExistingServer: false,
-    timeout: 60_000,
+    // software WebGL on a busy machine can take tens of seconds per 1080p test
+  timeout: 120_000,
   },
 })

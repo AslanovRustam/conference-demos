@@ -1,6 +1,9 @@
 import { expect, test } from '@playwright/test'
 import { lobby, openLobby } from './helpers'
 
+// behaviour only; 1080p layout is covered by smoke and hud specs
+test.use({ viewport: { width: 1280, height: 720 } })
+
 test('arrow keys turn the carousel', async ({ page }) => {
   await openLobby(page)
   await page.keyboard.press('ArrowRight')
