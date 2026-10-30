@@ -1,4 +1,8 @@
-import { bindVisibility } from './engine';
+import { MUSIC_VOLUME, bindVisibility } from './engine';
+
+test('music bus is half as loud as the first version', () => {
+  expect(MUSIC_VOLUME).toBeCloseTo(0.35 / 2);
+});
 
 test('visibility suspends and resumes unless muted', async () => {
   let muted = false;

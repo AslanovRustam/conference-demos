@@ -1,3 +1,6 @@
+// Громкость фоновой музыки: в 2 раза тише первой версии (просьба заказчика)
+export const MUSIC_VOLUME = 0.175;
+
 export interface AudioEngine {
   readonly ctx: AudioContext | null;
   readonly sfx: GainNode | null;
@@ -48,7 +51,7 @@ export function createAudioEngine(): AudioEngine {
         sfx = ctx.createGain();
         sfx.gain.value = 0.9;
         music = ctx.createGain();
-        music.gain.value = 0.35;
+        music.gain.value = MUSIC_VOLUME;
         sfx.connect(master);
         music.connect(master);
         master.connect(compressor).connect(ctx.destination);
