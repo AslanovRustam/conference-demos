@@ -53,7 +53,7 @@ function playTickSample(c: AudioContext, buf: AudioBuffer) {
   const src = c.createBufferSource()
   src.buffer = buf
   const g = c.createGain()
-  g.gain.value = 0.8
+  g.gain.value = 0.4
   src.connect(g)
   g.connect(out!)
   src.start()
@@ -108,13 +108,13 @@ const effects: Record<Name, (c: AudioContext) => void> = {
     band.frequency.value = 1100
     band.Q.value = 0.9
     src.connect(band)
-    band.connect(env(c, 0.045, 0.001, 0.03, at))
+    band.connect(env(c, 0.0225, 0.001, 0.03, at))
     src.start(at)
     src.stop(at + 0.06)
     const low = c.createBiquadFilter()
     low.type = 'lowpass'
     low.frequency.value = 900
-    low.connect(env(c, 0.11, 0.002, 0.09, at))
+    low.connect(env(c, 0.055, 0.002, 0.09, at))
     tone(c, 'sine', 210, 120, low, at, 0.1)
   },
   select(c) {
