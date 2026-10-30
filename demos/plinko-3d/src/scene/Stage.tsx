@@ -13,6 +13,7 @@ import { FloatingWins } from './FloatingWins';
 import { Lighting } from './Lighting';
 import { Pegs } from './Pegs';
 import { Shards } from './Shards';
+import { SlotFx } from './SlotFx';
 import { Slots } from './Slots';
 import { Trails } from './Trails';
 import { WinFx } from './WinFx';
@@ -53,6 +54,7 @@ export function Stage({ children }: { children?: ReactNode }) {
       <CameraRig />
       <Pegs />
       <Slots />
+      <SlotFx />
       <Trails />
       <Balls />
       <Shards />
