@@ -68,9 +68,25 @@ function sweep(c: AudioContext, from: number, to: number, dur: number, peak: num
 }
 
 const effects: Record<Name, (c: AudioContext) => void> = {
+  // a soft, low "thock" like a heavy dial detent: short filtered noise for the contact plus a
+  // falling low sine for the body (the old bright square-wave click sounded like a toy)
   tick(c) {
     const at = c.currentTime
-    tone(c, 'square', 2200, 1400, env(c, 0.06, 0.002, 0.04, at), at, 0.05)
+    const src = c.createBufferSource()
+    src.buffer = noise
+    const band = c.createBiquadFilter()
+    band.type = 'bandpass'
+    band.frequency.value = 1100
+    band.Q.value = 0.9
+    src.connect(band)
+    band.connect(env(c, 0.045, 0.001, 0.03, at))
+    src.start(at)
+    src.stop(at + 0.06)
+    const low = c.createBiquadFilter()
+    low.type = 'lowpass'
+    low.frequency.value = 900
+    low.connect(env(c, 0.11, 0.002, 0.09, at))
+    tone(c, 'sine', 210, 120, low, at, 0.1)
   },
   select(c) {
     const at = c.currentTime

@@ -16,7 +16,7 @@ export interface GameEntry {
   idleReturnSec?: number
   /** the game shows its own exit button in embed mode, so the lobby hides its corner button */
   ownExit?: boolean
-  /** extra wait before revealing a game that never sends clickable:ready */
+  /** extra wait after the game's readiness signal (ready message or first canvas frames) before revealing it */
   revealDelayMs?: number
 }
 

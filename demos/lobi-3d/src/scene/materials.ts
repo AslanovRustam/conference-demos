@@ -3,27 +3,26 @@
 import { brandColors } from '@brand/tokens'
 import * as THREE from 'three'
 
-const cache = new Map<string, THREE.MeshPhysicalMaterial>()
-function shared(key: string, make: () => THREE.MeshPhysicalMaterial) {
+// MeshStandardMaterial with low roughness instead of MeshPhysicalMaterial + clearcoat: nearly the same
+// gloss on screen, a much cheaper fragment shader (the physical set held only ~45 FPS on an iGPU).
+const cache = new Map<string, THREE.MeshStandardMaterial>()
+function shared(key: string, make: () => THREE.MeshStandardMaterial) {
   let m = cache.get(key)
   if (!m) cache.set(key, (m = make()))
   return m
 }
 
 /** Polished chrome: needs the studio environment to read as metal. */
-export const chrome = () =>
-  shared('chrome', () => new THREE.MeshPhysicalMaterial({ color: '#f2f3f5', metalness: 1, roughness: 0.14, clearcoat: 1, clearcoatRoughness: 0.06, envMapIntensity: 1.8 }))
+export const chrome = () => shared('chrome', () => new THREE.MeshStandardMaterial({ color: '#f2f3f5', metalness: 1, roughness: 0.14, envMapIntensity: 1.8 }))
 
 /** White glossy enamel, the cabinet crown. */
-export const whiteChrome = () => shared('white', () => new THREE.MeshPhysicalMaterial({ color: '#e6e7ec', roughness: 0.26, clearcoat: 1, envMapIntensity: 0.85 }))
+export const whiteChrome = () => shared('white', () => new THREE.MeshStandardMaterial({ color: '#e6e7ec', roughness: 0.18, envMapIntensity: 0.85 }))
 
 /** Glossy red ceramic, the cabinet body and red chips. */
-export const ceramicRed = () =>
-  shared('ceramic', () => new THREE.MeshPhysicalMaterial({ color: '#e0101a', roughness: 0.28, clearcoat: 1, clearcoatRoughness: 0.08, envMapIntensity: 1 }))
+export const ceramicRed = () => shared('ceramic', () => new THREE.MeshStandardMaterial({ color: '#e0101a', roughness: 0.16, envMapIntensity: 1 }))
 
 /** Dark lacquer, screen bezels and black chips. */
-export const lacquerDark = () =>
-  shared('lacquer', () => new THREE.MeshPhysicalMaterial({ color: '#15161c', roughness: 0.3, metalness: 0.4, clearcoat: 1, clearcoatRoughness: 0.12 }))
+export const lacquerDark = () => shared('lacquer', () => new THREE.MeshStandardMaterial({ color: '#15161c', roughness: 0.22, metalness: 0.4 }))
 
 const WARM = new THREE.Color('#fff1e0')
 const RED = new THREE.Color(brandColors.red)

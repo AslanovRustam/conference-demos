@@ -22,7 +22,7 @@ function canvasTexture(draw: (g: CanvasRenderingContext2D, size: number) => void
 }
 
 /** chip face: base colour, a ring of edge spots and an inner line, like a real casino chip */
-function chipMaterials(color: string): THREE.MeshPhysicalMaterial[] {
+function chipMaterials(color: string): THREE.MeshStandardMaterial[] {
   const spot = color === '#e6e7ec' ? '#e0101a' : '#f4f5f8'
   const face = canvasTexture((g, s) => {
     g.fillStyle = color
@@ -47,12 +47,12 @@ function chipMaterials(color: string): THREE.MeshPhysicalMaterial[] {
     g.fillStyle = spot
     for (let i = 0; i < 8; i++) g.fillRect((i / 8) * s, 0, s / 20, s)
   })
-  const mat = (map: THREE.Texture) => new THREE.MeshPhysicalMaterial({ map, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.1 })
+  const mat = (map: THREE.Texture) => new THREE.MeshStandardMaterial({ map, roughness: 0.22 })
   return [mat(edge), mat(face), mat(face)]
 }
 
 /** die faces 1–6 as pips on white enamel */
-function dieMaterials(): THREE.MeshPhysicalMaterial[] {
+function dieMaterials(): THREE.MeshStandardMaterial[] {
   const pips: Record<number, [number, number][]> = {
     1: [[0.5, 0.5]],
     2: [[0.27, 0.27], [0.73, 0.73]],
@@ -72,7 +72,7 @@ function dieMaterials(): THREE.MeshPhysicalMaterial[] {
         g.fill()
       }
     })
-    return new THREE.MeshPhysicalMaterial({ map, roughness: 0.25, clearcoat: 1 })
+    return new THREE.MeshStandardMaterial({ map, roughness: 0.2 })
   })
 }
 

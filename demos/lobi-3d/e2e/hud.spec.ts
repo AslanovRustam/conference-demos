@@ -3,7 +3,8 @@ import { lobby, openLobby } from './helpers'
 
 test('loading screen goes away and the HUD names the active cabinet', async ({ page }) => {
   await openLobby(page, '', { quality: 'high' })
-  await expect(page.getByTestId('loading')).toHaveCount(0)
+  // full quality in software WebGL: the loading screen's fade-out can take a while
+  await expect(page.getByTestId('loading')).toHaveCount(0, { timeout: 30_000 })
   const s = await lobby(page)
   const slot = s.slots[s.activeIndex]
   const expected = slot.kind === 'game' ? slot.game.title : (slot.title ?? 'COMING SOON')
@@ -71,5 +72,8 @@ test('PLAY then Enter opens one frame', async ({ page }) => {
 test('logo and game tag are shown', async ({ page }) => {
   await openLobby(page)
   await expect(page.getByTestId('hud-logo')).toBeVisible()
+  const link = page.getByTestId('hud-logo-link')
+  await expect(link).toHaveAttribute('href', 'https://clickable.agency/')
+  await expect(link).toHaveAttribute('target', '_blank')
   await expect(page.getByTestId('hud-tag')).toHaveText(/GAME \d{2} \/ \d{2}|COMING SOON/)
 })

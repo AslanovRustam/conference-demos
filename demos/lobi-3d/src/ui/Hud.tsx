@@ -38,7 +38,9 @@ export default function Hud() {
     <AnimatePresence>
       {inLobby && slot && (
         <motion.div className="hud" data-testid="hud" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.25 } }}>
-          <img className="hud-logo" data-testid="hud-logo" src={brandLogo.white} alt="Clickable" />
+          <a className="hud-logo-link" data-testid="hud-logo-link" href="https://clickable.agency/" target="_blank" rel="noopener">
+            <img className="hud-logo" data-testid="hud-logo" src={brandLogo.white} alt="Clickable" />
+          </a>
           <button className="hud-round hud-mute" data-testid="mute" aria-label="Sound" aria-pressed={muted} onClick={() => applyAction({ type: 'toggleMute' })}>
             <SoundIcon muted={muted} />
           </button>

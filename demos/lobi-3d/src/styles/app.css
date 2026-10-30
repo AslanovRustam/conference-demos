@@ -93,13 +93,22 @@ button {
   z-index: 5;
   pointer-events: none;
 }
-.hud button {
+.hud button,
+.hud a {
   pointer-events: auto;
 }
-.hud-logo {
+.hud-logo-link {
   position: absolute;
   top: 2.2rem;
   left: 3rem;
+  display: block;
+  transition: opacity 0.2s;
+}
+.hud-logo-link:hover {
+  opacity: 0.8;
+}
+.hud-logo {
+  display: block;
   height: 1.7rem;
 }
 .hud-round {

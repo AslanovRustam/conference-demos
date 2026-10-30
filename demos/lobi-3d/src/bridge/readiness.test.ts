@@ -14,6 +14,19 @@ test('message wins immediately', async () => {
   await expect(r.result).resolves.toBe('message')
 })
 
+test('a ready message also waits revealDelayMs (games that announce ready too early)', async () => {
+  const r = createReadiness({ timeoutMs: 15000, revealDelayMs: 500 })
+  let done = false
+  r.result.then(() => {
+    done = true
+  })
+  r.messageReady()
+  await vi.advanceTimersByTimeAsync(499)
+  expect(done).toBe(false)
+  await vi.advanceTimersByTimeAsync(1)
+  await expect(r.result).resolves.toBe('message')
+})
+
 test('probe success waits revealDelayMs', async () => {
   const r = createReadiness({ timeoutMs: 15000, revealDelayMs: 500 })
   let done = false

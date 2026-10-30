@@ -16,7 +16,14 @@ export default defineConfig({
     ...devices['Desktop Chrome'],
     launchOptions: { args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required'] },
   },
-  projects: [{ name: 'chromium', use: { viewport: { width: 1920, height: 1080 } } }],
+  projects: [
+    { name: 'chromium', testIgnore: /real-games/, use: { viewport: { width: 1920, height: 1080 } } },
+    {
+      name: 'gpu',
+      testMatch: /real-games/,
+      use: { viewport: { width: 1920, height: 1080 }, launchOptions: { args: ['--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist'] } },
+    },
+  ],
   webServer: {
     command: `npm run dev -- --port ${PORT} --strictPort`,
     url: `http://localhost:${PORT}`,

@@ -16,7 +16,7 @@ export const CAMERA_HOME = {
 }
 
 /** glass sphere with the glowing Clickable mark, above the middle of the ring */
-export const CORE = { y: 3.6, radius: 0.85 } as const
+export const CORE = { y: 3.75, radius: 0.85 } as const
 
 /** how strongly cabinets beside the front one turn toward the viewer (0 = face straight out) */
 export const TURN_TO_VIEWER = 0.55

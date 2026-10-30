@@ -19,6 +19,10 @@ const RECORD_SEC = 15
 /** key that starts a round in each game (spin, launch, drop); Space when not listed */
 const PLAY_KEY: Record<string, string> = {}
 const PLAY_EVERY_MS = 3500
+/** games whose embed mode opens on a splash: the button to press (the opening itself goes into the loop) */
+const INTRO_BUTTON: Record<string, RegExp> = { 'slot-3d': /open the vault/i }
+/** games show their own loader after the canvas appears; the loop starts once it is gone */
+const SETTLE_MS = 4500
 
 const lobbyDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const buildDir = path.join(lobbyDir, '.games-build')
@@ -66,8 +70,14 @@ for (const id of games) {
     await ctx.close()
     continue
   }
-  await page.waitForTimeout(1500)
+  await page.waitForTimeout(SETTLE_MS)
   const start = (Date.now() - t0) / 1000
+  const intro = INTRO_BUTTON[id]
+  if (intro) {
+    // force: splash buttons pulse forever and never count as "stable" for a normal click
+    await page.getByRole('button', { name: intro }).click({ timeout: 5000, force: true }).catch(() => console.warn(`  ${id}: no ${intro} button`))
+    await page.waitForTimeout(2500)
+  }
   const key = PLAY_KEY[id] ?? 'Space'
   const end = Date.now() + RECORD_SEC * 1000
   let posterTaken = false

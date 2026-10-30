@@ -20,7 +20,7 @@ export default function Effects() {
   return (
     // no MSAA: on integrated GPUs it caused regular half-second stalls, and bloom hides the edges anyway
     <EffectComposer multisampling={0}>
-      <Bloom mipmapBlur luminanceThreshold={1.1} luminanceSmoothing={0.3} intensity={0.85} radius={0.75} />
+      <Bloom mipmapBlur levels={4} resolutionScale={0.4} luminanceThreshold={1.1} luminanceSmoothing={0.3} intensity={0.85} radius={0.75} />
       <Vignette ref={vignette} darkness={0.6} offset={0.3} />
       <ToneMapping mode={ToneMappingMode.NEUTRAL} />
     </EffectComposer>

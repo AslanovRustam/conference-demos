@@ -6,7 +6,6 @@ import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js'
 import markSvg from '../brand-extra/logo-mark.svg?raw'
-import { params } from '../state/params'
 import { CORE } from './layout'
 
 const MARK_WIDTH = 0.95
@@ -20,11 +19,23 @@ function markGeometry(): THREE.BufferGeometry {
   return geo
 }
 
+/**
+ * A clear shell with studio reflections and a faint iridescent sheen. Real refraction (transmission)
+ * re-renders the whole lounge behind the glass and held only ~35 FPS on an integrated GPU, so the
+ * spec's fallback is the default: no refraction, the mark is seen straight through.
+ */
 function glassMaterial(): THREE.MeshPhysicalMaterial {
-  // real refraction costs a second render of the scene; low quality keeps the look with reflections only
-  return params.quality === 'low'
-    ? new THREE.MeshPhysicalMaterial({ color: '#ffffff', roughness: 0.04, transparent: true, opacity: 0.22, clearcoat: 1, envMapIntensity: 2, depthWrite: false })
-    : new THREE.MeshPhysicalMaterial({ color: '#ffffff', roughness: 0.03, transmission: 1, thickness: 0.25, ior: 1.18, iridescence: 0.6, iridescenceIOR: 1.3, clearcoat: 1, envMapIntensity: 1.6 })
+  return new THREE.MeshPhysicalMaterial({
+    color: '#ffffff',
+    roughness: 0.04,
+    transparent: true,
+    opacity: 0.2,
+    depthWrite: false,
+    iridescence: 0.6,
+    iridescenceIOR: 1.3,
+    clearcoat: 1,
+    envMapIntensity: 2,
+  })
 }
 
 export default function GlassCore() {
@@ -36,7 +47,7 @@ export default function GlassCore() {
     return MARK_WIDTH / (b.max.x - b.min.x)
   }, [geometry])
   const glass = useMemo(glassMaterial, [])
-  // red-hot: brighter than the red ceramic seen through the glass, so the mark reads as light
+  // red-hot, brighter than the ceramic around it, so the mark reads as light
   const glow = useMemo(() => new THREE.MeshBasicMaterial({ color: new THREE.Color('#ff4a52').multiplyScalar(3.2), toneMapped: false }), [])
 
   useFrame(({ clock }) => {

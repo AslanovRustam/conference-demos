@@ -1,7 +1,7 @@
 // When to reveal a game. iframe `load` fires long before a three.js game has its assets and
-// shaders ready, so: trust clickable:ready if the game sends it; otherwise wait for a canvas
-// that has drawn a few frames (+ the game's revealDelayMs); never keep the visitor waiting
-// past the timeout.
+// shaders ready, so: take clickable:ready if the game sends it, otherwise a canvas that has drawn
+// a few frames. Either signal is followed by the game's revealDelayMs (some games announce ready
+// or create their canvas while their own loader is still up). Never past the timeout.
 
 export type ReadyReason = 'message' | 'probe' | 'timeout'
 
@@ -31,7 +31,10 @@ export function createReadiness(opts: { timeoutMs: number; revealDelayMs: number
 
   return {
     result,
-    messageReady: () => settle('message'),
+    messageReady() {
+      if (opts.revealDelayMs > 0) timers.push(setTimeout(() => settle('message'), opts.revealDelayMs))
+      else settle('message')
+    },
     loaded(probe) {
       probe().then(
         (ok) => {

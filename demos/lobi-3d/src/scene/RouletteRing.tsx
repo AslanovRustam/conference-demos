@@ -20,7 +20,7 @@ export default function RouletteRing({ inner, outer, y }: { inner: number; outer
     return (Object.keys(parts) as (keyof typeof COLORS)[]).map((c) => ({
       color: c,
       geometry: mergeGeometries(parts[c]),
-      material: new THREE.MeshPhysicalMaterial({ color: COLORS[c], roughness: 0.4, clearcoat: 0.6, envMapIntensity: 0.7 }),
+      material: new THREE.MeshStandardMaterial({ color: COLORS[c], roughness: 0.35, envMapIntensity: 0.7 }),
     }))
   }, [inner, outer])
 
