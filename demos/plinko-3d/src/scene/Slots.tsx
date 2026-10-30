@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { formatMultiplier } from '../core/format';
 import { anticipation, breath } from '../fx/slotLife';
-import { boardLayout } from '../math/layout';
+import { SLOT_LABEL_Y, boardLayout } from '../math/layout';
 import { getPaytable } from '../math/paytable';
 import { TIER_RANK, tierOf } from '../math/tiers';
 import { useSim } from '../sim/SimProvider';
@@ -171,7 +171,7 @@ export function Slots() {
             material={materials[k]}
           />
           <group
-            position={[0, -0.02, 0.45]}
+            position={[0, SLOT_LABEL_Y, 0.45]}
             ref={(g) => {
               labelGroups.current[k] = g;
             }}

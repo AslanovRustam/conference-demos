@@ -11,6 +11,11 @@ export const SPAWN_HEIGHT = 1.6;
 
 const GEM_HALF_WIDTH = 0.45;
 const GEM_HEIGHT = 0.32;
+/** Нижняя точка камня-ячейки относительно его центра (огранка с наклоном к зрителю). */
+export const SLOT_GEM_BOTTOM = -0.27;
+/** Центр подписи множителя относительно центра ячейки и половина высоты подписи. */
+export const SLOT_LABEL_Y = -0.43;
+export const SLOT_LABEL_HALF = 0.15;
 
 export interface Peg {
   row: number;
@@ -64,7 +69,8 @@ export function boardLayout(rows: Rows): BoardLayout {
     pegs,
     slots,
     spawn,
-    bounds: { minX: -halfWidth, maxX: halfWidth, minY: slotY - GEM_HEIGHT / 2, maxY: SPAWN_HEIGHT + BALL_RADIUS },
+    // Снизу кадр доходит до подписей множителей под камнями
+    bounds: { minX: -halfWidth, maxX: halfWidth, minY: slotY + Math.min(-GEM_HEIGHT / 2, SLOT_LABEL_Y - SLOT_LABEL_HALF), maxY: SPAWN_HEIGHT + BALL_RADIUS },
   };
   cache.set(rows, layout);
   return layout;

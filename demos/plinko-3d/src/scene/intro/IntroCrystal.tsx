@@ -1,23 +1,14 @@
 import logoSvg from '@brand/logo/clickable-logo-white.svg?raw';
 import { MeshRefractionMaterial } from '@react-three/drei';
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js';
-import type { Rows } from '../../core/types';
 import { introStore } from '../../intro/introStore';
-import { boardLayout } from '../../math/layout';
 import { useGame } from '../../state/store';
 import { brilliantCut } from './brilliant';
+import { crystalFrame } from './crystalFrame';
 import { gemEnvironment } from './gemEnvironment';
-
-/** Центр и масштаб камня интро: середина будущей пирамиды, размер по меньшей стороне доски (на телефоне это ширина). */
-export function crystalFrame(rows: Rows) {
-  const { bounds } = boardLayout(rows);
-  const height = bounds.maxY - bounds.minY;
-  const width = bounds.maxX - bounds.minX;
-  return { cx: 0, cy: (bounds.minY + bounds.maxY) / 2 + height * 0.04, scale: Math.min(height, width) * 0.3 };
-}
 
 /** Площадка камня повёрнута к зрителю: видна «звезда» огранки. */
 export const CRYSTAL_TILT = 0.38;
@@ -147,7 +138,8 @@ interface Flare {
 export function IntroCrystal() {
   const rows = useGame((s) => s.rows);
   const quality = useGame((s) => s.quality);
-  const frame = crystalFrame(rows);
+  const size = useThree((s) => s.size);
+  const frame = crystalFrame(rows, size);
   const root = useRef<THREE.Group>(null);
   const spinner = useRef<THREE.Group>(null);
   const logoSpin = useRef<THREE.Group>(null);
@@ -294,7 +286,9 @@ export function IntroCrystal() {
       <instancedMesh ref={bokeh} args={[plane, bokehMat, BOKEH]} frustumCulled={false} />
       <group ref={spinner}>
         <mesh ref={gem} geometry={geometry} renderOrder={1}>
-          <MeshRefractionMaterial envMap={env} bounces={high ? 4 : 3} ior={2.4} fresnel={0.6} aberrationStrength={high ? 0.025 : 0.015} fastChroma={!high} color={GEM_COLOR} />
+          {/* key: при смене качества drei пересоздаёт материал, а BVH огранки строит только при монтировании —
+              без перемонтирования камень исчезал после автопереключения high → light */}
+          <MeshRefractionMaterial key={quality} envMap={env} bounces={high ? 4 : 3} ior={2.4} fresnel={0.6} aberrationStrength={high ? 0.025 : 0.015} fastChroma={!high} color={GEM_COLOR} />
         </mesh>
         <lineSegments geometry={edges} material={edgeMat} renderOrder={4} />
       </group>

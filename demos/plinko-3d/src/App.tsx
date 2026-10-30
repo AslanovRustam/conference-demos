@@ -23,6 +23,7 @@ import { Splash } from './ui/Splash';
 import { useLongPress } from './ui/useLongPress';
 
 const EMBED = isEmbed(location.search);
+const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
 
 export function App() {
   const [sim] = useState(() => createSim({ seed: seedFromSearch(location.search) ?? Date.now() }));
@@ -30,7 +31,8 @@ export function App() {
   const introStarted = useIntro((s) => s.startedAt !== null);
 
   useEffect(() => {
-    if (import.meta.env.DEV) (window as unknown as { __sim: typeof sim }).__sim = sim;
+    // Доступ к симуляции для отладки и e2e: в dev всегда, в сборке только с ?debug=1
+    if (import.meta.env.DEV || DEBUG) (window as unknown as { __sim: typeof sim }).__sim = sim;
     sim.store.getState().setQuality(detectQuality());
   }, [sim]);
 

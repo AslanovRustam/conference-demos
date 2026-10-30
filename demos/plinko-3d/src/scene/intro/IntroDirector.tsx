@@ -5,7 +5,7 @@ import { isEmbed, postReady } from '../../platform/embed';
 import { useSim } from '../../sim/SimProvider';
 import { fxHooks } from '../fxStore';
 import { useGame } from '../../state/store';
-import { crystalFrame } from './IntroCrystal';
+import { crystalFrame } from './crystalFrame';
 
 const EMBED = isEmbed(location.search);
 const READY_FRAMES = 4; // после стольких кадров сцена точно скомпилирована и видна
@@ -24,7 +24,7 @@ export function IntroDirector(): null {
     });
   }, []);
 
-  useFrame(() => {
+  useFrame(({ size }) => {
     const intro = introStore.getState();
     if (!intro.ready) {
       frames.current++;
@@ -43,7 +43,7 @@ export function IntroDirector(): null {
     if ((phase === 'explode' || phase === 'assemble' || phase === 'gems' || phase === 'done') && !f.shatter) {
       f.shatter = true;
       bus.emit('intro:shatter', {});
-      const { cx, cy } = crystalFrame(rows);
+      const { cx, cy } = crystalFrame(rows, size);
       fxHooks.pulse?.(1.2, 0.006, 0.9);
       fxHooks.shake?.(0.25, 0.7);
       fxHooks.burst?.(cx, cy, 120, 2);

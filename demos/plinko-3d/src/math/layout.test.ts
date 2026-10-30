@@ -1,4 +1,4 @@
-import { BALL_RADIUS, PEG_RADIUS, SPACING, boardLayout, pegCount, pegFlatIndex } from './layout';
+import { BALL_RADIUS, PEG_RADIUS, SLOT_GEM_BOTTOM, SLOT_LABEL_HALF, SLOT_LABEL_Y, SPACING, boardLayout, pegCount, pegFlatIndex } from './layout';
 
 test('peg counts and flat index', () => {
   expect(pegCount(16)).toBe(168);
@@ -29,4 +29,11 @@ test('bounds cover pegs, slots and spawn', () => {
     expect(p.y).toBeGreaterThanOrEqual(L.bounds.minY);
     expect(p.y).toBeLessThanOrEqual(L.bounds.maxY);
   }
+});
+
+// Подписи множителей наезжали на камни-ячейки: подпись стоит целиком под камнем и входит в кадр доски
+test('multiplier labels sit below the slot gems and inside the framed bounds', () => {
+  expect(SLOT_LABEL_Y + SLOT_LABEL_HALF).toBeLessThanOrEqual(SLOT_GEM_BOTTOM);
+  const L = boardLayout(16);
+  expect(L.slots[0].y + SLOT_LABEL_Y - SLOT_LABEL_HALF).toBeGreaterThanOrEqual(L.bounds.minY);
 });

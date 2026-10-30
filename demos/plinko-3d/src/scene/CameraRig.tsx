@@ -2,14 +2,11 @@ import { useFrame, useThree } from '@react-three/fiber';
 import gsap from 'gsap';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
-import { computeFraming, type Framing } from '../math/framing';
-import { boardLayout } from '../math/layout';
+import type { Framing } from '../math/framing';
 import { useSim } from '../sim/SimProvider';
 import { useGame } from '../state/store';
-import { hudInsets, orientationOf, readSafeArea } from '../ui/layoutMetrics';
+import { boardFraming } from './boardFraming';
 import { fxHooks } from './fxStore';
-
-export const CAMERA_FOV = 35;
 
 const FOLLOW_DISTANCE = 0.45; // доля базовой дистанции при наезде
 
@@ -17,12 +14,7 @@ export function CameraRig() {
   const { bus, system } = useSim();
   const rows = useGame((s) => s.rows);
   const size = useThree((s) => s.size);
-  const framing = useMemo(
-    // На вертикальном телефоне каждая доля ширины на счету: поля кадра меньше
-    () =>
-      computeFraming(boardLayout(rows).bounds, size, hudInsets(size, readSafeArea()), CAMERA_FOV, orientationOf(size) === 'portrait' ? 0.25 : 0.6),
-    [rows, size],
-  );
+  const framing = useMemo(() => boardFraming(rows, size), [rows, size]);
 
   const follow = useRef({ k: 0, ballId: null as number | null, x: 0, y: 0 });
   const shake = useRef({ amp: 0, dur: 1, t: 1 });

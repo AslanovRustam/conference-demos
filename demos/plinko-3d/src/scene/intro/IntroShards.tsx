@@ -1,4 +1,4 @@
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { createRng } from '../../core/rng';
@@ -10,7 +10,8 @@ import { useGame } from '../../state/store';
 import { createCrystalMaterial } from '../materials';
 import { PEG_VISUAL_RADIUS, PEG_VISUAL_STRETCH_Y, pegEuler } from '../pegShape';
 import { BRILLIANT, brilliantRadiusAt } from './brilliant';
-import { CRYSTAL_TILT, crystalFrame } from './IntroCrystal';
+import { crystalFrame } from './crystalFrame';
+import { CRYSTAL_TILT } from './IntroCrystal';
 
 const EXTRA = 70; // лишние осколки просто разлетаются и гаснут
 const DRAG = 4;
@@ -30,6 +31,7 @@ interface Shard {
 export function IntroShards() {
   const { bus } = useSim();
   const rows = useGame((s) => s.rows);
+  const size = useThree((s) => s.size);
   const quality = useGame((s) => s.quality);
   const mesh = useRef<THREE.InstancedMesh>(null);
   const layout = boardLayout(rows);
@@ -41,7 +43,7 @@ export function IntroShards() {
 
   const shards = useMemo<Shard[]>(() => {
     const rng = createRng(7);
-    const { cx, cy, scale } = crystalFrame(rows);
+    const { cx, cy, scale } = crystalFrame(rows, size);
     return Array.from({ length: count }, () => {
       // Случайная точка внутри бриллианта (площадка наклонена к зрителю, как у камня в интро)
       const y = rng.range(BRILLIANT.culet, BRILLIANT.table);
@@ -69,7 +71,7 @@ export function IntroShards() {
         flash: 0,
       };
     });
-  }, [rows, count]);
+  }, [rows, count, size]);
 
   const tmp = useMemo(
     () => ({ m: new THREE.Matrix4(), p: new THREE.Vector3(), q: new THREE.Quaternion(), q2: new THREE.Quaternion(), e: new THREE.Euler(), s: new THREE.Vector3(), c: new THREE.Color() }),
