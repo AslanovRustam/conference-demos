@@ -1,4 +1,4 @@
-import { Color, Vector2 } from 'three'
+import { Color, Vector2, Vector3 } from 'three'
 
 // a screen-space heat haze or shockwave ring (post/DistortionEffect.ts). producers keep their own entries in
 // fx.distortion: push on mount, update every frame (strength 0 hides it), splice out on unmount
@@ -16,6 +16,7 @@ export const fx = {
   flash: 0, // 0..1 full-screen flash towards flashColor
   flashColor: new Color(),
   dofPulse: 0, // 0..1 focus pull on camera cuts
+  focus: new Vector3(), // what the live camera is looking at (world), the depth of field focuses there
   shake: 0, // camera shake amplitude
   zoomBlur: 0, // radial blur length as a fraction of the distance to the screen center
   distortion: [] as DistortionSource[],

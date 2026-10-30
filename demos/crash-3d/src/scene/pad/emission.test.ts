@@ -1,4 +1,5 @@
 import { expect, test } from 'vitest'
+import { telemetry } from '../../core/telemetry'
 import { timeAt } from '../../core/curve'
 import { altitudeAt, exhaustRate, GROUND_REACH, launchClock, steamLevel, thrustAt } from './emission'
 
@@ -22,7 +23,7 @@ test('thrust spools up over the last 1.5 s of the countdown, matching the rig', 
 test('the rocket leaves the deck at liftoff and climbs', () => {
   expect(altitudeAt(2)).toBe(0)
   expect(altitudeAt(3)).toBeCloseTo(0)
-  expect(altitudeAt(3 + timeAt(1.1))).toBeCloseTo(209.1, 0)
+  expect(altitudeAt(3 + timeAt(1.1))).toBeCloseTo(telemetry(1.1).altKm * 1000, 3) // follows the eased liftoff
   expect(altitudeAt(3.4)).toBeGreaterThan(altitudeAt(3.2))
 })
 
