@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Test game · lobby dev stub</title>
+    <style>
+      html, body { margin: 0; height: 100%; overflow: hidden; background: #050508; color: #fff; font: 600 18px/1.4 system-ui, sans-serif; }
+      canvas { position: fixed; inset: 0; width: 100%; height: 100%; }
+      #exit { position: fixed; top: 24px; left: 24px; padding: 12px 20px; font: inherit; color: #fff; background: #ff1923; border: 0; cursor: pointer; }
+      #status { position: fixed; left: 24px; bottom: 24px; max-width: 70vw; white-space: pre-wrap; opacity: 0.85; }
+    </style>
+  </head>
+  <body>
+    <button id="exit" hidden>EXIT</button>
+    <div id="status"></div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
