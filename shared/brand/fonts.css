@@ -1,0 +1,42 @@
+/* Фирменные шрифты Clickable. Файлы лежат рядом, в ./fonts, поэтому работают офлайн. */
+
+@font-face {
+  font-family: 'Clickable';
+  font-weight: 900;
+  font-style: normal;
+  font-display: block;
+  src: url('./fonts/CLICKABLE-Black.woff2') format('woff2'),
+       url('./fonts/CLICKABLE-Black.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Montserrat';
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+  src: url('./fonts/Montserrat-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Montserrat';
+  font-weight: 500;
+  font-style: normal;
+  font-display: block;
+  src: url('./fonts/Montserrat-Medium.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Montserrat';
+  font-weight: 600;
+  font-style: normal;
+  font-display: block;
+  src: url('./fonts/Montserrat-SemiBold.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Montserrat';
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+  src: url('./fonts/Montserrat-Bold.woff2') format('woff2');
+}

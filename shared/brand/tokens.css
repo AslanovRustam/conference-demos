@@ -1,0 +1,34 @@
+/* Фирменные токены Clickable. Значения взяты из CSS сайта clickable.agency. */
+
+:root {
+  /* Красный */
+  --ck-red: #ff1923;          /* основной: логотип, акценты */
+  --ck-red-button: #f01c25;   /* заливка кнопок */
+  --ck-red-pressed: #e5000a;  /* hover и active кнопок */
+
+  /* Нейтральные */
+  --ck-black: #000000;
+  --ck-dark: #0d0d0d;         /* тёмные плашки и фон секций */
+  --ck-white: #ffffff;
+  --ck-gray: #909090;         /* основной цвет текста на сайте */
+
+  /* Дополнительный акцент из промо-блоков сайта, использовать редко */
+  --ck-accent-green: #59ea00;
+
+  /* Шрифты (подключаются через fonts.css) */
+  --ck-font-display: 'Clickable', 'Montserrat', system-ui, sans-serif;
+  --ck-font-body: 'Montserrat', system-ui, sans-serif;
+
+  /* Фирменная форма кнопки: срезанный правый нижний угол */
+  --ck-chamfer: 1.5em;
+}
+
+.ck-chamfer {
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - var(--ck-chamfer)),
+    calc(100% - var(--ck-chamfer)) 100%,
+    0 100%
+  );
+}
