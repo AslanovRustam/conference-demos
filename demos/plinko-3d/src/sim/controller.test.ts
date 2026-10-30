@@ -143,22 +143,112 @@ test('big win starts celebration and blocks drops until it ends', () => {
   expect(sys.balls).toHaveLength(1);
 });
 
-test('drops during slow-mo are queued, then flushed', () => {
-  const { bus, ctl, sys, slowmo, run } = setup(9);
+// Сид, при котором первый бросок даёт крупный (не Big) выигрыш с замедлением, но без празднования
+function seedWithPlainSlowMo(): number {
+  for (let seed = 0; seed < 500; seed++) {
+    const { ctl, sys } = setup(seed);
+    ctl.drop();
+    const b = sys.balls[0];
+    if (b.slowMo === 'win' && b.tier === 'large') return seed;
+  }
+  throw new Error('no seed');
+}
+
+test('drops during a plain slow-mo are queued, then fire one by one', () => {
+  const { bus, ctl, sys, slowmo } = setup(seedWithPlainSlowMo());
+  let frame = 0;
   let started = false;
-  let ended = false;
-  const spawnsAfterStart: boolean[] = []; // true, если замедление в момент появления уже закончилось
+  let endFrame = -1;
+  const spawns: { frame: number; afterSlowMo: boolean }[] = [];
   bus.on('slowmo:start', () => (started = true));
-  bus.on('slowmo:end', () => (ended = true));
-  bus.on('ball:spawn', () => started && spawnsAfterStart.push(slowmo.activeBallId === null));
+  bus.on('slowmo:end', () => (endFrame = frame));
+  bus.on('ball:spawn', () => started && spawns.push({ frame, afterSlowMo: slowmo.activeBallId === null }));
+  const step = () => {
+    frame++;
+    ctl.update(1 / 60);
+  };
+  ctl.drop();
+  while (!started) step();
+  ctl.drop();
+  ctl.drop();
+  expect(sys.balls).toHaveLength(1);
+  for (let i = 0; i < 60 * 8; i++) step();
+  expect(endFrame).toBeGreaterThan(0);
+  expect(spawns.map((s) => s.afterSlowMo)).toEqual([true, true]);
+  expect(spawns[1].frame - spawns[0].frame).toBeGreaterThanOrEqual(8); // ≥ 0.13 с между шариками
+});
+
+test('drops queued before a big win are discarded when it is celebrated', () => {
+  const { bus, ctl, run } = setup(9);
+  let started = false;
+  let spawnsAfter = 0;
+  bus.on('slowmo:start', () => (started = true));
+  bus.on('ball:spawn', () => started && spawnsAfter++);
   ctl.drop({ forceBig: true });
   while (!started) run(0.05);
   ctl.drop();
   ctl.drop();
-  expect(sys.balls).toHaveLength(1);
-  // празднование крупного выигрыша блокирует броски, поэтому оверлей завершаем сразу
-  bus.on('celebrate:start', (e) => bus.emit('celebrate:end', { kind: e.kind }));
+  let kind: GameEvents['celebrate:start']['kind'] | null = null;
+  bus.on('celebrate:start', (e) => (kind = e.kind));
+  while (!kind) run(0.05);
+  run(1);
+  bus.emit('celebrate:end', { kind: kind! });
+  run(3);
+  expect(spawnsAfter).toBe(0);
+});
+
+test('endDemo stops a demo rain without a celebration', () => {
+  const { st, bus, ctl, run } = setup(16);
+  let celebrations = 0;
+  bus.on('celebrate:start', () => celebrations++);
+  ctl.rain({ mode: 'demo', count: 30 });
+  run(1);
+  ctl.endDemo();
+  expect(ctl.rainActive).toBe(false);
+  run(15);
+  expect(celebrations).toBe(0);
+  expect(st.getState().balance).toBe(10000);
+  expect(ctl.drop()).toBe(true);
+});
+
+test('endDemo ends a demo slow-mo at once and its landing celebrates nothing', () => {
+  const { bus, ctl, sys, slowmo, run } = setup(17);
+  let started = false;
+  let ended = 0;
+  let celebrations = 0;
+  bus.on('slowmo:start', () => (started = true));
+  bus.on('slowmo:end', () => ended++);
+  bus.on('celebrate:start', () => celebrations++);
+  ctl.drop({ kind: 'demo', forceBig: true });
+  while (!started) run(0.05);
+  ctl.endDemo();
+  expect(slowmo.activeBallId).toBeNull();
+  expect(sys.timeScale).toBe(1);
+  expect(ended).toBe(1);
   run(8);
-  expect(ended).toBe(true);
-  expect(spawnsAfterStart).toEqual([true, true]);
+  expect(celebrations).toBe(0);
+});
+
+test('endDemo closes a running demo celebration', () => {
+  const { bus, ctl, run } = setup(18);
+  const ends: string[] = [];
+  bus.on('celebrate:end', (e) => ends.push(e.kind));
+  let kind: string | null = null;
+  bus.on('celebrate:start', (e) => (kind = e.kind));
+  ctl.drop({ kind: 'demo', forceBig: true });
+  while (!kind) run(0.05);
+  expect(ctl.celebrating).toBe(true);
+  ctl.endDemo();
+  expect(ends).toEqual([kind]);
+  expect(ctl.celebrating).toBe(false);
+});
+
+test('endDemo leaves a player celebration alone', () => {
+  const { bus, ctl, run } = setup(19);
+  let kind: string | null = null;
+  bus.on('celebrate:start', (e) => (kind = e.kind));
+  ctl.drop({ forceBig: true });
+  while (!kind) run(0.05);
+  ctl.endDemo();
+  expect(ctl.celebrating).toBe(true);
 });

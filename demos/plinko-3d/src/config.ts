@@ -11,6 +11,7 @@ export const RAIN_SPAWN_INTERVAL = 0.06; // с между шариками до�
 export const MAX_ACTIVE_BALLS = 130;
 export const MAX_DT = 0.05; // с, защита от скачка времени после скрытой вкладки
 export const MAX_QUEUED_DROPS = 5;
+export const QUEUE_STAGGER = 0.15; // с между отложенными бросками, чтобы шарики не слипались
 
 export const IDLE_MS = 45_000;
 export const HISTORY_MAX = 12;

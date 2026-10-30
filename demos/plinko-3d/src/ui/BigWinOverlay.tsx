@@ -66,6 +66,19 @@ export function BigWinOverlay() {
     [bus, finish],
   );
 
+  // Празднование закрыли снаружи (выход из attract посреди демо-выигрыша): убираем оверлей молча
+  useEffect(
+    () =>
+      bus.on('celebrate:end', () => {
+        if (!sceneRef.current) return;
+        sceneRef.current = null;
+        counter.current?.stop();
+        if (endTimer.current) clearTimeout(endTimer.current);
+        setScene(null);
+      }),
+    [bus],
+  );
+
   useEffect(
     () => () => {
       counter.current?.stop();

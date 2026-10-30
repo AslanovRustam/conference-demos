@@ -2,12 +2,13 @@ import { useFrame } from '@react-three/fiber';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { createRng } from '../core/rng';
-import { PEG_RADIUS, boardLayout, pegCount, pegFlatIndex } from '../math/layout';
+import { boardLayout, pegCount, pegFlatIndex } from '../math/layout';
 import { useSim } from '../sim/SimProvider';
 import { useGame } from '../state/store';
 import { pegGlow } from './fxStore';
 import { createCrystalMaterial } from './materials';
 import { CRYSTAL, pegHue } from './palette';
+import { HIT_PULSE, PEG_VISUAL_RADIUS, PEG_VISUAL_STRETCH_Y } from './pegShape';
 import { useRowsTransition } from './rowsTransition';
 
 const CAPACITY = pegCount(16);
@@ -43,7 +44,7 @@ export function Pegs() {
   const transition = useRowsTransition(rows);
 
   // Почти круглый граненый кристалл: визуальная граница близка к физическому радиусу касания
-  const geometry = useMemo(() => new THREE.IcosahedronGeometry(PEG_RADIUS * 1.1, 0).scale(1, 1.1, 1), []);
+  const geometry = useMemo(() => new THREE.IcosahedronGeometry(PEG_VISUAL_RADIUS, 0).scale(1, PEG_VISUAL_STRETCH_Y, 1), []);
   const material = useMemo(() => createCrystalMaterial(quality), [quality]);
   useEffect(() => () => material.dispose(), [material]);
 
@@ -98,7 +99,7 @@ export function Pegs() {
       tmp.p.set(peg.x, peg.y, 0);
       tmp.e.set(spin.x, spin.y + t * 0.15, 0);
       tmp.q.setFromEuler(tmp.e);
-      const s = (1 + 0.35 * glow) * appear;
+      const s = (1 + HIT_PULSE * glow) * appear;
       tmp.s.set(s, s, s);
       mesh.setMatrixAt(i, tmp.m.compose(tmp.p, tmp.q, tmp.s));
       tmp.c.setHSL(pegHue(peg.flat, t), 1, 0.65);

@@ -40,6 +40,16 @@ export class SlowMoDirector {
     });
   }
 
+  /** Немедленно вернуть нормальное время (выход из attract посреди демо-замедления). */
+  cancel(): void {
+    if (this.activeBallId === null) return;
+    const ballId = this.activeBallId;
+    this.activeBallId = null;
+    this.phase = 'idle';
+    this.system.timeScale = 1;
+    this.bus.emit('slowmo:end', { ballId });
+  }
+
   update(realDt: number): void {
     const dt = Math.min(realDt, MAX_DT);
     if (this.phase === 'idle') {

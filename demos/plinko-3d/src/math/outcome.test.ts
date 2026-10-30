@@ -11,6 +11,14 @@ test('pickSlot follows weights (100k draws)', () => {
   counts.forEach((c, k) => expect(Math.abs(c / n - t.weights[k])).toBeLessThan(Math.max(0.003, t.weights[k] * 0.25)));
 });
 
+test('forced big goes to an edge cell (spec §6)', () => {
+  const rng = createRng(4);
+  const t = getPaytable('high', 12);
+  const seen = new Set<number>();
+  for (let i = 0; i < 200; i++) seen.add(pickForcedBig(t, rng)!);
+  expect([...seen].sort((a, b) => a - b)).toEqual([0, 12]);
+});
+
 test('forced big picks only >=25x cells, null when none', () => {
   const rng = createRng(3);
   const hi = getPaytable('high', 8);

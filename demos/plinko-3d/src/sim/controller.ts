@@ -1,8 +1,8 @@
 import type { StoreApi } from 'zustand/vanilla';
-import { MAX_ACTIVE_BALLS, MAX_DT, MAX_QUEUED_DROPS, RAIN_COUNT, RAIN_SPAWN_INTERVAL, START_BALANCE } from '../config';
+import { MAX_ACTIVE_BALLS, MAX_DT, MAX_QUEUED_DROPS, QUEUE_STAGGER, RAIN_COUNT, RAIN_SPAWN_INTERVAL, START_BALANCE } from '../config';
 import type { EventBus, GameEvents } from '../core/events';
 import type { Rng } from '../core/rng';
-import type { BallKind, RainMode } from '../core/types';
+import type { BallKind, CelebrateKind, RainMode } from '../core/types';
 import { alternativeSlot, buildDecisions, type Step } from '../math/decisions';
 import { boardLayout } from '../math/layout';
 import { bigCells, pickForcedBig, pickSlot } from '../math/outcome';
@@ -36,6 +36,10 @@ export class GameController {
   private forceNext = false;
   private riskHighOnClear = false;
   private celebratingNow = false;
+  private celebration: { kind: CelebrateKind; demo: boolean } | null = null;
+  private flushTimer = 0;
+  /** Демо-шарики, оставшиеся после выхода из attract: долетают молча, без замедления и празднования. */
+  private readonly silenced = new Set<number>();
 
   constructor(deps: { store: StoreApi<GameState>; bus: EventBus<GameEvents>; rng: Rng; system: BallSystem; slowmo: SlowMoDirector }) {
     this.store = deps.store;
@@ -45,10 +49,13 @@ export class GameController {
     this.slowmo = deps.slowmo;
 
     this.bus.on('ball:land', (e) => this.onLand(e));
-    this.bus.on('slowmo:end', () => this.flushQueue());
+    // Отложенные броски не переживают празднование: иначе они вылетают через несколько секунд после тапа
+    this.bus.on('celebrate:start', () => {
+      this.queued = 0;
+    });
     this.bus.on('celebrate:end', () => {
       this.celebratingNow = false;
-      this.flushQueue();
+      this.celebration = null;
     });
     this.bus.on('board:clear', () => {
       this.store.getState().setInFlight(0);
@@ -106,6 +113,22 @@ export class GameController {
     this.bus.emit('rain:start', { count, mode: opts.mode });
   }
 
+  /** Выход из attract: демо-дождь, демо-замедление и демо-празднование заканчиваются сразу. */
+  endDemo(): void {
+    if (this.rainState?.mode === 'demo') {
+      for (const id of this.rainState.pending) this.silenced.add(id);
+      this.rainState = null;
+    }
+    for (const b of this.system.balls) {
+      if (b.kind !== 'demo') continue;
+      b.slowMo = null;
+      this.silenced.add(b.id);
+    }
+    const active = this.system.balls.find((b) => b.id === this.slowmo.activeBallId);
+    if (active?.kind === 'demo') this.slowmo.cancel();
+    if (this.celebration?.demo) this.bus.emit('celebrate:end', { kind: this.celebration.kind });
+  }
+
   forceBigNext(): void {
     this.forceNext = true;
     const s = this.store.getState();
@@ -119,7 +142,9 @@ export class GameController {
   }
 
   update(realDt: number): void {
-    this.updateRain(Math.min(realDt, MAX_DT));
+    const dt = Math.min(realDt, MAX_DT);
+    this.updateRain(dt);
+    this.flushQueue(dt);
     this.slowmo.update(realDt);
     this.system.update(realDt);
     const n = this.system.balls.length;
@@ -134,11 +159,17 @@ export class GameController {
     this.bus.emit('balance:refill', { from, to: START_BALANCE });
   }
 
-  private flushQueue() {
-    if (this.celebratingNow || this.slowmo.activeBallId !== null) return;
-    const n = this.queued;
-    this.queued = 0;
-    for (let i = 0; i < n; i++) this.drop();
+  /** Отложенные броски выходят по одному, когда замедление закончилось и ничего не празднуется. */
+  private flushQueue(dt: number) {
+    if (this.queued === 0 || this.celebratingNow || this.slowmo.activeBallId !== null) {
+      this.flushTimer = 0;
+      return;
+    }
+    this.flushTimer -= dt;
+    if (this.flushTimer > 0) return;
+    this.queued--;
+    this.drop();
+    this.flushTimer = QUEUE_STAGGER;
   }
 
   private updateRain(dt: number) {
@@ -186,20 +217,23 @@ export class GameController {
     if (e.kind !== 'demo') this.store.getState().credit(e.win);
     // История показывает броски игрока; итог дождя виден в финале TOTAL WIN
     if (e.kind === 'player') this.store.getState().pushHistory(e.multiplier);
+    if (this.silenced.delete(e.ballId)) return;
     const r = this.rainState;
     if (r && r.pending.delete(e.ballId)) {
       r.totalWin += e.win;
       if (r.remaining <= 0 && r.pending.size === 0) {
         this.rainState = null;
         this.bus.emit('rain:end', { totalWin: r.totalWin, totalBet: r.totalBet, mode: r.mode });
-        this.celebratingNow = true;
-        this.bus.emit('celebrate:start', { kind: 'total', amount: r.totalWin, slot: null });
+        this.celebrate('total', r.totalWin, null, r.mode === 'demo');
       }
       return;
     }
-    if (e.tier === 'big' || e.tier === 'mega') {
-      this.celebratingNow = true;
-      this.bus.emit('celebrate:start', { kind: e.tier, amount: e.win, slot: e.slot });
-    }
+    if (e.tier === 'big' || e.tier === 'mega') this.celebrate(e.tier, e.win, e.slot, e.kind === 'demo');
+  }
+
+  private celebrate(kind: CelebrateKind, amount: number, slot: number | null, demo: boolean) {
+    this.celebratingNow = true;
+    this.celebration = { kind, demo };
+    this.bus.emit('celebrate:start', { kind, amount, slot });
   }
 }
