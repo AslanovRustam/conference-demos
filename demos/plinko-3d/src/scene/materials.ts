@@ -54,5 +54,13 @@ export function createGemMaterial(color: string, q: Quality): THREE.MeshPhysical
 }
 
 export function createChromeMaterial(): THREE.MeshStandardMaterial {
-  return new THREE.MeshStandardMaterial({ color: '#e9ecf8', metalness: 1, roughness: 0.06, envMapIntensity: 1.6 });
+  // Лёгкое собственное свечение, чтобы маленький хромированный шарик читался на тёмном фоне
+  return new THREE.MeshStandardMaterial({
+    color: '#f2f3fb',
+    metalness: 1,
+    roughness: 0.12,
+    envMapIntensity: 3.5,
+    emissive: new THREE.Color('#8c7fd0'),
+    emissiveIntensity: 0.25,
+  });
 }

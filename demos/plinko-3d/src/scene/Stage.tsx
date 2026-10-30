@@ -4,8 +4,10 @@ import { SimDriver } from '../sim/SimProvider';
 import { Background } from './Background';
 import { CAMERA_FOV, CameraRig } from './CameraRig';
 import { Lighting } from './Lighting';
+import { Balls } from './Balls';
 import { Pegs } from './Pegs';
 import { Slots } from './Slots';
+import { Trails } from './Trails';
 
 export function Stage({ children }: { children?: ReactNode }) {
   return (
@@ -21,6 +23,8 @@ export function Stage({ children }: { children?: ReactNode }) {
       <CameraRig />
       <Pegs />
       <Slots />
+      <Trails />
+      <Balls />
       {children}
     </Canvas>
   );
