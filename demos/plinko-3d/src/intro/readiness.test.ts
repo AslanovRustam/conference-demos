@@ -33,3 +33,9 @@ test('once ready it stays ready', () => {
   const s = stepReadiness({ smooth: 0, ready: true }, { fontsReady: false, compiled: false, frameMs: 900, elapsedMs: 0 });
   expect(s.ready).toBe(true);
 });
+
+// На слабом или загруженном устройстве кадры ровные, но медленные (15–20 FPS): это не фриз, ждать до таймаута незачем
+test('steady slow frames without stalls still count as settled', () => {
+  const input = { fontsReady: true, compiled: true, frameMs: 67, elapsedMs: 1000 };
+  expect(run(fresh, SMOOTH_FRAMES, input).ready).toBe(true);
+});

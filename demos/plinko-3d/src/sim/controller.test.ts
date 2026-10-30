@@ -114,6 +114,20 @@ test('every 5th player drop is a BIG or MEGA win', () => {
   expect(['big', 'mega']).toContain(tiers[9]);
 });
 
+// Каждый 5-й бросок падал почти всегда в ×30: теперь он обходит крупные ячейки и чередует стороны
+test('guaranteed wins on high risk, 16 rows rotate through 30x, 100x and 500x, alternating sides', () => {
+  const kit = setup(22);
+  kit.st.setState({ risk: 'high', rows: 16 });
+  const lands: Land[] = [];
+  kit.bus.on('ball:land', (e) => e.kind === 'player' && lands.push(e));
+  dropOneByOne(kit, 30);
+  const guaranteed = lands.filter((_, i) => i % 5 === 4);
+  expect(guaranteed).toHaveLength(6);
+  expect([...new Set(guaranteed.map((l) => l.multiplier))].sort((a, b) => a - b)).toEqual([30, 100, 500]);
+  const sides = guaranteed.map((l) => (l.slot < 8 ? 'L' : 'R'));
+  sides.slice(1).forEach((s, i) => expect(s).not.toBe(sides[i]));
+});
+
 test('attract exit restarts the 5-drop count for the next visitor', () => {
   const kit = setup(21);
   dropOneByOne(kit, 3);

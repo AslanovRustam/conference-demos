@@ -5,7 +5,7 @@ import type { Rng } from '../core/rng';
 import type { BallKind, CelebrateKind, RainMode } from '../core/types';
 import { alternativeSlot, buildDecisions, type Step } from '../math/decisions';
 import { boardLayout } from '../math/layout';
-import { bigCells, pickForcedBig, pickGuaranteedBig, pickSlot } from '../math/outcome';
+import { bigCells, createBigWinCycle, pickForcedBig, pickSlot } from '../math/outcome';
 import { getPaytable } from '../math/paytable';
 import { TIER_RANK, tierOf } from '../math/tiers';
 import { buildTrajectory } from '../math/trajectory';
@@ -42,6 +42,8 @@ export class GameController {
   private celebration: { kind: CelebrateKind; demo: boolean } | null = null;
   private flushTimer = 0;
   private playerDrops = 0;
+  /** Каждый 5-й бросок: крупные ячейки по кругу, стороны чередуются */
+  private readonly bigWins = createBigWinCycle();
   /** Демо-шарики, оставшиеся после выхода из attract: долетают молча, без замедления и празднования. */
   private readonly silenced = new Set<number>();
 
@@ -201,7 +203,7 @@ export class GameController {
     const { risk, rows } = this.store.getState();
     const table = getPaytable(risk, rows);
     const slot =
-      (pick === 'edge' ? pickForcedBig(table, this.rng) : pick === 'guaranteed' ? pickGuaranteedBig(table, this.rng) : null) ??
+      (pick === 'edge' ? pickForcedBig(table, this.rng) : pick === 'guaranteed' ? this.bigWins.next(table, this.rng) : null) ??
       pickSlot(table, this.rng);
     const multiplier = table.multipliers[slot];
     const tier = tierOf(multiplier);

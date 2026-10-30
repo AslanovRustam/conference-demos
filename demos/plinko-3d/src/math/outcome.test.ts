@@ -1,5 +1,5 @@
 import { createRng } from '../core/rng';
-import { bigCells, pickForcedBig, pickGuaranteedBig, pickSlot } from './outcome';
+import { bigCells, createBigWinCycle, pickForcedBig, pickSlot } from './outcome';
 import { getPaytable } from './paytable';
 
 test('pickSlot follows weights (100k draws)', () => {
@@ -11,19 +11,52 @@ test('pickSlot follows weights (100k draws)', () => {
   counts.forEach((c, k) => expect(Math.abs(c / n - t.weights[k])).toBeLessThan(Math.max(0.003, t.weights[k] * 0.25)));
 });
 
-test('guaranteed big win: BIG or MEGA cells when the table has them', () => {
+// Каждый 5-й бросок раньше чаще всего падал в одну и ту же ячейку (×30): теперь он обходит все крупные ячейки
+const side = (slot: number, rows: number) => (slot < rows / 2 ? 'L' : 'R');
+
+test('guaranteed big wins visit every big cell before any repeats', () => {
   const rng = createRng(5);
-  const t = getPaytable('high', 12);
-  const ms = Array.from({ length: 300 }, () => t.multipliers[pickGuaranteedBig(t, rng)]);
-  ms.forEach((m) => expect(m).toBeGreaterThanOrEqual(25));
-  expect(ms.some((m) => m >= 100)).toBe(true); // MEGA
-  expect(ms.some((m) => m < 100)).toBe(true); // BIG
+  const t = getPaytable('high', 16);
+  const cycle = createBigWinCycle();
+  const cells = bigCells(t);
+  for (let round = 0; round < 3; round++) {
+    const picks = cells.map(() => cycle.next(t, rng));
+    expect([...picks].sort((a, b) => a - b)).toEqual(cells);
+  }
 });
 
-test('guaranteed big win on a table without BIG cells takes the top cell', () => {
+test('guaranteed big wins on high risk, 16 rows land in 30x, 100x and 500x on both sides', () => {
+  const rng = createRng(9);
+  const t = getPaytable('high', 16);
+  const cycle = createBigWinCycle();
+  const picks = Array.from({ length: 6 }, () => cycle.next(t, rng));
+  expect([...new Set(picks.map((k) => t.multipliers[k]))].sort((a, b) => a - b)).toEqual([30, 100, 500]);
+  expect(new Set(picks.map((k) => side(k, 16))).size).toBe(2);
+});
+
+test('guaranteed big wins alternate sides: left, right, left…', () => {
+  const rng = createRng(11);
+  const t = getPaytable('medium', 16);
+  const cycle = createBigWinCycle();
+  const sides = Array.from({ length: 24 }, () => side(cycle.next(t, rng), 16));
+  sides.slice(1).forEach((s, i) => expect(s).not.toBe(sides[i]));
+});
+
+test('a table without big cells alternates the two edge cells', () => {
   const rng = createRng(6);
   const t = getPaytable('low', 8);
-  for (let i = 0; i < 50; i++) expect([0, 8]).toContain(pickGuaranteedBig(t, rng));
+  const cycle = createBigWinCycle();
+  const picks = Array.from({ length: 10 }, () => cycle.next(t, rng));
+  picks.forEach((k) => expect([0, 8]).toContain(k));
+  picks.slice(1).forEach((k, i) => expect(k).not.toBe(picks[i]));
+});
+
+test('changing rows or risk restarts the cycle on the new table', () => {
+  const rng = createRng(2);
+  const cycle = createBigWinCycle();
+  cycle.next(getPaytable('high', 16), rng);
+  const t = getPaytable('medium', 12);
+  for (let i = 0; i < 8; i++) expect(bigCells(t)).toContain(cycle.next(t, rng));
 });
 
 test('forced big goes to an edge cell (spec §6)', () => {

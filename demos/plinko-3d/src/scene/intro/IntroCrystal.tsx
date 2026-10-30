@@ -70,7 +70,7 @@ const raysFrag = /* glsl */ `
   }
 `;
 
-// Мягкое пятно света (ореол, подиум, свечение логотипа)
+// Мягкое пятно света (ореол, свечение логотипа)
 const glowFrag = /* glsl */ `
   uniform vec3 uColor;
   uniform float uStrength;
@@ -78,6 +78,16 @@ const glowFrag = /* glsl */ `
   void main() {
     float d = length(vUv - 0.5) * 2.0;
     gl_FragColor = vec4(uColor * pow(clamp(1.0 - d, 0.0, 1.0), 2.2) * uStrength, 1.0);
+  }
+`;
+
+// Мягкая тень под парящим камнем: тёмное пятно, плавно сходящее на нет к краям
+const shadowFrag = /* glsl */ `
+  uniform float uOpacity;
+  varying vec2 vUv;
+  void main() {
+    float d = length(vUv - 0.5) * 2.0;
+    gl_FragColor = vec4(0.0, 0.0, 0.0, pow(clamp(1.0 - d, 0.0, 1.0), 1.6) * uOpacity);
   }
 `;
 
@@ -127,6 +137,9 @@ const Z_AXIS = new THREE.Vector3(0, 0, 1);
 const GEM_COLOR = new THREE.Color('#f4efff');
 const LOGO_Y = -0.1;
 const LOGO_RED = new THREE.Color('#ff1923');
+const SHADOW_DROP = 1.1; // тень под камнем, в масштабах камня
+const SHADOW_WIDTH = 2.1;
+const SHADOW_OPACITY = 0.8;
 
 interface Flare {
   vertex: number;
@@ -146,6 +159,7 @@ export function IntroCrystal() {
   const gem = useRef<THREE.Mesh>(null);
   const flares = useRef<THREE.InstancedMesh>(null);
   const bokeh = useRef<THREE.InstancedMesh>(null);
+  const shadow = useRef<THREE.Mesh>(null);
 
   const geometry = useMemo(brilliantCut, []);
   const env = sharedGemEnvironment();
@@ -165,9 +179,10 @@ export function IntroCrystal() {
   const logoGlow = useMemo(() => additive(glowFrag, quadVert, { uColor: { value: new THREE.Color('#ff2a4a') }, uStrength: { value: 0.35 } }, true), []);
   const rays = useMemo(() => additive(raysFrag, quadVert, { uTime: { value: 0 }, uStrength: { value: 0.28 }, uColor: { value: new THREE.Color('#8f74ff') } }), []);
   const halo = useMemo(() => additive(glowFrag, quadVert, { uColor: { value: new THREE.Color('#6a4fd6') }, uStrength: { value: 0.5 } }), []);
-  const pool = useMemo(() => additive(glowFrag, quadVert, { uColor: { value: new THREE.Color('#b9a7ff') }, uStrength: { value: 0.4 } }), []);
-  const ringMat = useMemo(
-    () => new THREE.MeshBasicMaterial({ color: new THREE.Color('#c9b8ff'), transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }),
+  // Едва заметный свет «пола» без краёв: на совсем тёмном фоне тени не на что лечь
+  const floor = useMemo(() => additive(glowFrag, quadVert, { uColor: { value: new THREE.Color('#8f74ff') }, uStrength: { value: 0.22 } }), []);
+  const shadowMat = useMemo(
+    () => new THREE.ShaderMaterial({ vertexShader: quadVert, fragmentShader: shadowFrag, uniforms: { uOpacity: { value: SHADOW_OPACITY } }, transparent: true, depthWrite: false }),
     [],
   );
   const flareMat = useMemo(() => additive(flareFrag, instVert), []);
@@ -215,7 +230,16 @@ export function IntroCrystal() {
 
     // Камень парит и вращается; при расколе дрожит всё сильнее, трещины разгораются по граням
     const jitter = cracking * cracking * 0.1 * S;
-    g.position.set(frame.cx + (Math.random() - 0.5) * jitter, frame.cy + Math.sin(t * 1.1) * 0.04 * S + (Math.random() - 0.5) * jitter, 0);
+    const bob = Math.sin(t * 1.1);
+    g.position.set(frame.cx + (Math.random() - 0.5) * jitter, frame.cy + bob * 0.04 * S + (Math.random() - 0.5) * jitter, 0);
+    // Тень стоит на месте, пока камень парит: поднялся — тень чуть меньше и бледнее
+    const sh = shadow.current;
+    if (sh) {
+      const lift = 1 - 0.12 * bob;
+      sh.position.y = -SHADOW_DROP * S - bob * 0.04 * S;
+      sh.scale.set(SHADOW_WIDTH * S * lift, SHADOW_WIDTH * 0.2 * S * lift, 1);
+      shadowMat.uniforms.uOpacity.value = SHADOW_OPACITY * lift;
+    }
     const spin = t * 0.35 + cracking * cracking * 2.5;
     sp.rotation.set(CRYSTAL_TILT, spin, 0);
     sp.scale.setScalar(S * (1 + cracking * 0.05));
@@ -277,11 +301,10 @@ export function IntroCrystal() {
     <group ref={root}>
       <mesh scale={S * 5.2} position={[0, 0, -2.5 * S]} material={rays} geometry={plane} />
       <mesh scale={S * 3.4} position={[0, 0, -1.2 * S]} material={halo} geometry={plane} />
-      {/* Подиум: светлое пятно и тонкое кольцо под камнем */}
-      <mesh scale={[S * 2.4, S * 0.5, 1]} position={[0, -1.15 * S, -0.2]} material={pool} geometry={plane} />
-      <mesh position={[0, -1.12 * S, 0]} rotation-x={Math.PI / 2 - 0.22} material={ringMat}>
-        <torusGeometry args={[S * 1.0, S * 0.008, 8, 128]} />
-      </mesh>
+      {/* Тень под парящим камнем на мягком свете «пола» */}
+      <mesh scale={[S * 3.6, S * 0.7, 1]} position={[0, -SHADOW_DROP * S, -0.3]} material={floor} geometry={plane} />
+      <mesh ref={shadow} material={shadowMat} geometry={plane} />
+
       <instancedMesh ref={bokeh} args={[plane, bokehMat, BOKEH]} frustumCulled={false} />
       <group ref={spinner}>
         <mesh ref={gem} geometry={geometry} renderOrder={1}>

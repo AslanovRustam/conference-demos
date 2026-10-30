@@ -21,17 +21,41 @@ export function pickForcedBig(t: Paytable, rng: Rng): number | null {
   return rng.chance(0.5) ? 0 : last;
 }
 
-const MEGA_SHARE = 0.35; // доля MEGA среди гарантированных крупных выигрышей
+export interface BigWinCycle {
+  next(t: Paytable, rng: Rng): number;
+}
 
 /**
- * Гарантированный крупный выигрыш (каждый 5-й бросок): BIG или MEGA, если они есть в таблице,
- * иначе самая крупная (крайняя) ячейка.
+ * Гарантированный крупный выигрыш (каждый 5-й бросок) обходит по кругу все ячейки от 25x в случайном порядке:
+ * ни одна не повторяется, пока не выпали остальные, а стороны чередуются — слева, справа, слева…
+ * На high/16 за шесть таких бросков выпадают 500x, 100x и 30x с обеих сторон. Без ячеек от 25x — крайние по очереди.
+ * Смена рядов или риска начинает круг заново на новой таблице.
  */
-export function pickGuaranteedBig(t: Paytable, rng: Rng): number {
-  const last = t.multipliers.length - 1;
-  const mega = t.multipliers.flatMap((m, k) => (m >= 100 ? [k] : []));
-  const big = t.multipliers.flatMap((m, k) => (m >= 25 && m < 100 ? [k] : []));
-  if (mega.length && (!big.length || rng.chance(MEGA_SHARE))) return mega[rng.int(mega.length)];
-  if (big.length) return big[rng.int(big.length)];
-  return rng.chance(0.5) ? 0 : last;
+export function createBigWinCycle(): BigWinCycle {
+  let table = '';
+  let bag: number[] = [];
+  let lastSide = 0;
+  return {
+    next(t, rng) {
+      const last = t.multipliers.length - 1;
+      const key = t.multipliers.join(',');
+      if (key !== table) {
+        table = key;
+        bag = [];
+      }
+      if (!bag.length) {
+        const cells = bigCells(t);
+        bag = cells.length ? cells : [0, last];
+        for (let i = bag.length - 1; i > 0; i--) {
+          const j = rng.int(i + 1);
+          [bag[i], bag[j]] = [bag[j], bag[i]];
+        }
+      }
+      const sideOf = (slot: number) => (slot < last / 2 ? -1 : 1);
+      const i = Math.max(0, bag.findIndex((slot) => sideOf(slot) !== lastSide));
+      const [slot] = bag.splice(i, 1);
+      lastSide = sideOf(slot);
+      return slot;
+    },
+  };
 }
