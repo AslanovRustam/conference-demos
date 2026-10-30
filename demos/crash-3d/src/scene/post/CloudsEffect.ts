@@ -71,7 +71,7 @@ const PLUME_REACH = 110 // m below the nozzles: the visible flame lies on this s
 const WIND = new Vector2(7, 2.5) // m/s, the deck drifts
 const BOIL = 1.2 // m/s the fine detail rises and churns
 const COVER: [number, number] = [0.36, 0.64]
-const FADE_ALT: [number, number] = [24000, 36000] // the deck hands over to the earth's own clouds (task 16)
+const FADE_ALT: [number, number] = [12000, 22000] // the deck hands over to the earth's own clouds (task 16): the earth is fully in by ~15 km
 
 const v = new Vector3()
 

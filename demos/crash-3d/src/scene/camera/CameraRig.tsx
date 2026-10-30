@@ -9,6 +9,7 @@ import { fx } from '../fx'
 import { GROUND_Y } from '../pad/layout'
 import { rig } from '../rig'
 import { createDirector } from './director'
+import { frameShot } from './shotFrame'
 import { SHOTS, type CameraPose } from './shots'
 
 // debug close-ups (?debug=1&cam=...): fixed poses near the hull, heights relative to the rocket base.
@@ -60,6 +61,7 @@ const SHAKE_RAD = 0.006
 const PAD_RUMBLE_M = 250 // the ignition rumble fades out over the first metres of the climb
 const DOF_FADE_S = 0.6
 const MAX_SHOT_DT = 0.1
+const dir = new Vector3()
 
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x))
 
@@ -115,10 +117,12 @@ export function CameraRig() {
     fx.dofPulse = Math.max(0, fx.dofPulse - dt / DOF_FADE_S)
     if (params.shot) {
       const shot = SHOTS[params.shot]
-      if (held.age === 0) useGame.getState().setCamLabel(shot.label)
+      const first = held.age === 0
+      if (first) useGame.getState().setCamLabel(shot.label)
       held.age += dt
       shot.pose(rig, held.age, aspect, held.pose)
       applyShot(camera as PerspectiveCamera, held.pose)
+      if (first) frameShot(camera.getWorldDirection(dir))
       return
     }
     // a hitch (a shader compile, a hidden tab) must not skip a whole shot
@@ -128,6 +132,7 @@ export function CameraRig() {
       fx.dofPulse = 1
     }
     applyShot(camera as PerspectiveCamera, live.pose)
+    if (live.cut) frameShot(camera.getWorldDirection(dir))
   }, -5)
   return null
 }

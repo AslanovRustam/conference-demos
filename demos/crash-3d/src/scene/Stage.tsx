@@ -7,7 +7,9 @@ import { CameraRig } from './camera/CameraRig'
 import { Explosion } from './crash/Explosion'
 import { Eject } from './eject/Capsule'
 import { Lights } from './env/Lights'
+import { Earth } from './far/Earth'
 import { FarField } from './far/FarField'
+import { Moon } from './far/Moon'
 import { SkyDome } from './far/SkyDome'
 import { Stars } from './far/Stars'
 import { Sun } from './far/Sun'
@@ -53,7 +55,9 @@ export function Stage() {
           <SkyDome />
           <Stars />
           <Sun />
-          {/* moon, earth, nebulae, warp: tasks 16, 17 */}
+          <Moon />
+          <Earth />
+          {/* nebulae, warp: task 17 */}
         </FarField>
         <LaunchPad />
         <Rocket />
