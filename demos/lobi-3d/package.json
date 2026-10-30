@@ -6,7 +6,11 @@
   "scripts": {
     "dev": "vite --host",
     "build": "tsc -b && vite build",
+    "build:games": "node scripts/build-games.ts",
+    "build:all": "npm run build:games && npm run build && npm run check:games",
+    "check:games": "node scripts/check-games.ts",
     "preview": "vite preview --host",
+    "serve": "vite preview --host --port 4173 --strictPort",
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e": "playwright test"
@@ -30,6 +34,7 @@
     "@types/react-dom": "19.3.0",
     "@types/three": "0.186.0",
     "@vitejs/plugin-react": "6.1.2",
+    "sirv": "3.0.2",
     "typescript": "6.0.3",
     "vite": "8.3.4",
     "vitest": "5.0.5"
