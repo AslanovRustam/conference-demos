@@ -1,6 +1,7 @@
-// Camera flights: into the open cabinet's screen until it covers the viewport, and back out.
-// The end pose is recomputed every frame from the screen's live transform, so a carousel that
-// is still settling (or a window resize mid-flight) never leaves a gap at the edges.
+// Camera flights: into the open cabinet's screen until it covers the viewport, back out, and a
+// slow orbit of the hall in attract mode. The fly-in end pose is recomputed every frame from the
+// screen's live transform, so a carousel that is still settling (or a window resize mid-flight)
+// never leaves a gap at the edges.
 import { useFrame, useThree } from '@react-three/fiber'
 import gsap from 'gsap'
 import { useEffect, useRef } from 'react'
@@ -10,10 +11,11 @@ import { coverDistance } from './cameraMath'
 import { fx } from './fx'
 import { CAMERA_HOME, FOV_HOME, FOV_PLAY, SCREEN } from './layout'
 
-const IN_SEC = 1.5
-const OUT_SEC = 1.1
+const DURATION = { in: 1.5, out: 1.1, orbit: 9, home: 0.7 } as const
 // a hair closer than an exact fit so no sliver of cabinet shows at the edges
 const OVERSCAN = 0.98
+/** in attract mode every third self-turn of the carousel gets a camera orbit */
+const ORBIT_EVERY = 3
 
 const HOME_POS = new THREE.Vector3(...CAMERA_HOME.position)
 const HOME_TARGET = new THREE.Vector3(...CAMERA_HOME.target)
@@ -23,7 +25,16 @@ const HOME_TARGET = new THREE.Vector3(...CAMERA_HOME.target)
 // flight; without it the flight keeps wall-clock time and simply skips frames.
 gsap.ticker.lagSmoothing(0)
 
-type Flight = { kind: 'in' | 'out'; t: number; fromPos: THREE.Vector3; fromTarget: THREE.Vector3; fromFov: number; tween: gsap.core.Tween }
+type Kind = keyof typeof DURATION
+type Flight = { kind: Kind; t: number; fromPos: THREE.Vector3; fromTarget: THREE.Vector3; fromFov: number; tween: gsap.core.Tween }
+
+/** Attract orbit at progress t: swing right, back, left, back, rising and closing in mid-way. */
+function orbitPose(t: number, out: THREE.Vector3): THREE.Vector3 {
+  const theta = Math.sin(t * Math.PI * 2) * 0.55
+  const lift = Math.sin(t * Math.PI)
+  const r = Math.hypot(HOME_POS.x, HOME_POS.z) * (1 - lift * 0.12)
+  return out.set(Math.sin(theta) * r, HOME_POS.y + lift * 0.9, Math.cos(theta) * r)
+}
 
 export default function CameraRig() {
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera
@@ -34,6 +45,29 @@ export default function CameraRig() {
   const flight = useRef<Flight | null>(null)
   const tmp = useRef({ pos: new THREE.Vector3(), normal: new THREE.Vector3(), scale: new THREE.Vector3(), endPos: new THREE.Vector3() })
 
+  const start = useRef((kind: Kind) => {
+    flight.current?.tween.kill()
+    const f: Flight = {
+      kind,
+      t: 0,
+      fromPos: camera.position.clone(),
+      fromTarget: target.current.clone(),
+      fromFov: camera.fov,
+      tween: null as unknown as gsap.core.Tween,
+    }
+    f.tween = gsap.to(f, {
+      t: 1,
+      duration: DURATION[kind],
+      ease: kind === 'orbit' ? 'none' : 'power3.inOut',
+      onComplete: () => {
+        if (kind === 'in') return lobbyStore.getState().markCameraArrived()
+        flight.current = null
+        if (kind === 'out') lobbyStore.getState().exitDone()
+      },
+    })
+    flight.current = f
+  })
+
   useEffect(() => {
     camera.position.copy(HOME_POS)
     camera.fov = FOV_HOME
@@ -41,39 +75,31 @@ export default function CameraRig() {
   }, [camera])
 
   useEffect(() => {
-    const start = (kind: Flight['kind']) => {
-      flight.current?.tween.kill()
-      const f: Flight = {
-        kind,
-        t: 0,
-        fromPos: camera.position.clone(),
-        fromTarget: target.current.clone(),
-        fromFov: camera.fov,
-        tween: null as unknown as gsap.core.Tween,
+    if (phase === 'entering') start.current('in')
+    if (phase === 'exiting') start.current('out')
+  }, [phase])
+
+  // attract: orbit on every third self-turn; any input (attract off) brings the camera home
+  useEffect(() => {
+    let turns = 0
+    return lobbyStore.subscribe((s, prev) => {
+      if (s.phase !== 'lobby') return
+      if (s.attract && s.activeIndex !== prev.activeIndex && ++turns % ORBIT_EVERY === 0) start.current('orbit')
+      if (!s.attract && prev.attract) {
+        turns = 0
+        if (flight.current?.kind === 'orbit') start.current('home')
       }
-      f.tween = gsap.to(f, {
-        t: 1,
-        duration: kind === 'in' ? IN_SEC : OUT_SEC,
-        ease: 'power3.inOut',
-        onComplete: () => {
-          if (kind === 'in') lobbyStore.getState().markCameraArrived()
-          else {
-            flight.current = null
-            lobbyStore.getState().exitDone()
-          }
-        },
-      })
-      flight.current = f
-    }
-    if (phase === 'entering') start('in')
-    if (phase === 'exiting') start('out')
-  }, [phase, camera])
+    })
+  }, [])
 
   useEffect(() => () => void flight.current?.tween.kill(), [])
 
   useFrame(() => {
     const f = flight.current
-    if (f) {
+    if (f?.kind === 'orbit') {
+      orbitPose(f.t, camera.position)
+      target.current.copy(HOME_TARGET)
+    } else if (f) {
       let endTarget = HOME_TARGET
       let endPos = HOME_POS
       let endFov = FOV_HOME
@@ -95,7 +121,8 @@ export default function CameraRig() {
       target.current.lerpVectors(f.fromTarget, endTarget, f.t)
       camera.fov = THREE.MathUtils.lerp(f.fromFov, endFov, f.t)
       camera.updateProjectionMatrix()
-      fx.focus = f.kind === 'in' ? Math.max(fx.focus, f.t) : Math.min(fx.focus, 1 - f.t)
+      if (f.kind === 'in') fx.focus = Math.max(fx.focus, f.t)
+      if (f.kind === 'out') fx.focus = Math.min(fx.focus, 1 - f.t)
     }
     camera.lookAt(target.current)
   })

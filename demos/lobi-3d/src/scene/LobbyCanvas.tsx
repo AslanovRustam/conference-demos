@@ -5,6 +5,7 @@ import Effects from './Effects'
 import Hall from './Hall'
 import HoloLogo from './HoloLogo'
 import { CAMERA_HOME, FOV_HOME } from './layout'
+import Precompile from './Precompile'
 
 export default function LobbyCanvas({ children }: { children?: ReactNode }) {
   // the game owns the GPU while it is on screen; the last lobby frame stays under the iframe
@@ -22,6 +23,7 @@ export default function LobbyCanvas({ children }: { children?: ReactNode }) {
       <Hall />
       <HoloLogo />
       {children}
+      <Precompile />
       <Effects />
     </Canvas>
   )

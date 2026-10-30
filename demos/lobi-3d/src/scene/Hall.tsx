@@ -1,4 +1,5 @@
 import { brandColors } from '@brand/tokens'
+import { MeshReflectorMaterial } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { useMemo } from 'react'
 import * as THREE from 'three'
@@ -60,6 +61,23 @@ function Platform() {
       <mesh position-y={0.06}>
         <cylinderGeometry args={[RADIUS + 0.9, RADIUS + 1.0, 0.12, 96]} />
         <meshStandardMaterial color="#0a0a0c" metalness={0.8} roughness={0.35} />
+      </mesh>
+      {/* glossy stage top: cabinets and neon mirror softly in it */}
+      <mesh position-y={0.121} rotation-x={-Math.PI / 2}>
+        <circleGeometry args={[RADIUS + 0.9, 96]} />
+        <MeshReflectorMaterial
+          resolution={512}
+          blur={[220, 80]}
+          mixBlur={1}
+          mixStrength={14}
+          roughness={0.55}
+          depthScale={1.1}
+          minDepthThreshold={0.4}
+          maxDepthThreshold={1.4}
+          color="#0b0b0e"
+          metalness={0.6}
+          mirror={0.8}
+        />
       </mesh>
       <mesh position-y={0.125} rotation-x={-Math.PI / 2} material={neon}>
         <torusGeometry args={[RADIUS + 0.9, 0.025, 8, 160]} />
