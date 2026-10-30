@@ -457,3 +457,93 @@
   top: calc(150 * var(--u));
   left: calc(24 * var(--u));
 }
+
+/* Заставка */
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 18px;
+  background: radial-gradient(ellipse at 50% 42%, #2a1660 0%, #1b0f3d 42%, #06030f 100%);
+  cursor: pointer;
+  font-family: var(--ck-font-body);
+  color: #fff;
+}
+
+.splash-logo {
+  height: clamp(26px, 5vw, 56px);
+}
+
+.splash-title {
+  font-family: var(--ck-font-display);
+  font-weight: 900;
+  font-size: clamp(56px, 13vw, 150px);
+  letter-spacing: 0.08em;
+  line-height: 1;
+  background: linear-gradient(180deg, #ffffff 10%, #c9b8ff 60%, #6a4fd6 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 30px rgba(201, 184, 255, 0.55));
+}
+
+.splash-tap {
+  font-family: var(--ck-font-display);
+  font-weight: 900;
+  font-size: clamp(16px, 3vw, 28px);
+  letter-spacing: 0.22em;
+}
+
+.splash-bar {
+  width: min(260px, 60vw);
+  height: 4px;
+  border-radius: 2px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.splash-bar > div {
+  height: 100%;
+  background: linear-gradient(90deg, #7a5cff, #ff4fd8);
+  transition: width 0.3s;
+}
+
+/* Attract-режим */
+.attract {
+  position: fixed;
+  inset: 0;
+  z-index: 15;
+  pointer-events: none;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 14px;
+  background: radial-gradient(ellipse at center, transparent 30%, rgba(6, 3, 15, 0.55) 100%);
+}
+
+.attract-logo {
+  height: clamp(22px, 4vw, 44px);
+  opacity: 0.9;
+}
+
+.attract-tap {
+  font-family: var(--ck-font-display);
+  font-weight: 900;
+  font-size: clamp(30px, 7vw, 84px);
+  letter-spacing: 0.12em;
+  color: #fff;
+  text-shadow: 0 0 30px rgba(201, 184, 255, 0.9), 0 0 80px rgba(255, 79, 216, 0.5);
+}
+
+.exit-btn {
+  padding: 0 calc(12 * var(--u));
+  height: calc(36 * var(--u));
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08) !important;
+  font-weight: 700 !important;
+  font-size: calc(11 * var(--u)) !important;
+  letter-spacing: 0.1em;
+}

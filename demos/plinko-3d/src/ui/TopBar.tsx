@@ -1,6 +1,8 @@
 import { brandLogo } from '@brand/tokens';
 import { useState } from 'react';
+import { isEmbed, postExit } from '../platform/embed';
 import { canFullscreen, toggleFullscreen } from '../platform/fullscreen';
+import { S } from '../strings';
 import { useSim } from '../sim/SimProvider';
 import { useGame } from '../state/store';
 import { BalanceCounter } from './BalanceCounter';
@@ -37,6 +39,7 @@ export function TopBar({ onLogoProps }: { onLogoProps?: React.HTMLAttributes<HTM
   const muted = useGame((s) => s.muted);
   const setMuted = useGame((s) => s.setMuted);
   const [fullscreen] = useState(canFullscreen);
+  const [embedded] = useState(() => isEmbed(location.search));
 
   return (
     <div className="topbar">
@@ -54,6 +57,11 @@ export function TopBar({ onLogoProps }: { onLogoProps?: React.HTMLAttributes<HTM
         >
           <SpeakerIcon muted={muted} />
         </button>
+        {embedded && (
+          <button className="exit-btn" onClick={() => postExit()}>
+            {S.exit}
+          </button>
+        )}
         {fullscreen && (
           <button className="icon-btn" aria-label="Fullscreen" onClick={() => void toggleFullscreen()}>
             <FullscreenIcon />

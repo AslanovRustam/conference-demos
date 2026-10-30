@@ -67,15 +67,16 @@ export class GameController {
     return this.celebratingNow;
   }
 
-  drop(opts: { kind?: 'player' | 'demo'; forceBig?: boolean } = {}): void {
+  /** true, если шарик появился прямо сейчас (а не отклонён или поставлен в очередь). */
+  drop(opts: { kind?: 'player' | 'demo'; forceBig?: boolean } = {}): boolean {
     const kind = opts.kind ?? 'player';
-    if (this.celebratingNow) return;
+    if (this.celebratingNow) return false;
     if (this.slowmo.activeBallId !== null) {
       // момент замедления не прерываем: бросок игрока выполнится после приземления
       if (kind === 'player') this.queued = Math.min(MAX_QUEUED_DROPS, this.queued + 1);
-      return;
+      return false;
     }
-    if (this.system.balls.length >= MAX_ACTIVE_BALLS) return;
+    if (this.system.balls.length >= MAX_ACTIVE_BALLS) return false;
 
     const bet = this.store.getState().bet;
     if (kind === 'player') {
@@ -90,6 +91,7 @@ export class GameController {
       this.forceNext = false;
     }
     this.spawn(kind, bet, force, true);
+    return true;
   }
 
   rain(opts: { mode: RainMode; count?: number }): void {

@@ -2,6 +2,7 @@
 import { createBus, type GameEvents } from '../core/events';
 import { createRng } from '../core/rng';
 import { createGameStore } from '../state/store';
+import { AttractDirector } from './attract';
 import { BallSystem } from './BallSystem';
 import { GameController } from './controller';
 import { SlowMoDirector } from './slowmo';
@@ -17,4 +18,9 @@ export function setup(seed: number) {
     for (let i = 0; i < n; i++) ctl.update(1 / 60);
   };
   return { st, bus, sys, slowmo, ctl, run };
+}
+
+export function setupWithAttract(seed: number) {
+  const kit = setup(seed);
+  return { ...kit, attract: new AttractDirector({ store: kit.st, controller: kit.ctl }) };
 }
