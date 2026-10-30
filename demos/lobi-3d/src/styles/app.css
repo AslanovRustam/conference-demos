@@ -188,3 +188,16 @@ button {
 .exit-button:active {
   background: var(--ck-red-pressed);
 }
+
+.fps {
+  position: fixed;
+  top: 0.8rem;
+  left: 50%;
+  translate: -50% 0;
+  z-index: 30;
+  padding: 0.3rem 0.7rem;
+  font: 600 0.85rem/1 var(--ck-font-body);
+  color: #59ea00;
+  background: rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}

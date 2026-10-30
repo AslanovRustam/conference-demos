@@ -3,8 +3,13 @@
 import { useEffect } from 'react'
 import { snapTarget } from '../carousel/math'
 import { lobbyStore } from '../state/store'
+import { params } from '../state/params'
 import { createDragTracker, pxToSlots } from './drag'
 import { mapKey, type Action } from './hotkeys'
+import { createIdleTimer } from './idle'
+
+const ATTRACT_IDLE_MS = (params.attractIdleSec ?? 45) * 1000
+const ATTRACT_STEP_MS = 6000
 
 export function applyAction(action: Action): void {
   const s = lobbyStore.getState()
@@ -33,18 +38,55 @@ export function wasJustDragged(): boolean {
   return performance.now() - lastDragEnd < 120
 }
 
-/** Any lobby input ends attract mode; the idle timer hooks in here later. */
+// nobody at the stand for a while: the lobby starts showing itself off
+const lobbyIdle = createIdleTimer(ATTRACT_IDLE_MS, () => {
+  const s = lobbyStore.getState()
+  if (s.phase === 'lobby') s.setAttract(true)
+})
+
+/** Any lobby input ends attract mode and restarts the idle countdown. */
 function noteInput() {
+  lobbyIdle.poke()
   const s = lobbyStore.getState()
   if (s.attract && s.phase === 'lobby') s.setAttract(false)
+}
+
+/** Idle countdown in the lobby and the self-turning carousel while attract is on. */
+export function useAttract(): void {
+  useEffect(() => {
+    let stepTimer: ReturnType<typeof setInterval> | null = null
+    const sync = () => {
+      const s = lobbyStore.getState()
+      if (s.phase === 'lobby') lobbyIdle.start()
+      else lobbyIdle.stop()
+      if (s.attract && s.phase === 'lobby') {
+        stepTimer ??= setInterval(() => lobbyStore.getState().step(1), ATTRACT_STEP_MS)
+      } else if (stepTimer) {
+        clearInterval(stepTimer)
+        stepTimer = null
+      }
+    }
+    sync()
+    let last = lobbyStore.getState()
+    const unsubscribe = lobbyStore.subscribe((s) => {
+      if (s.phase !== last.phase || s.attract !== last.attract) sync()
+      last = s
+    })
+    return () => {
+      unsubscribe()
+      lobbyIdle.stop()
+      if (stepTimer) clearInterval(stepTimer)
+    }
+  }, [])
 }
 
 export function useControls(): void {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const s = lobbyStore.getState()
-      if (s.phase === 'lobby') noteInput()
       const action = mapKey(e.key, s.phase, e.repeat)
+      // T toggles attract itself, so it must not first be cancelled as ordinary input
+      if (s.phase === 'lobby' && action?.type !== 'toggleAttract') noteInput()
       if (!action) return
       e.preventDefault()
       applyAction(action)
@@ -56,9 +98,10 @@ export function useControls(): void {
     let moved = false
 
     const onDown = (e: PointerEvent) => {
-      // HUD buttons sit above the canvas; only presses on the scene itself start a drag
-      if (!(e.target instanceof Element) || !e.target.closest('.canvas') || lobbyStore.getState().phase !== 'lobby') return
+      if (lobbyStore.getState().phase !== 'lobby') return
       noteInput()
+      // HUD buttons sit above the canvas; only presses on the scene itself start a drag
+      if (!(e.target instanceof Element) || !e.target.closest('.canvas')) return
       pointerId = e.pointerId
       startTarget = lobbyStore.getState().carouselTarget
       moved = false

@@ -1,6 +1,6 @@
 import rawConfig from '../games.config.json'
 import { buildSlots, loadManifest, validateConfig, type GameEntry } from './config/games'
-import { useControls, wasJustDragged } from './input/useControls'
+import { useAttract, useControls, wasJustDragged } from './input/useControls'
 import ExitButton from './game/ExitButton'
 import GameFrame from './game/GameFrame'
 import CameraRig from './scene/CameraRig'
@@ -8,6 +8,7 @@ import Carousel from './scene/Carousel'
 import LobbyCanvas from './scene/LobbyCanvas'
 import { params } from './state/params'
 import { lobbyStore } from './state/store'
+import FpsMeter from './ui/FpsMeter'
 import Hud from './ui/Hud'
 import LoadingScreen from './ui/LoadingScreen'
 
@@ -34,6 +35,7 @@ function selectCabinet(index: number) {
 
 export default function App() {
   useControls()
+  useAttract()
   return (
     <div className="app">
       <LobbyCanvas>
@@ -43,6 +45,7 @@ export default function App() {
       <Hud />
       <GameFrame />
       <ExitButton />
+      <FpsMeter />
       <LoadingScreen prepare={prepare} />
     </div>
   )
