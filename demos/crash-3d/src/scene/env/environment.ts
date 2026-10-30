@@ -14,6 +14,7 @@ import {
   type Material,
   type Texture,
   type WebGLRenderer,
+  type WebGLRenderTarget,
 } from 'three'
 import { QUALITY } from '../quality'
 
@@ -33,21 +34,32 @@ export function createEnvMaps(renderer: WebGLRenderer): { pad: Texture; space: T
   const checkShaders = renderer.debug.checkShaderErrors
   renderer.debug.checkShaderErrors = false
   const pmrem = new PMREMGenerator(renderer)
-  const bake = (scene: Scene) => {
-    const target = pmrem.fromScene(scene, 0, 0.1, 100, { size: QUALITY.envMapSize })
-    scene.traverse((o) => {
-      if (o instanceof Mesh) {
-        const material: Material = o.material
-        o.geometry.dispose()
-        material.dispose()
-      }
-    })
-    return target.texture
+  const targets: WebGLRenderTarget[] = []
+  const bake = (build: () => Scene) => {
+    const scene = build()
+    try {
+      const target = pmrem.fromScene(scene, 0, 0.1, 100, { size: QUALITY.envMapSize })
+      targets.push(target)
+      return target.texture
+    } finally {
+      scene.traverse((o) => {
+        if (o instanceof Mesh) {
+          const material: Material = o.material
+          o.geometry.dispose()
+          material.dispose()
+        }
+      })
+    }
   }
-  const maps = { pad: bake(padScene()), space: bake(spaceScene()) }
-  pmrem.dispose()
-  renderer.debug.checkShaderErrors = checkShaders
-  return maps
+  try {
+    return { pad: bake(padScene), space: bake(spaceScene) }
+  } catch (err) {
+    for (const t of targets) t.dispose()
+    throw err
+  } finally {
+    pmrem.dispose()
+    renderer.debug.checkShaderErrors = checkShaders
+  }
 }
 
 // ---------- builders ----------

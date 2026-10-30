@@ -20,7 +20,8 @@ export interface RocketTextures {
   hull: PbrSet
   carbon: PbrSet
   nozzle: PbrSet
-  shield: PbrSet
+  shield: PbrSet // capsule heat shield (polar uv)
+  plate: PbrSet // the same shield canvases at the scale of the engine plate (meter uv)
   logo: CanvasTexture
 }
 
@@ -28,11 +29,23 @@ const TAU = Math.PI * 2
 export const CARBON_TILE_M = 0.64 // one carbon tile covers this many meters
 
 let pending: Promise<RocketTextures> | null = null
+let built: RocketTextures | null = null
 
-// built once per page; waits for the brand fonts so the livery never falls back to a system font
+// built once and shared while the rocket is mounted; waits for the brand fonts so the livery never
+// falls back to a system font
 export function loadRocketTextures(): Promise<RocketTextures> {
-  pending ??= build()
+  pending ??= build().then((t) => (built = t))
   return pending
+}
+
+// frees the gpu copy of every rocket texture and forgets the cache, so the next mount builds afresh.
+// the canvases stay attached: a texture still in use simply uploads again (webgl context restore needs them too)
+export function disposeRocketTextures(): void {
+  pending = null
+  if (!built) return
+  const { hull, carbon, nozzle, shield, plate, logo } = built
+  for (const set of [hull, carbon, nozzle, shield, plate]) for (const t of Object.values(set)) t.dispose()
+  logo.dispose()
 }
 
 async function build(): Promise<RocketTextures> {
@@ -48,7 +61,7 @@ async function build(): Promise<RocketTextures> {
   const nozzle = paintNozzle()
   await yieldFrame()
   const shield = paintShield()
-  return { hull, carbon, nozzle, shield, logo: paintLogo() }
+  return { hull, carbon, nozzle, shield, plate: rescale(shield, 1.5, 1.5), logo: paintLogo() }
 }
 
 const yieldFrame = () => new Promise<void>((resolve) => setTimeout(resolve, 0))
@@ -402,7 +415,8 @@ function paintHull(rng: Rng): PbrSet {
   })
 
   // large mottling in the paint and the roughness
-  const mottle = field(w / 8, h / 8, (u, v, px) => {
+  const ds = QUALITY.rocketNoiseDownscale
+  const mottle = field(w / (ds * 2), h / (ds * 2), (u, v, px) => {
     const n = fbm(u * 12, v * 40, 12, 4, 11)
     const k = 225 + n * 30
     px[0] = k
@@ -413,7 +427,7 @@ function paintHull(rng: Rng): PbrSet {
   c.drawImage(mottle, 0, 0, w, h)
   c.globalCompositeOperation = 'source-over'
   release(mottle)
-  const roughNoise = field(w / 4, h / 4, (u, v, px) => {
+  const roughNoise = field(w / ds, h / ds, (u, v, px) => {
     const n = fbm(u * 24, v * 90, 24, 5, 23)
     px[0] = 0
     px[1] = Math.max(0, n - 0.35) * 70
@@ -537,28 +551,29 @@ function paintHull(rng: Rng): PbrSet {
 
   // engine soot: dense at the skirt lip, fading up the first stage in noisy, rising streaks
   const sootTop = 13
-  const sootH = Math.ceil(((sootTop - SOOT_FLOOR) * p.sy) / 4)
-  const mask = new Float32Array((w / 4) * sootH)
+  const sootW = Math.round(w / ds)
+  const sootH = Math.ceil(((sootTop - SOOT_FLOOR) * p.sy) / ds)
+  const mask = new Float32Array(sootW * sootH)
   for (let j = 0; j < sootH; j++) {
     const y = sootTop - ((j + 0.5) / sootH) * (sootTop - SOOT_FLOOR)
-    for (let i = 0; i < w / 4; i++) mask[j * (w / 4) + i] = sootAt((i + 0.5) / (w / 4), y)
+    for (let i = 0; i < sootW; i++) mask[j * sootW + i] = sootAt((i + 0.5) / sootW, y)
   }
-  const sootColor = field(w / 4, sootH, (u, v, px) => {
+  const sootColor = field(sootW, sootH, (u, v, px) => {
     const warm = clamp01((sootTop - v * (sootTop - SOOT_FLOOR) - DIM.skirtBottom) / 5)
     px[0] = lerp(14, 52, warm)
     px[1] = lerp(12, 42, warm)
     px[2] = lerp(10, 33, warm)
-    px[3] = mask[Math.floor(v * sootH) * (w / 4) + Math.floor(u * (w / 4))] * 255
+    px[3] = mask[Math.floor(v * sootH) * sootW + Math.floor(u * sootW)] * 255
   })
   // soot kills the clearcoat and roughens the paint
-  const sootOrm = field(w / 4, sootH, (u, v, px) => {
+  const sootOrm = field(sootW, sootH, (u, v, px) => {
     px[0] = 20
     px[1] = 220
     px[2] = 0
-    px[3] = mask[Math.floor(v * sootH) * (w / 4) + Math.floor(u * (w / 4))] * 255
+    px[3] = mask[Math.floor(v * sootH) * sootW + Math.floor(u * sootW)] * 255
   })
-  c.drawImage(sootColor, 0, p.row(sootTop), w, sootH * 4)
-  o.drawImage(sootOrm, 0, p.row(sootTop), w, sootH * 4)
+  c.drawImage(sootColor, 0, p.row(sootTop), w, sootH * ds)
+  o.drawImage(sootOrm, 0, p.row(sootTop), w, sootH * ds)
   release(sootColor)
   release(sootOrm)
 
@@ -713,7 +728,16 @@ function paintShield(): PbrSet {
     px[0] = px[1] = px[2] = k
   })
   const normal = normalFromHeight(height, () => 16, () => 16, true)
-  return { color: texture(color, true, true), orm: texture(orm, false, true), normal: texture(normal, false, true) }
+  const set = { color: texture(color, true, true), orm: texture(orm, false, true), normal: texture(normal, false, true) }
+  for (const t of Object.values(set)) t.repeat.set(10, 3) // polar uv: 10 tiles around, 3 from center to rim
+  return set
+}
+
+// another view of the same canvases with its own tiling (clones share the image source)
+function rescale(set: PbrSet, x: number, y: number): PbrSet {
+  const out = { color: set.color.clone(), orm: set.orm.clone(), normal: set.normal.clone() }
+  for (const t of Object.values(out)) t.repeat.set(x, y)
+  return out
 }
 
 // ---------- capsule logo decal ----------
@@ -721,7 +745,7 @@ function paintShield(): PbrSet {
 // the brand logo is plain filled paths: drawn as Path2D straight from the svg source,
 // so there is no image decode and no canvas tainting on any browser
 function paintLogo(): CanvasTexture {
-  const w = 2048
+  const w = QUALITY.rocketLogoTexture
   const h = Math.round(w / DECAL.aspect)
   const { c, ctx } = canvas(w, h)
   const box = /viewBox="([^"]+)"/.exec(logoSvg)?.[1].trim().split(/[\s,]+/).map(Number) ?? [0, 0, 262, 36]

@@ -1,19 +1,22 @@
 import { useFrame, useThree } from '@react-three/fiber'
-import { use, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { use, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { Group, Object3D, Texture } from 'three'
 import { createEnvMaps } from '../env/environment'
 import { rig } from '../rig'
 import { buildRocketGeometry, DIM, NOZZLES } from './geometry'
 import { createRocketMaterials } from './materials'
 import { rocketRefs } from './refs'
-import { loadRocketTextures } from './textures'
+import { disposeRocketTextures, loadRocketTextures } from './textures'
 
 // the space reflections take over while the rocket is inside the cloud layer, so the swap is never seen
 const SPACE_ENV_STAGE = 1.6
 
 // the hero rocket: procedural geometry, pbr materials, canvas textures; suspends until the textures exist
 export function Rocket() {
-  const textures = use(loadRocketTextures())
+  // the promise is pinned per instance: unmount resets the shared cache, and a dev strict-mode
+  // remount (or a later re-render) must not start a second build
+  const [texturesReady] = useState(loadRocketTextures)
+  const textures = use(texturesReady)
   const gl = useThree((s) => s.gl)
   const scene = useThree((s) => s.scene)
   const geo = useMemo(buildRocketGeometry, [])
@@ -40,6 +43,7 @@ export function Rocket() {
       const { capsule: parts, ...rest } = geo
       for (const g of [...Object.values(rest), ...Object.values(parts)]) g.dispose()
       for (const m of Object.values(mats)) m.dispose()
+      disposeRocketTextures()
     },
     [geo, mats],
   )

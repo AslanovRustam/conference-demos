@@ -64,15 +64,15 @@ export function createRocketMaterials(t: RocketTextures): RocketMaterials {
     roughnessMap: t.shield.orm,
     normalMap: t.shield.normal,
   })
-  for (const tex of [t.shield.color, t.shield.orm, t.shield.normal]) tex.repeat.set(10, 3)
 
-  const plate = {
-    map: t.shield.color.clone(),
-    roughnessMap: t.shield.orm.clone(),
-    normalMap: t.shield.normal.clone(),
-  }
-  for (const tex of Object.values(plate)) tex.repeat.set(1.5, 1.5)
-  const base = new MeshPhysicalMaterial({ ...plate, color: '#8c8782', metalness: 0.6, roughness: 1 })
+  const base = new MeshPhysicalMaterial({
+    map: t.plate.color,
+    color: '#8c8782',
+    metalness: 0.6,
+    roughness: 1,
+    roughnessMap: t.plate.orm,
+    normalMap: t.plate.normal,
+  })
 
   const boot = new MeshPhysicalMaterial({
     color: '#16171a',
