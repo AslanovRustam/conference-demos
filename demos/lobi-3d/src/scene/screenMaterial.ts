@@ -46,10 +46,10 @@ const fragment = /* glsl */ `
       float bar = step(abs(uv.y - 0.16), 0.012) * step(abs(uv.x - x), 0.12);
       col = mix(col * 0.55, vec3(1.6), bar);
     }
-    col *= 0.86 + 0.14 * sin(uv.y * 700.0 - uTime * 8.0);
-    col += (hash(floor(uv * vec2(480.0, 270.0)) + fract(uTime)) - 0.5) * 0.05;
+    col *= 0.96 + 0.04 * sin(uv.y * 700.0 - uTime * 8.0);
+    col += (hash(floor(uv * vec2(480.0, 270.0)) + fract(uTime)) - 0.5) * 0.02;
     float edge = max(abs(uv.x - 0.5), abs(uv.y - 0.5)) * 2.0;
-    col += uColor * smoothstep(0.93, 1.0, edge) * 1.4;
+    col *= 1.0 - smoothstep(0.9, 1.0, edge) * 0.35;
     col += uColor * uFlash;
     gl_FragColor = vec4(col * uDim, 1.0);
   }

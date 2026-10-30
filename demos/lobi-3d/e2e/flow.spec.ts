@@ -82,7 +82,7 @@ test('corner exit button', async ({ page }) => {
 })
 
 test('idle in game returns to lobby in attract', async ({ page }) => {
-  await page.goto('/?idle=2')
+  await page.goto('/?idle=2&quality=low')
   await expect.poll(() => phase(page)).toBe('lobby')
   const n = await testGameNumber(page)
   await page.evaluate((n) => (window as any).__lobby.getState().openGame(n), n)
@@ -92,7 +92,7 @@ test('idle in game returns to lobby in attract', async ({ page }) => {
 })
 
 test('input in game keeps it open', async ({ page }) => {
-  await page.goto('/?idle=3')
+  await page.goto('/?idle=3&quality=low')
   await expect.poll(() => phase(page)).toBe('lobby')
   const n = await testGameNumber(page)
   await page.evaluate((n) => (window as any).__lobby.getState().openGame(n), n)

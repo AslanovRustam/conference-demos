@@ -7,13 +7,19 @@ test('parseParams reads presenter and test overrides', () => {
     attractIdleSec: 2,
     testGameQuery: 'noready=1',
     fps: true,
+    quality: 'high',
   })
 })
 
 test('parseParams defaults', () => {
-  expect(parseParams('')).toEqual({ testGameQuery: '', fps: false })
+  expect(parseParams('')).toEqual({ testGameQuery: '', fps: false, quality: 'high' })
+})
+
+test('quality=low for weak hardware; anything else is high', () => {
+  expect(parseParams('?quality=low').quality).toBe('low')
+  expect(parseParams('?quality=ultra').quality).toBe('high')
 })
 
 test('parseParams ignores non-numeric timings', () => {
-  expect(parseParams('?idle=abc')).toEqual({ testGameQuery: '', fps: false })
+  expect(parseParams('?idle=abc')).toEqual({ testGameQuery: '', fps: false, quality: 'high' })
 })

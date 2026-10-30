@@ -1,4 +1,5 @@
 import { MeshReflectorMaterial } from '@react-three/drei'
+import { params } from '../state/params'
 import { RADIUS } from './layout'
 import RouletteRing from './RouletteRing'
 
@@ -20,9 +21,12 @@ function Platform() {
         <cylinderGeometry args={[RADIUS + 1.32, RADIUS + 1.4, 0.12, 128]} />
         <meshPhysicalMaterial color="#050405" roughness={0.3} metalness={0.4} clearcoat={0.6} envMapIntensity={0.2} />
       </mesh>
-      {/* glossy stage top: cabinets mirror softly in it */}
+      {/* glossy stage top: cabinets mirror softly in it (a second scene render, skipped on low quality) */}
       <mesh position-y={0.121} rotation-x={-Math.PI / 2}>
         <circleGeometry args={[RADIUS + 0.5, 96]} />
+        {params.quality === 'low' ? (
+          <meshPhysicalMaterial color="#050406" roughness={0.3} metalness={0.4} clearcoat={0.8} envMapIntensity={0.3} />
+        ) : (
         <MeshReflectorMaterial
           resolution={512}
           blur={[220, 80]}
@@ -36,6 +40,7 @@ function Platform() {
           metalness={0.2}
           mirror={0.8}
         />
+        )}
       </mesh>
       <RouletteRing inner={RADIUS + 0.55} outer={RADIUS + 1.25} y={0.124} />
     </group>

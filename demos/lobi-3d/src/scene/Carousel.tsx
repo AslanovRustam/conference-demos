@@ -38,6 +38,9 @@ export default function Carousel({ onSelect }: { onSelect: (index: number) => vo
   })
 
   return (
+    <>
+      {/* the front position is always the active cabinet: one spotlight picks it out */}
+      <spotLight position={[0, 6.2, RADIUS + 1.6]} angle={0.32} penumbra={0.55} intensity={42} color="#fff1e0" target-position={[0, 1.2, RADIUS]} />
     <group ref={ref}>
       {slots.map((slot, i) => {
         const t = slotTransform(i, n, RADIUS)
@@ -50,5 +53,6 @@ export default function Carousel({ onSelect }: { onSelect: (index: number) => vo
         )
       })}
     </group>
+    </>
   )
 }
