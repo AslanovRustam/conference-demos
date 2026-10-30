@@ -1,9 +1,9 @@
-import { brandLogo } from '@brand/tokens'
+import LobbyCanvas from './scene/LobbyCanvas'
 
 export default function App() {
   return (
     <div className="app">
-      <img className="splash-logo" src={brandLogo.red} alt="Clickable" />
+      <LobbyCanvas />
     </div>
   )
 }
