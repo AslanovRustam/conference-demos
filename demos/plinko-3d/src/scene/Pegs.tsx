@@ -8,6 +8,7 @@ import { useGame } from '../state/store';
 import { pegGlow } from './fxStore';
 import { createCrystalMaterial } from './materials';
 import { CRYSTAL, pegHue } from './palette';
+import { useRowsTransition } from './rowsTransition';
 
 const CAPACITY = pegCount(16);
 const IDLE_HALO = 0.3; // мягкое лавандовое свечение кристалла в покое
@@ -39,6 +40,7 @@ export function Pegs() {
   const quality = useGame((s) => s.quality);
   const crystals = useRef<THREE.InstancedMesh>(null);
   const glows = useRef<THREE.InstancedMesh>(null);
+  const transition = useRowsTransition(rows);
 
   // Почти круглый граненый кристалл: визуальная граница близка к физическому радиусу касания
   const geometry = useMemo(() => new THREE.IcosahedronGeometry(PEG_RADIUS * 1.1, 0).scale(1, 1.1, 1), []);
@@ -85,16 +87,18 @@ export function Pegs() {
     const halo = glows.current;
     if (!mesh || !halo) return;
     pegGlow.decay(dt);
-    const { pegs } = boardLayout(rows);
+    const { pegs } = boardLayout(transition.shown);
     const t = clock.elapsedTime;
+    const now = performance.now() / 1000;
     for (let i = 0; i < pegs.length; i++) {
       const peg = pegs[i];
       const glow = pegGlow.values[peg.flat];
       const spin = spins[peg.flat];
+      const appear = transition.scaleFor(peg.row, now);
       tmp.p.set(peg.x, peg.y, 0);
       tmp.e.set(spin.x, spin.y + t * 0.15, 0);
       tmp.q.setFromEuler(tmp.e);
-      const s = 1 + 0.35 * glow;
+      const s = (1 + 0.35 * glow) * appear;
       tmp.s.set(s, s, s);
       mesh.setMatrixAt(i, tmp.m.compose(tmp.p, tmp.q, tmp.s));
       tmp.c.setHSL(pegHue(peg.flat, t), 1, 0.65);
@@ -102,7 +106,7 @@ export function Pegs() {
       mesh.setColorAt(i, tmp.tint);
 
       tmp.q.identity();
-      const hs = 1.15 + 0.6 * glow;
+      const hs = (1.15 + 0.6 * glow) * appear;
       tmp.s.set(hs, hs, hs);
       tmp.p.set(peg.x, peg.y, 0.05);
       halo.setMatrixAt(i, tmp.m.compose(tmp.p, tmp.q, tmp.s));

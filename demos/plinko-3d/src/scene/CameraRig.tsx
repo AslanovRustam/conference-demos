@@ -2,7 +2,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import gsap from 'gsap';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
-import { computeFraming } from '../math/framing';
+import { computeFraming, type Framing } from '../math/framing';
 import { boardLayout } from '../math/layout';
 import { useSim } from '../sim/SimProvider';
 import { useGame } from '../state/store';
@@ -27,6 +27,7 @@ export function CameraRig() {
   const follow = useRef({ k: 0, ballId: null as number | null, x: 0, y: 0 });
   const shake = useRef({ amp: 0, dur: 1, t: 1 });
   const target = useMemo(() => new THREE.Vector3(), []);
+  const smooth = useRef<Framing | null>(null);
 
   useEffect(() => {
     const f = follow.current;
@@ -69,12 +70,19 @@ export function CameraRig() {
       f.y += (ball.sample.y - f.y) * a;
     }
 
+    // Смена рядов и размера окна: камера плавно переезжает к новому кадру (около 0.6 с)
+    const base = (smooth.current ??= { ...framing });
+    const ease = 1 - Math.exp(-dt * 6);
+    base.x += (framing.x - base.x) * ease;
+    base.y += (framing.y - base.y) * ease;
+    base.z += (framing.z - base.z) * ease;
+
     const k = f.k;
-    const bx = framing.x + Math.sin(t * 0.3) * 0.05;
-    const by = framing.y + Math.cos(t * 0.25) * 0.05;
+    const bx = base.x + Math.sin(t * 0.3) * 0.05;
+    const by = base.y + Math.cos(t * 0.25) * 0.05;
     let x = bx + (f.x - bx) * k;
     let y = by + (f.y - by) * k;
-    const z = framing.z * (1 - k * (1 - FOLLOW_DISTANCE));
+    const z = base.z * (1 - k * (1 - FOLLOW_DISTANCE));
 
     const s = shake.current;
     let roll = 0;

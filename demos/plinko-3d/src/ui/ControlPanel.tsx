@@ -25,7 +25,7 @@ function Stepper(props: { label: string; value: string; testid: string; canDown:
 }
 
 export function ControlPanel() {
-  const { bus, controller } = useSim();
+  const { bus, controller, store } = useSim();
   const bet = useGame((s) => s.bet);
   const risk = useGame((s) => s.risk);
   const rows = useGame((s) => s.rows);
@@ -36,6 +36,11 @@ export function ControlPanel() {
   const [raining, setRaining] = useState(controller.rainActive);
   const locked = inFlight > 0;
   const click = () => bus.emit('ui:click', {});
+  // Берём текущее значение из стора: быстрые клики подряд не теряются
+  const stepRows = (dir: 1 | -1) => {
+    const next = store.getState().rows + dir;
+    return next >= ROWS_MIN && next <= ROWS_MAX && setRows(next as Rows);
+  };
 
   useEffect(() => {
     const a = bus.on('rain:start', () => setRaining(true));
@@ -71,10 +76,10 @@ export function ControlPanel() {
           canDown={!locked && rows > ROWS_MIN}
           canUp={!locked && rows < ROWS_MAX}
           onDown={() => {
-            if (setRows((rows - 1) as Rows)) click();
+            if (stepRows(-1)) click();
           }}
           onUp={() => {
-            if (setRows((rows + 1) as Rows)) click();
+            if (stepRows(1)) click();
           }}
         />
       </div>
