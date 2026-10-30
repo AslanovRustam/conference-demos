@@ -38,6 +38,10 @@ export function createAttractMode(
       engine.setAttract(false)
       return true
     },
+    // straight into the loop (the stand after its splash); never mid-round
+    start(): void {
+      if (engine.snapshot().phase === 'betting') engine.setAttract(true)
+    },
     dispose(): void {
       idle.dispose()
     },

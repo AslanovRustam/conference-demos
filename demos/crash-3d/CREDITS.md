@@ -22,3 +22,9 @@ in the public domain.
 | `public/textures/earth/8k/night.jpg` | NASA Earth Observatory, Black Marble 2016: https://eoimages.gsfc.nasa.gov/images/imagerecords/144000/144898/BlackMarble_2016_3km.jpg |
 | `public/textures/earth/8k/clouds.jpg` | NASA Visible Earth, Blue Marble cloud composite: https://eoimages.gsfc.nasa.gov/images/imagerecords/57000/57747/cloud_combined_8192.tif |
 | `public/textures/moon/moon-4k.jpg` | NASA Scientific Visualization Studio, CGI Moon Kit (LRO colour mosaic): https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/lroc_color_poles_4k.tif |
+
+## Original work
+
+The app icon (`public/icon.svg` and the PWA icons generated from it), the rocket, the launch pad, the orbital station
+and every effect (clouds, plume, explosion, nebulae, warp, aurora, meteors) are made for this demo, procedurally or in
+code. No third-party models or textures beyond the NASA imagery above.

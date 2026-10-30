@@ -9,6 +9,7 @@ interface GameState {
   muted: boolean
   camLabel: string
   presenterOpen: boolean
+  ready: boolean // the scene is loaded, compiled and on screen
   setMuted(v: boolean): void
   setCamLabel(v: string): void
   setPresenterOpen(v: boolean): void
@@ -19,6 +20,7 @@ export const useGame = create<GameState>((set) => ({
   muted: loadMuted(safeStorage),
   camLabel: '',
   presenterOpen: false,
+  ready: false,
   setMuted: (muted) => set({ muted }),
   setCamLabel: (camLabel) => set({ camLabel }),
   setPresenterOpen: (presenterOpen) => set({ presenterOpen }),

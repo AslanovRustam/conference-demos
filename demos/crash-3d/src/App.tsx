@@ -9,12 +9,15 @@ import { primaryAction, runtime } from './game/runtime'
 import { toggleMute, useGame } from './game/store'
 import { bindKeyboard } from './platform/input'
 import { params } from './platform/params'
+import { exitToLobby, parseLobbyMessage, readyToLobby } from './platform/embed'
 import { createCodeDetector } from './platform/presenter'
 import { loadCloudNoise } from './scene/clouds/noise'
 import { QUALITY } from './scene/quality'
 import { rig } from './scene/rig'
 import { Stage } from './scene/Stage'
 import { Hud } from './ui/Hud'
+import { Splash } from './ui/Splash'
+import './ui/splash.css'
 
 // the cloud noise takes a moment in its workers: start it with the page, the stage waits for it while it loads
 void loadCloudNoise()
@@ -39,6 +42,19 @@ export default function App() {
     // the stand's idle loop; any key or touch pokes it, the first one after attract only wakes the game
     const attract = createAttractMode(engine, undefined, () => !isStageReady())
     const wake = () => void attract.input()
+    // the stand boots into the idle loop once its splash is gone; the lobby (embed) and debug sessions start on the
+    // betting screen. the lobby hears that the game is ready
+    const unsubReady = useGame.subscribe((s, prev) => {
+      if (!s.ready || prev.ready) return
+      readyToLobby()
+      if (!params.embed && !params.debug) attract.start()
+    })
+    // the lobby mutes the game with itself (not saved: the visitor's own choice stays)
+    const onLobby = (e: MessageEvent) => {
+      const msg = parseLobbyMessage(e, location.origin, window.parent)
+      if (msg?.type === 'mute') useGame.getState().setMuted(msg.muted)
+    }
+    if (params.embed) window.addEventListener('message', onLobby)
     window.addEventListener('pointerdown', wake, true)
     const stopLoop = startLoop(() => {
       attract.tick()
@@ -54,14 +70,17 @@ export default function App() {
       auto: (d) => engine.stepAuto(d),
       toggleAuto: () => engine.toggleAuto(),
       mute: toggleMute,
-      exit: () => {},
-      anyInput: () => attract.input(),
+      exit: () => exitToLobby(),
+      // nothing reaches the game under the splash
+      anyInput: () => !isStageReady() || attract.input(),
       code: (k) => feed(k, performance.now()),
     })
     return () => {
       stopLoop()
       unbind()
       attract.dispose()
+      unsubReady()
+      window.removeEventListener('message', onLobby)
       window.removeEventListener('pointerdown', wake, true)
       window.removeEventListener('pointerdown', unlock, true)
       window.removeEventListener('keydown', unlock, true)
@@ -86,6 +105,7 @@ export default function App() {
         <Stage />
       </Canvas>
       <Hud />
+      <Splash />
     </>
   )
 }

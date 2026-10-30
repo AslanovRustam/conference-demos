@@ -1,5 +1,6 @@
 import { brandLogo } from '@brand/tokens'
 import { useGame } from '../game/store'
+import { params } from '../platform/params'
 import { AltitudeScale } from './AltitudeScale'
 import { AttractOverlay } from './AttractOverlay'
 import { Balance } from './Balance'
@@ -7,6 +8,7 @@ import { Banner } from './Banner'
 import { BetControls } from './BetControls'
 import { Confetti } from './Confetti'
 import { Countdown } from './Countdown'
+import { ExitButton } from './ExitButton'
 import { History } from './History'
 import './hud.css'
 import { MainButton } from './MainButton'
@@ -27,7 +29,7 @@ export function Hud() {
   const setPresenterOpen = useGame((s) => s.setPresenterOpen)
   const hold = useLongPress(PRESENTER_HOLD_MS, () => setPresenterOpen(true))
   return (
-    <div className="hud" data-attract={attract || undefined}>
+    <div className="hud" data-attract={attract || undefined} data-embed={params.embed || undefined}>
       <div className="hud-shade" aria-hidden />
       <div className="hud-bar hud-bar--top" aria-hidden />
       <div className="hud-bar hud-bar--bottom" aria-hidden />
@@ -40,6 +42,7 @@ export function Hud() {
         <MuteButton />
       </div>
       <Telemetry />
+      <ExitButton />
       <Balance />
       <History />
       <Multiplier />

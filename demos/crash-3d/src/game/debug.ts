@@ -1,6 +1,7 @@
 import type { RoundSnapshot } from '../core/types'
 import { params } from '../platform/params'
 import { runtime } from './runtime'
+import { useGame } from './store'
 
 declare global {
   interface Window {
@@ -18,17 +19,15 @@ export function installDebug(): void {
   }
 }
 
-let stageReady = false
-
-// the scene is on screen (the attract idle clock waits for it)
+// the scene is on screen (the splash, the input and the attract idle clock wait for it)
 export function isStageReady(): boolean {
-  return stageReady
+  return useGame.getState().ready
 }
 
 // the stage calls it once the scene has loaded and 30 frames have rendered. screenshots and e2e wait for
 // window.__crashReady; the hud fonts must be in too
 export function markReady(): void {
-  stageReady = true
+  useGame.setState({ ready: true })
   if (!params.debug) return
   void document.fonts.ready.then(() => {
     window.__crashReady = true

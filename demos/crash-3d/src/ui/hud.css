@@ -1161,3 +1161,30 @@ html {
 .presenter-btn--boom {
   background: var(--red);
 }
+
+/* ------------------------------------------------------------ lobby exit (?embed=1) */
+
+.hud-exit {
+  --ck-chamfer: 0.5rem;
+  position: absolute;
+  top: var(--top);
+  right: var(--edge-r);
+  height: 2rem;
+  padding: 0 0.9rem;
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  text-shadow: none;
+}
+@media (min-aspect-ratio: 1/1) {
+  .hud-exit {
+    height: 2.6rem;
+    padding: 0 1.3rem;
+    font-size: 0.95rem;
+  }
+  /* the telemetry shares the top right corner with it */
+  .hud[data-embed] .hud-telemetry {
+    right: calc(var(--edge-r) + 8rem);
+  }
+}

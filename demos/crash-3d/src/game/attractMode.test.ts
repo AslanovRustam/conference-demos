@@ -3,7 +3,7 @@ import { attractRound } from '../core/attract'
 import { IDLE_TO_ATTRACT_S } from '../core/config'
 import { Emitter } from '../core/events'
 import { RoundEngine } from '../core/round'
-import { createAttractMode } from './attractMode'
+import { ATTRACT_GAP_S, createAttractMode } from './attractMode'
 
 function setup(held = () => false) {
   let now = 0
@@ -102,4 +102,16 @@ test('a stage still loading holds the idle clock', () => {
   expect(engine.snapshot().attract).toBe(false)
   run(1.1)
   expect(engine.snapshot().attract).toBe(true)
+})
+
+test('start() drops the stand straight into the attract loop (after the splash)', () => {
+  const { engine, mode, run } = setup()
+  mode.start()
+  run(ATTRACT_GAP_S + 0.1)
+  expect(engine.snapshot()).toMatchObject({ attract: true, phase: 'countdown' })
+  // not mid-round
+  const busy = setup()
+  busy.engine.launch()
+  busy.mode.start()
+  expect(busy.engine.snapshot().attract).toBe(false)
 })
