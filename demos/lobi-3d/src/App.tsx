@@ -1,3 +1,4 @@
+import { useLobbySound } from './audio/useLobbySound'
 import { buildSlots, loadManifest, type GameEntry } from './config/games'
 import { config } from './config/lobbyConfig'
 import { useAttract, useControls, wasJustDragged } from './input/useControls'
@@ -34,6 +35,7 @@ function selectCabinet(index: number) {
 export default function App() {
   useControls()
   useAttract()
+  useLobbySound()
   return (
     <div className="app">
       <LobbyCanvas>
