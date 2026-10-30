@@ -24,6 +24,7 @@ export default function App() {
   useEffect(() => {
     const { engine } = runtime
     installDebug()
+    if (params.rare !== null) engine.forceRare(params.rare)
     if (params.freeze !== null) engine.freezeAt(params.freeze)
     // sound: browsers keep it silent until the first touch or key, the mute state comes from the store
     const audio = createAudio(useGame.getState().muted)

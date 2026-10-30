@@ -1,6 +1,7 @@
 import { Vector3 } from 'three'
 import type { Rng } from '../../core/rng'
 import type { FlightRig } from '../rig'
+import { shotRequest } from './shotRequest'
 import { SHOTS, type CameraPose, type ShotId } from './shots'
 
 const CUT_MIN = 3 // seconds between cuts in flight
@@ -65,6 +66,10 @@ export function createDirector(rng: Rng): Director {
           else if (rig.phase === 'countdown' && shot === 'padWide' && age >= PAD_CLOSE_AT) cutTo('padClose')
         } else if (mode === 'eject' && shot === 'capsuleFollow') {
           if (age >= CAPSULE_S) cutTo(rng() < 0.5 ? 'sideChase' : 'wide')
+        } else if (mode !== 'crash' && shotRequest.shot) {
+          // a rare event's camera (never over the pad, the capsule or the crash)
+          cutTo(shotRequest.shot, shotRequest.hold)
+          shotRequest.shot = null
         } else if (mode !== 'crash' && age >= hold) {
           cutTo(nextFlightShot(rig.stageF))
         }

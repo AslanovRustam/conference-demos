@@ -44,6 +44,17 @@ const smooth = (a: number, b: number, x: number) => {
   return k * k * (3 - 2 * k)
 }
 
+const framed = new Vector3()
+
+// where the earth's centre sits in the far field (relative to the camera) and its radius there: straight below at
+// first, further out it slides in front of the shot. the rare events (scene/rare) place their effects on it too
+export function earthCenter(stageF: number, altM: number, out: Vector3): number {
+  const f = shotFrame.forward
+  framed.set(f.x * Math.cos(AWAY_DIP), -Math.sin(AWAY_DIP), f.z * Math.cos(AWAY_DIP))
+  out.set(0, -1, 0).lerp(framed, smooth(AWAY[0], AWAY[1], stageF)).normalize().multiplyScalar(FAR_EARTH_D)
+  return FAR_EARTH_D * (R_KM / (R_KM + altM / 1000))
+}
+
 // three's sphere uv: longitude 0 at +x, east towards -z, latitude up y
 function surfacePoint(lat: number, lon: number, out = new Vector3()) {
   return out.set(Math.cos(lon) * Math.cos(lat), Math.sin(lat), -Math.sin(lon) * Math.cos(lat))
@@ -217,7 +228,7 @@ export function Earth() {
   }, [day, night, clouds, spec])
   const group = useRef<Group>(null)
   const tmp = useMemo(
-    () => ({ align: new Quaternion(), spin: new Quaternion(), local: new Vector3(), dir: new Vector3(), face: new Vector3(), framed: new Vector3(), spinAxis: new Vector3() }),
+    () => ({ align: new Quaternion(), spin: new Quaternion(), local: new Vector3(), dir: new Vector3(), face: new Vector3(), spinAxis: new Vector3() }),
     [],
   )
 
@@ -238,12 +249,8 @@ export function Earth() {
     g.visible = a > 0.001
     if (!g.visible) return
     mats.alpha.value = a
-    const r = FAR_EARTH_D * (R_KM / (R_KM + rig.altM / 1000))
-    // straight below at first; further out it slides in front of the shot
-    const f = shotFrame.forward
-    tmp.framed.set(f.x * Math.cos(AWAY_DIP), -Math.sin(AWAY_DIP), f.z * Math.cos(AWAY_DIP))
-    tmp.dir.set(0, -1, 0).lerp(tmp.framed, smooth(AWAY[0], AWAY[1], rig.stageF)).normalize()
-    g.position.copy(tmp.dir).multiplyScalar(FAR_EARTH_D)
+    const r = earthCenter(rig.stageF, rig.altM, g.position)
+    tmp.dir.copy(g.position).normalize()
     g.scale.setScalar(r)
     // europe turned towards the camera, turning slowly around the earth's own axis
     surfacePoint(BELOW_LAT, BELOW_LON, tmp.local)

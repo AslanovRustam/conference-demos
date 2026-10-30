@@ -1,6 +1,7 @@
 import { expect, test } from 'vitest'
 import { Emitter, type GameEvent } from './events'
 import { payoutFor } from './payout'
+import { forcedRare, RARE_WINDOWS } from './rare'
 import { RoundEngine } from './round'
 import { timeAt } from './curve'
 
@@ -250,4 +251,41 @@ test('entering attract resets balance, bet and auto for the next visitor', () =>
   engine.setAttract(true)
   expect(engine.snapshot()).toMatchObject({ balance: 10_000, bet: 100, auto: { enabled: false, value: 2 }, attract: true })
   expect(engine.snapshot().history).toHaveLength(1)
+})
+
+test('launch fills snapshot.rare from pickRare and attract rounds also may get one', () => {
+  // u = 0.01 → a crash past ×100; then the rare roll hits (0.1 < 0.25), kind and stage rolls
+  const { engine } = setup([0.01, 0.1, 0.1, 0.5])
+  engine.launch()
+  const plan = engine.snapshot().rare
+  expect(plan).not.toBeNull()
+  const [lo, hi] = RARE_WINDOWS[plan!.kind]
+  expect(plan!.atStage).toBeGreaterThanOrEqual(lo)
+  expect(plan!.atStage).toBeLessThanOrEqual(hi)
+
+  const attract = setup([0.1, 0.1, 0.5])
+  attract.engine.setAttract(true)
+  attract.engine.launchScripted(64, 12)
+  expect(attract.engine.snapshot().rare).not.toBeNull()
+})
+
+test('a missed rare roll leaves the round without an event, and betting clears the plan', () => {
+  const { engine } = setup([0.01, 0.1, 0.1, 0.5])
+  engine.launch()
+  expect(engine.snapshot().rare).not.toBeNull()
+  engine.abortToBetting()
+  expect(engine.snapshot().rare).toBeNull()
+  const miss = setup([0.01, 0.9])
+  miss.engine.launch()
+  expect(miss.engine.snapshot().rare).toBeNull()
+})
+
+test('a forced rare kind (debug) plans every round and the frozen flight', () => {
+  const { engine } = setup([0.5])
+  engine.forceRare('aurora')
+  engine.launch()
+  expect(engine.snapshot().rare).toEqual(forcedRare('aurora'))
+  engine.abortToBetting()
+  engine.freezeAt(5)
+  expect(engine.snapshot().rare).toEqual(forcedRare('aurora'))
 })

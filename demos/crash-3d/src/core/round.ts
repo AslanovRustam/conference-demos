@@ -20,7 +20,8 @@ import type { Emitter } from './events'
 import { payoutFor } from './payout'
 import { floor2, type Rng } from './rng'
 import { stageAt, type StageId } from './stages'
-import type { HistoryEntry, Phase, PresenterForce, RarePlan, RoundSnapshot } from './types'
+import { forcedRare, pickRare } from './rare'
+import type { HistoryEntry, Phase, PresenterForce, RareKind, RarePlan, RoundSnapshot } from './types'
 
 // freezeAt(1) holds the countdown here: arms swung away, engines still cold (they spool up over the last 1.5 s)
 const FREEZE_COUNTDOWN_AGE = 1.4
@@ -50,6 +51,7 @@ export class RoundEngine {
   private nextCrash: number | null = null
   private attract = false
   private rare: RarePlan | null = null
+  private rareKind: RareKind | null = null // debug: every round gets this event
   private frozen = false
   private scripted = false // round does not touch balance or history
   private scriptedAuto: number | null = null
@@ -94,6 +96,7 @@ export class RoundEngine {
     this.scripted = false
     this.scriptedAuto = null
     this.startRound(this.pickCrash())
+    this.rare = this.planRare(this.crashPoint)
     this.emitter.emit({ type: 'launch', bet: this.bet })
     this.enterCountdown()
     return true
@@ -104,6 +107,7 @@ export class RoundEngine {
     this.scripted = true
     this.scriptedAuto = autoAt
     this.startRound(crash)
+    this.rare = this.planRare(crash)
     this.emitter.emit({ type: 'launch', bet: this.bet })
     this.enterCountdown()
     return true
@@ -171,6 +175,11 @@ export class RoundEngine {
     this.nextCrash = x
   }
 
+  // debug only
+  forceRare(kind: RareKind | null): void {
+    this.rareKind = kind
+  }
+
   setAttract(on: boolean): void {
     this.attract = on
     if (!on) return
@@ -192,6 +201,7 @@ export class RoundEngine {
     this.crashTime = timeAt(MAX_MULT)
     this.frozen = true
     this.lastStage = 0
+    this.rare = this.rareKind ? forcedRare(this.rareKind) : null
     // m = 1 is the pad: hold the countdown instead of a rocket that never leaves
     if (m === 1) {
       this.t = 0
@@ -228,6 +238,10 @@ export class RoundEngine {
     if (forced === 'instant') return 1
     if (forced === 'warp') return floor2(WARP_FORCE_RANGE[0] + this.rng() * (WARP_FORCE_RANGE[1] - WARP_FORCE_RANGE[0]))
     return sampleCrashPoint(this.rng())
+  }
+
+  private planRare(crash: number): RarePlan | null {
+    return this.rareKind ? forcedRare(this.rareKind) : pickRare(this.rng, crash)
   }
 
   private autoValue(): number | null {
@@ -310,6 +324,7 @@ export class RoundEngine {
     this.frozen = false
     this.scripted = false
     this.scriptedAuto = null
+    this.rare = null
     if (this.balance < BET_LADDER[0]) {
       this.balance = START_BALANCE
       this.emitter.emit({ type: 'refuel', balance: this.balance })

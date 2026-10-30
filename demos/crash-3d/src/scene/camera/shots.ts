@@ -1,5 +1,7 @@
 import { Vector3 } from 'three'
 import { S } from '../../strings'
+import { horizonDip } from '../env/atmosphere'
+import { dirFromAzEl, sunAzimuthAt } from '../env/lightState'
 import { GROUND_Y } from '../pad/layout'
 import { rocketRefs } from '../rocket/refs'
 import type { FlightRig } from '../rig'
@@ -127,6 +129,26 @@ const crashWide: Shot = {
   },
 }
 
+// the sunrise event (scene/rare): behind the rocket's nose and off to one side, looking along the sun's azimuth just
+// over the horizon, so the sun breaks out of the earth's limb beside the rocket; a slow drift sideways
+const SUNRISE_BACK = 90
+const SUNRISE_SIDE = 14
+const SUNRISE_TILT = 3.5 * DEG // the look sits this far over the horizon: the limb in the lower part of the frame
+const sunLook = new Vector3()
+const sunSide = new Vector3()
+const sunrise: Shot = {
+  label: S.cam.sunrise,
+  pose(rig, age, aspect, out) {
+    const az = sunAzimuthAt(rig.stageF)
+    dirFromAzEl(az, 0, sunLook)
+    sunSide.set(sunLook.z, 0, -sunLook.x)
+    out.pos.set(0, rig.rocketY + TOP + 4, 0).addScaledVector(sunLook, -SUNRISE_BACK).addScaledVector(sunSide, SUNRISE_SIDE + age * 0.8)
+    dirFromAzEl(az, -horizonDip(rig.altM) + SUNRISE_TILT, sunLook)
+    out.look.copy(out.pos).addScaledVector(sunLook, 100)
+    out.fov = portraitFov(42, aspect)
+  },
+}
+
 export const SHOTS: Record<ShotId, Shot> = {
   padWide,
   padClose,
@@ -136,4 +158,5 @@ export const SHOTS: Record<ShotId, Shot> = {
   wide,
   capsuleFollow,
   crashWide,
+  sunrise,
 }

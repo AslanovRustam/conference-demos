@@ -28,6 +28,7 @@ export const S = {
     padClose: 'CAM 6 · TOWER',
     capsuleFollow: 'CAM 7 · CAPSULE',
     crashWide: 'CAM 8 · RANGE',
+    sunrise: 'CAM 9 · HORIZON',
   },
 
   // glyphs and telemetry units

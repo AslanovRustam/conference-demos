@@ -1,6 +1,7 @@
 import { expect, test } from 'vitest'
 import { createRng } from '../../core/rng'
 import { createDirector } from './director'
+import { requestShot } from './shotRequest'
 import type { ShotId } from './shots'
 import { rigAt } from './testRig'
 
@@ -58,4 +59,26 @@ test('a new round starts again on the wide pad shot', () => {
   const d = createDirector(createRng(5))
   d.update(rigAt({ phase: 'crashed', crashAge: 0 }), DT, 16 / 9)
   expect(d.update(rigAt({ phase: 'betting' }), DT, 16 / 9)).toMatchObject({ shot: 'padWide', cut: true })
+})
+
+test('a rare event asks for a camera: the director cuts to it at once and holds it for the event', () => {
+  const d = createDirector(createRng(5))
+  for (let t = 0; t < 0.5; t += DT) d.update(rigAt({ phase: 'flight', stageF: 3 }), DT, 16 / 9)
+  requestShot('sunrise', 5)
+  const r = d.update(rigAt({ phase: 'flight', stageF: 3 }), DT, 16 / 9)
+  expect(r).toMatchObject({ shot: 'sunrise', cut: true })
+  for (let t = 0; t < 4.9; t += DT) expect(d.update(rigAt({ phase: 'flight', stageF: 3 }), DT, 16 / 9).shot).toBe('sunrise')
+  let shot: ShotId = 'sunrise'
+  for (let t = 0; t < 0.3; t += DT) shot = d.update(rigAt({ phase: 'flight', stageF: 3 }), DT, 16 / 9).shot
+  expect(shot).not.toBe('sunrise')
+})
+
+test('a camera request waits out the capsule shot', () => {
+  const d = createDirector(createRng(6))
+  d.update(rigAt({ phase: 'ejected', ejected: true, stageF: 3 }), DT, 16 / 9)
+  requestShot('wide', 5)
+  expect(d.update(rigAt({ phase: 'ejected', ejected: true, stageF: 3 }), DT, 16 / 9).shot).toBe('capsuleFollow')
+  let shot: ShotId = 'capsuleFollow'
+  for (let t = 0; t < 1.6; t += DT) shot = d.update(rigAt({ phase: 'ejected', ejected: true, stageF: 3 }), DT, 16 / 9).shot
+  expect(shot).toBe('wide')
 })

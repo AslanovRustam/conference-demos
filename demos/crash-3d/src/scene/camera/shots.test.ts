@@ -1,4 +1,6 @@
 import { expect, test } from 'vitest'
+import { horizonDip } from '../env/atmosphere'
+import { sunAzimuthAt } from '../env/lightState'
 import { SHOTS, type ShotId } from './shots'
 import { emptyPose, projectRocketCenter, rigAt } from './testRig'
 
@@ -47,4 +49,24 @@ test('every shot has a broadcast label', () => {
   expect(SHOTS.onboard.label).toBe('CAM 2 · ONBOARD')
   expect(SHOTS.sideChase.label).toBe('CAM 3 · CHASE')
   expect(SHOTS.wide.label).toBe('CAM 4 · WIDE')
+})
+
+test('the horizon camera looks along the sun just over the horizon with the rocket in frame', () => {
+  for (const aspect of [16 / 9, 9 / 19.5]) {
+    const rig = rigAt({ phase: 'flight', stageF: 2.6, rocketY: 6000, altM: 40_000 })
+    const pose = emptyPose()
+    SHOTS.sunrise.pose(rig, 1, aspect, pose)
+    const look = pose.look.clone().sub(pose.pos).normalize()
+    const az = Math.atan2(look.x, look.z)
+    const sunAz = sunAzimuthAt(2.6)
+    const dAz = Math.atan2(Math.sin(az - sunAz), Math.cos(az - sunAz))
+    expect(Math.abs(dAz)).toBeLessThan((15 * Math.PI) / 180)
+    const el = Math.asin(look.y)
+    expect(el).toBeGreaterThan(-horizonDip(40_000))
+    expect(el).toBeLessThan(-horizonDip(40_000) + (12 * Math.PI) / 180)
+    const ndc = projectRocketCenter(pose, aspect, 6000)
+    expect(ndc.z).toBeLessThan(1)
+    expect(Math.abs(ndc.x)).toBeLessThan(0.9)
+  }
+  expect(SHOTS.sunrise.label).toBe('CAM 9 · HORIZON')
 })

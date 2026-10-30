@@ -1,22 +1,10 @@
 import { useFrame } from '@react-three/fiber'
 import { useEffect, useMemo, useRef } from 'react'
-import {
-  AddEquation,
-  BackSide,
-  BufferAttribute,
-  BufferGeometry,
-  CustomBlending,
-  CylinderGeometry,
-  LineSegments,
-  Mesh,
-  OneFactor,
-  ShaderMaterial,
-  ZeroFactor,
-  type Material,
-} from 'three'
+import { BackSide, BufferAttribute, BufferGeometry, CylinderGeometry, LineSegments, Mesh, ShaderMaterial } from 'three'
 import { createRng } from '../../core/rng'
 import { fx } from '../fx'
 import { rig } from '../rig'
+import { farAdditive } from './blend'
 
 const STREAKS = 2400
 const SPAN = 3000 // height of the column of passing stars around the camera
@@ -29,18 +17,6 @@ const TUNNEL_L = 6000
 
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x))
 const ramp = (a: number, b: number, x: number) => clamp01((x - a) / (b - a))
-
-function farAdditive(m: Material) {
-  m.transparent = false
-  m.depthTest = false
-  m.depthWrite = false
-  m.blending = CustomBlending
-  m.blendEquation = AddEquation
-  m.blendSrc = OneFactor
-  m.blendDst = OneFactor
-  m.blendSrcAlpha = ZeroFactor
-  m.blendDstAlpha = OneFactor
-}
 
 // passing stars streaming down past the camera (the rocket climbs), faster with speed, stretched into lines in the
 // warp; a noise tunnel with split colour around the camera; the chroma for the warp

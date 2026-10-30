@@ -18,6 +18,7 @@ import { Warp } from './far/Warp'
 import { LaunchPad } from './pad/LaunchPad'
 import { Effects } from './post/Effects'
 import { isPrewarmed, prewarm } from './prewarm'
+import { RareEvents, RareSky } from './rare/RareEvents'
 import { RigUpdater } from './RigUpdater'
 import { Rocket } from './rocket/Rocket'
 
@@ -61,11 +62,13 @@ export function Stage() {
           <Earth />
           <Nebula />
           <Warp />
+          <RareSky />
         </FarField>
         <LaunchPad />
         <Rocket />
         <Eject />
         <Explosion />
+        <RareEvents />
         <Effects />
         <Prewarm />
         <Ready />

@@ -2,11 +2,11 @@ import { expect, test } from 'vitest'
 import { parseParams } from './params'
 
 test('debug-only params are ignored without debug=1', () => {
-  expect(parseParams('?seed=7&freeze=3&cam=close')).toEqual({ embed: false, debug: false, seed: null, freeze: null, cam: null, shot: null })
+  expect(parseParams('?seed=7&freeze=3&cam=close')).toEqual({ embed: false, debug: false, seed: null, freeze: null, cam: null, shot: null, rare: null })
 })
 
 test('parses embed and debug params', () => {
-  expect(parseParams('?embed=1&debug=1&seed=7&freeze=2.5&cam=top')).toEqual({ embed: true, debug: true, seed: 7, freeze: 2.5, cam: 'top', shot: null })
+  expect(parseParams('?embed=1&debug=1&seed=7&freeze=2.5&cam=top')).toEqual({ embed: true, debug: true, seed: 7, freeze: 2.5, cam: 'top', shot: null, rare: null })
 })
 
 test('the pad wide shot is a debug camera too', () => {
@@ -30,4 +30,10 @@ test('debug shot forces a broadcast camera, ignored without debug or when unknow
   expect(parseParams('?debug=1&shot=onboard').shot).toBe('onboard')
   expect(parseParams('?shot=onboard').shot).toBeNull()
   expect(parseParams('?debug=1&shot=selfie').shot).toBeNull()
+})
+
+test('debug rare forces an event kind, ignored without debug or when unknown', () => {
+  expect(parseParams('?debug=1&rare=station').rare).toBe('station')
+  expect(parseParams('?rare=station').rare).toBeNull()
+  expect(parseParams('?debug=1&rare=ufo').rare).toBeNull()
 })
