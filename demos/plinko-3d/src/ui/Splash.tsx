@@ -34,7 +34,10 @@ export function Splash({ onStart }: { onStart(): void }) {
       <AnimatePresence>
         {ready && (
           <motion.div key="tap" className="intro-tap" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.7 }}>
-            <span>{S.tapToPlay}</span>
+            <div className="intro-cta-glow">
+              <div className="intro-cta ck-chamfer">{S.tapToPlay}</div>
+            </div>
+            <div className="intro-sub">{S.introSub}</div>
           </motion.div>
         )}
       </AnimatePresence>

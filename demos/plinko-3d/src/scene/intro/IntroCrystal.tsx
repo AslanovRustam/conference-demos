@@ -1,14 +1,14 @@
 import logoSvg from '@brand/logo/clickable-logo-white.svg?raw';
 import { MeshRefractionMaterial } from '@react-three/drei';
 import { useFrame, useThree } from '@react-three/fiber';
-import { useEffect, useMemo, useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js';
 import { introStore } from '../../intro/introStore';
 import { useGame } from '../../state/store';
-import { brilliantCut } from './brilliant';
+import { brilliantCut } from '../gem/brilliant';
 import { crystalFrame } from './crystalFrame';
-import { gemEnvironment } from './gemEnvironment';
+import { sharedGemEnvironment } from '../gem/gemEnvironment';
 
 /** Площадка камня повёрнута к зрителю: видна «звезда» огранки. */
 export const CRYSTAL_TILT = 0.38;
@@ -148,8 +148,7 @@ export function IntroCrystal() {
   const bokeh = useRef<THREE.InstancedMesh>(null);
 
   const geometry = useMemo(brilliantCut, []);
-  const env = useMemo(gemEnvironment, []);
-  useEffect(() => () => env.dispose(), [env]);
+  const env = sharedGemEnvironment();
   const edges = useMemo(() => new THREE.EdgesGeometry(geometry, 1), [geometry]);
   const edgeMat = useMemo(
     () => new THREE.LineBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }),

@@ -14,6 +14,7 @@ export const S = {
   totalWin: 'TOTAL WIN',
   tapToPlay: 'TAP TO PLAY',
   introEyebrow: 'CRYSTAL EDITION',
+  introSub: '3D PLINKO DEMO · VIRTUAL CREDITS ONLY',
   refill: 'BALANCE REFILLED',
   presenterBig: 'NEXT: BIG WIN',
   presenterRain: 'FREE 100 BALLS',

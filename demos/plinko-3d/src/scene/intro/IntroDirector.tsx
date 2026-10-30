@@ -1,6 +1,8 @@
 import { useFrame } from '@react-three/fiber';
 import { useEffect, useRef } from 'react';
+import * as THREE from 'three';
 import { introStore } from '../../intro/introStore';
+import { stepReadiness, type ReadyState } from '../../intro/readiness';
 import { isEmbed, postReady } from '../../platform/embed';
 import { useSim } from '../../sim/SimProvider';
 import { fxHooks } from '../fxStore';
@@ -8,14 +10,28 @@ import { useGame } from '../../state/store';
 import { crystalFrame } from './crystalFrame';
 
 const EMBED = isEmbed(location.search);
-const READY_FRAMES = 4; // после стольких кадров сцена точно скомпилирована и видна
+
+/**
+ * Многие instanced-меши получают цвета экземпляров только в момент своего эффекта (взрыв, искры, вспышки).
+ * Тогда шейдер перекомпилируется прямо в анимации. Белый цвет заранее ничего не меняет на экране,
+ * зато прогрев компилирует сразу окончательный вариант шейдера.
+ */
+function ensureInstanceColors(scene: THREE.Object3D) {
+  scene.traverse((o) => {
+    if (o instanceof THREE.InstancedMesh && !o.instanceColor) {
+      o.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(o.instanceMatrix.count * 3).fill(1), 3);
+    }
+  });
+}
 
 /** Ведёт интро: готовность для заставки и лобби, звуки и вспышки по фазам, переход в игру. */
 export function IntroDirector(): null {
   const { bus, store } = useSim();
   const rows = useGame((s) => s.rows);
   const fontsReady = useRef(false);
-  const frames = useRef(0);
+  const warmup = useRef<'idle' | 'compiling' | 'compiled'>('idle');
+  const readiness = useRef<ReadyState>({ smooth: 0, ready: false });
+  const mountedAt = useRef(performance.now());
   const fired = useRef({ crack: false, shatter: false, done: false });
 
   useEffect(() => {
@@ -24,11 +40,24 @@ export function IntroDirector(): null {
     });
   }, []);
 
-  useFrame(({ size }) => {
+  useFrame(({ gl, scene, camera, size }, dt) => {
     const intro = introStore.getState();
     if (!intro.ready) {
-      frames.current++;
-      if (fontsReady.current && frames.current >= READY_FRAMES) {
+      // Пока висит обложка: шрифты, затем все шейдеры сцены (и скрытых пирамиды, осколков, ячеек), затем ровные кадры
+      if (fontsReady.current && warmup.current === 'idle') {
+        warmup.current = 'compiling';
+        ensureInstanceColors(scene);
+        void gl.compileAsync(scene, camera).then(() => {
+          warmup.current = 'compiled';
+        });
+      }
+      readiness.current = stepReadiness(readiness.current, {
+        fontsReady: fontsReady.current,
+        compiled: warmup.current === 'compiled',
+        frameMs: dt * 1000,
+        elapsedMs: performance.now() - mountedAt.current,
+      });
+      if (readiness.current.ready) {
         intro.setReady();
         if (EMBED) postReady();
       }

@@ -636,58 +636,90 @@
   }
 }
 
-/* Приглашение — стеклянная капсула с тонкой рамкой и медленным дыханием */
+/* Приглашение — фирменная красная кнопка со срезанным углом, как в других играх Clickable (slot-3d) */
 /* Центрирование без transform: его перезаписывает анимация появления */
 .intro-tap {
   position: absolute;
-  bottom: calc(env(safe-area-inset-bottom) + 9vh);
+  bottom: calc(env(safe-area-inset-bottom) + 7vh);
   left: 0;
   right: 0;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(12px, 1.8vh, 18px);
   pointer-events: none;
 }
 
-.intro-tap span {
-  display: block;
-  padding: clamp(12px, 1.6vh, 16px) clamp(28px, 3vw, 40px);
-  padding-right: calc(clamp(28px, 3vw, 40px) - 0.45em);
-  border-radius: 999px;
-  border: 1px solid rgba(201, 184, 255, 0.4);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
-  box-shadow: 0 0 32px rgba(143, 116, 255, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.12);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
-  font-weight: 600;
-  font-size: clamp(11px, 1.1vw, 14px);
-  letter-spacing: 0.45em;
-  white-space: nowrap;
-  color: #f4f0ff;
-  animation: intro-breathe 2.4s ease-in-out infinite;
+/* Свечение и пульс на обёртке: clip-path у кнопки обрезал бы box-shadow, а transform занят анимацией появления */
+.intro-cta-glow {
+  filter: drop-shadow(0 0 22px rgba(255, 25, 35, 0.45)) drop-shadow(0 10px 24px rgba(0, 0, 0, 0.55));
+  animation: intro-pulse 1.6s ease-in-out infinite;
 }
 
-@keyframes intro-breathe {
+.intro-cta {
+  --ck-chamfer: clamp(12px, 1.3vw, 18px);
+  position: relative;
+  overflow: hidden;
+  display: block;
+  padding: clamp(16px, 2.1vh, 22px) clamp(40px, 4.2vw, 64px);
+  padding-right: calc(clamp(40px, 4.2vw, 64px) - 0.28em);
+  font-weight: 700;
+  font-size: clamp(13px, 1.1vw, 17px);
+  letter-spacing: 0.28em;
+  white-space: nowrap;
+  color: #fff;
+  background: var(--ck-red-button);
+}
+
+/* Блик пробегает по кнопке раз в несколько секунд */
+.intro-cta::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 35%, rgba(255, 255, 255, 0.38) 50%, transparent 65%);
+  transform: translateX(-120%);
+  animation: intro-cta-shine 3.2s ease-in-out infinite;
+}
+
+.intro-sub {
+  font-size: clamp(9px, 0.75vw, 11px);
+  letter-spacing: 0.3em;
+  padding-left: 0.3em;
+  color: rgba(255, 255, 255, 0.55);
+  white-space: nowrap;
+}
+
+@keyframes intro-pulse {
   0%,
   100% {
-    opacity: 0.7;
-    box-shadow: 0 0 22px rgba(143, 116, 255, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    transform: scale(1);
   }
   50% {
-    opacity: 1;
-    box-shadow: 0 0 40px rgba(143, 116, 255, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    transform: scale(1.05);
   }
 }
 
-/* На телефоне камень выше середины экрана: приглашение ближе к нему */
+@keyframes intro-cta-shine {
+  0%,
+  55% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(120%);
+  }
+}
+
+/* На телефоне кнопка чуть выше: под ней ещё домашняя полоса */
 @media (max-aspect-ratio: 3/4) {
   .intro-tap {
-    bottom: calc(env(safe-area-inset-bottom) + 22vh);
+    bottom: calc(env(safe-area-inset-bottom) + 12vh);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .intro-title,
-  .intro-tap span {
+  .intro-cta-glow,
+  .intro-cta::after {
     animation: none;
   }
 }

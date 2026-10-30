@@ -9,7 +9,7 @@ import { useSim } from '../../sim/SimProvider';
 import { useGame } from '../../state/store';
 import { createCrystalMaterial } from '../materials';
 import { PEG_VISUAL_RADIUS, PEG_VISUAL_STRETCH_Y, pegEuler } from '../pegShape';
-import { BRILLIANT, brilliantRadiusAt } from './brilliant';
+import { BRILLIANT, brilliantRadiusAt } from '../gem/brilliant';
 import { crystalFrame } from './crystalFrame';
 import { CRYSTAL_TILT } from './IntroCrystal';
 

@@ -1,5 +1,5 @@
 import clickableWoff from '@brand/fonts/CLICKABLE-Black.woff?url';
-import { Text } from '@react-three/drei';
+import { MeshRefractionMaterial, Text } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
@@ -11,7 +11,9 @@ import { TIER_RANK, tierOf } from '../math/tiers';
 import { useSim } from '../sim/SimProvider';
 import { useGame } from '../state/store';
 import { fxHooks, slotView } from './fxStore';
-import { createGemMaterial } from './materials';
+import { createGemBodyMaterial } from './gem/gemBody';
+import { sharedGemEnvironment } from './gem/gemEnvironment';
+import { SLOT_GEM_TILT, slotGemGeometry } from './gem/slotGem';
 import { gemColor } from './palette';
 import { useRowsTransition } from './rowsTransition';
 import { introStore } from '../intro/introStore';
@@ -19,24 +21,14 @@ import { gemReveal } from '../intro/timeline';
 
 export const GEM_FONT_URL = clickableWoff;
 
-const BASE_EMISSIVE = 0.18;
+const SPARKLE = 1.9; // яркость бликов граней: камень преломляет только тёмную студию
+const TINT_LIGHTEN = 0.3; // блики чуть разбелены, чтобы оставались светлыми, а не густо-тёмными
+const BODY_GLOW = 0.26; // собственный цвет камня изнутри (см. gemBody)
+const WHITE = new THREE.Color('#ffffff');
 const FLASH_SECONDS = 0.6;
 const FLIP_SECONDS = 0.25;
 const FLIP_STEP = 0.02; // волна переворота подписей от центра к краям
 const SPIN_SPEED = 0.35; // рад/с: камни медленно поворачиваются, грани ловят свет
-const TILT = 0.3; // площадка камня чуть повёрнута к зрителю
-
-/** Огранка «бриллиант»: шип павильона снизу, поясок, корона и площадка сверху, 8 граней. */
-function brilliantGeometry(): THREE.BufferGeometry {
-  const profile = [
-    new THREE.Vector2(0.001, -0.28),
-    new THREE.Vector2(0.46, -0.02),
-    new THREE.Vector2(0.47, 0.03),
-    new THREE.Vector2(0.32, 0.17),
-    new THREE.Vector2(0.001, 0.17),
-  ];
-  return new THREE.LatheGeometry(profile, 8);
-}
 
 export function Slots() {
   const { system } = useSim();
@@ -48,15 +40,17 @@ export function Slots() {
   const { slots } = boardLayout(shown);
   const target = getPaytable(risk, shown).multipliers;
 
-  const geometry = useMemo(brilliantGeometry, []);
+  const geometry = useMemo(slotGemGeometry, []);
+  const env = sharedGemEnvironment();
   const targetColors = useMemo(() => target.map((m) => new THREE.Color(gemColor(m))), [target]);
   const ranks = useMemo(() => target.map((m) => TIER_RANK[tierOf(m)] / TIER_RANK.mega), [target]);
-  // Материалы живут, пока не сменились ряды или качество; при смене риска цвет перетекает плавно
-  const materials = useMemo(
-    () => getPaytable(risk, shown).multipliers.map((m) => createGemMaterial(gemColor(m), quality)),
-    [shown, quality], // risk намеренно не в зависимостях: его смену отрабатывает плавная перекраска
+  // Оттенки камней живут, пока не сменились ряды; при смене риска цвет перетекает плавно
+  const tints = useMemo(
+    () => getPaytable(risk, shown).multipliers.map((m) => new THREE.Color(gemColor(m))),
+    [shown], // risk намеренно не в зависимостях: его смену отрабатывает плавная перекраска
   );
-  useEffect(() => () => materials.forEach((m) => m.dispose()), [materials]);
+  const bodies = useMemo(() => tints.map(() => createGemBodyMaterial()), [tints]);
+  useEffect(() => () => bodies.forEach((m) => m.dispose()), [bodies]);
 
   const [labels, setLabels] = useState(() => target.map(formatMultiplier));
   const labelsRef = useRef(labels);
@@ -116,12 +110,14 @@ export function Slots() {
         g.scale.setScalar(scale);
       }
       const gem = gems.current[k];
-      if (gem) gem.rotation.set(TILT, t * SPIN_SPEED + k * 0.7, 0);
-      const mat = materials[k];
-      if (mat && targetColors[k]) {
-        mat.color.lerp(targetColors[k], ease);
-        mat.emissive.lerp(targetColors[k], ease);
-        mat.emissiveIntensity = BASE_EMISSIVE + b * (0.1 + 0.3 * ranks[k]) + a * 1.4 + h * 2.5;
+      if (gem) gem.rotation.set(SLOT_GEM_TILT, t * SPIN_SPEED + k * 0.7, 0);
+      const tint = tints[k];
+      if (tint && targetColors[k]) {
+        tint.lerp(targetColors[k], ease);
+        // «Дыхание», предвкушение и вспышка попадания — свечением тела камня; попадание ещё и усиливает блики
+        const mat = gem?.material as THREE.ShaderMaterial | undefined;
+        mat?.uniforms?.color?.value.copy(tint).lerp(WHITE, TINT_LIGHTEN).multiplyScalar(SPARKLE + h * 1.5);
+        bodies[k]?.uniforms.uColor.value.copy(tint).multiplyScalar(BODY_GLOW + b * (0.15 + 0.45 * ranks[k]) + a * 1.2 + h * 2);
       }
 
       slotView.x[k] = slot.x;
@@ -130,7 +126,7 @@ export function Slots() {
       slotView.light[k] = b * (0.4 + 0.6 * ranks[k]);
       slotView.antic[k] = a;
       slotView.big[k] = target[k] >= 25 ? 1 : 0;
-      if (mat) slotView.colors[k].copy(mat.color);
+      if (tint) slotView.colors[k].copy(tint);
 
       const start = flips.current[k] ?? -1;
       const lg = labelGroups.current[k];
@@ -168,8 +164,20 @@ export function Slots() {
               gems.current[k] = m;
             }}
             geometry={geometry}
-            material={materials[k]}
-          />
+          >
+            {/* key: при смене качества материал перемонтируется вместе со своей BVH (см. камень интро) */}
+            <MeshRefractionMaterial
+              key={quality}
+              envMap={env}
+              bounces={quality === 'high' ? 3 : 2}
+              ior={2.4}
+              fresnel={0.5}
+              aberrationStrength={quality === 'high' ? 0.02 : 0.012}
+              fastChroma={quality !== 'high'}
+              color={tints[k]}
+            />
+            <mesh geometry={geometry} material={bodies[k]} />
+          </mesh>
           <group
             position={[0, SLOT_LABEL_Y, 0.45]}
             ref={(g) => {

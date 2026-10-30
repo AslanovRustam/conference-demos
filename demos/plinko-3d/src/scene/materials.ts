@@ -35,24 +35,6 @@ export function createCrystalMaterial(q: Quality): THREE.MeshPhysicalMaterial {
   });
 }
 
-export function createGemMaterial(color: string, q: Quality): THREE.MeshPhysicalMaterial {
-  const base = new THREE.Color(color);
-  return new THREE.MeshPhysicalMaterial({
-    color: base,
-    transmission: q === 'high' ? 0.6 : 0,
-    thickness: 0.5,
-    ior: 1.8,
-    dispersion: q === 'high' ? 3 : 0,
-    roughness: 0.04,
-    metalness: q === 'high' ? 0 : 0.15,
-    iridescence: 0.4,
-    envMapIntensity: 2,
-    emissive: base,
-    emissiveIntensity: 0.18,
-    flatShading: true,
-  });
-}
-
 export function createChromeMaterial(): THREE.MeshStandardMaterial {
   // Лёгкое собственное свечение, чтобы маленький хромированный шарик читался на тёмном фоне
   return new THREE.MeshStandardMaterial({

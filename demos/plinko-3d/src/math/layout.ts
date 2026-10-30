@@ -12,9 +12,9 @@ export const SPAWN_HEIGHT = 1.6;
 const GEM_HALF_WIDTH = 0.45;
 const GEM_HEIGHT = 0.32;
 /** Нижняя точка камня-ячейки относительно его центра (огранка с наклоном к зрителю). */
-export const SLOT_GEM_BOTTOM = -0.27;
+export const SLOT_GEM_BOTTOM = -0.32;
 /** Центр подписи множителя относительно центра ячейки и половина высоты подписи. */
-export const SLOT_LABEL_Y = -0.43;
+export const SLOT_LABEL_Y = -0.475;
 export const SLOT_LABEL_HALF = 0.15;
 
 export interface Peg {

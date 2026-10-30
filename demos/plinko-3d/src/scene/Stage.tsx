@@ -31,6 +31,11 @@ const PINNED = params.get('quality') === 'high' || params.get('quality') === 'li
 export function Stage({ children }: { children?: ReactNode }) {
   const quality = useGame((s) => s.quality);
   const setQuality = useGame((s) => s.setQuality);
+  // Монитор включается после интро: фризы загрузки и первой компиляции шейдеров — не повод снижать качество,
+  // а переключение во время интро само дало бы фриз на глазах у посетителя
+  const introOver = useGame((s) => s.mode !== 'splash');
+  const [monitoring, setMonitoring] = useState(false);
+  if (introOver && !monitoring) setMonitoring(true);
   const [dprCap, setDprCap] = useState<number | null>(null);
   const [lo, hi] = dprRange(quality);
   const dpr: [number, number] = [lo, dprCap ?? hi];
@@ -43,7 +48,7 @@ export function Stage({ children }: { children?: ReactNode }) {
       gl={{ antialias: false, powerPreference: 'high-performance' }}
     >
       {/* Проседаем — сначала облегчённые материалы, потом пониженное разрешение. После трёх переключений уровень фиксируется. */}
-      {!PINNED && (
+      {!PINNED && monitoring && (
         <PerformanceMonitor
           flipflops={3}
           onDecline={() => {

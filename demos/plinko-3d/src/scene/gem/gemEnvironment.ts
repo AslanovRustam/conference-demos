@@ -63,3 +63,10 @@ export function gemEnvironment(): THREE.CanvasTexture {
   texture.colorSpace = THREE.SRGBColorSpace;
   return texture;
 }
+
+let shared: THREE.CanvasTexture | null = null;
+
+/** Одна студия на всю игру: её преломляют и камень интро, и камни-ячейки. Живёт всё время работы игры. */
+export function sharedGemEnvironment(): THREE.CanvasTexture {
+  return (shared ??= gemEnvironment());
+}
