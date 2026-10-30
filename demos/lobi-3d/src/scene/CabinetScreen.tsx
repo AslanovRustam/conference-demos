@@ -9,7 +9,7 @@ interface Props {
   index: number
   slot: Slot
   loading: boolean
-  /** only the active cabinet decodes its preview video; the others show the poster */
+  /** see previewShouldPlay: only the front cabinet, only in the lobby */
   near: boolean
   dim: number
   flash: { current: number }

@@ -4,26 +4,35 @@
 
 const WINDOW_MS = 100
 
+/** Fingers jitter more than a mouse; Chrome's own tap slop is about 15 px. */
+export function dragThreshold(pointerType: string): number {
+  return pointerType === 'touch' ? 12 : 6
+}
+
 export interface DragTracker {
-  start(x: number, t: number): void
+  /** `thresholdPx` overrides the tracker default for this press */
+  start(x: number, t: number, thresholdPx?: number): void
   /** total offset from the start, in px */
   move(x: number, t: number): number
   end(t: number): { wasDrag: boolean; velocityPxPerSec: number }
+  isDragging(): boolean
 }
 
 export function createDragTracker(thresholdPx = 6): DragTracker {
   let x0 = 0
+  let threshold = thresholdPx
   let dragging = false
   let samples: { x: number; t: number }[] = []
 
   return {
-    start(x, t) {
+    start(x, t, thresholdOverride) {
       x0 = x
+      threshold = thresholdOverride ?? thresholdPx
       dragging = false
       samples = [{ x, t }]
     },
     move(x, t) {
-      if (Math.abs(x - x0) > thresholdPx) dragging = true
+      if (Math.abs(x - x0) > threshold) dragging = true
       samples.push({ x, t })
       while (samples.length > 2 && t - samples[0].t > WINDOW_MS) samples.shift()
       return x - x0
@@ -38,6 +47,7 @@ export function createDragTracker(thresholdPx = 6): DragTracker {
       }
       return { wasDrag: dragging, velocityPxPerSec }
     },
+    isDragging: () => dragging,
   }
 }
 

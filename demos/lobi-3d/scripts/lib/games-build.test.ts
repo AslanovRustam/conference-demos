@@ -32,3 +32,11 @@ test('toManifest', () => {
     games: { a: { ok: true }, b: { ok: false, reason: 'build-failed' } },
   })
 })
+
+test('refuses ids that could point outside .games-build', () => {
+  for (const id of ['../slot-3d', '..', '', 'C:/x', 'a/b']) {
+    const plan = planBuild({ id }, lobby, () => true)
+    expect(plan.skip).toBe('bad-id')
+    expect(plan.steps).toEqual([])
+  }
+})

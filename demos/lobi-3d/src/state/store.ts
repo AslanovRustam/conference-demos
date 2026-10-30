@@ -20,6 +20,8 @@ export interface LobbyState {
   deniedToken: number
   activeIndex: number
   openSlot: number | null
+  /** bumped on every entry into a game: one game frame per entry, even for the same slot */
+  entryToken: number
   cameraArrived: boolean
   gameReady: boolean
   muted: boolean
@@ -59,6 +61,7 @@ export function createLobbyStore() {
       deniedToken: 0,
       activeIndex: 0,
       openSlot: null,
+      entryToken: 0,
       cameraArrived: false,
       gameReady: false,
       muted: false,
@@ -101,7 +104,7 @@ export function createLobbyStore() {
           set({ deniedToken: s.deniedToken + 1 })
           return false
         }
-        set({ phase: 'entering', openSlot: s.activeIndex, cameraArrived: false, gameReady: false, attract: false })
+        set({ phase: 'entering', openSlot: s.activeIndex, entryToken: s.entryToken + 1, cameraArrived: false, gameReady: false, attract: false })
         return true
       },
 

@@ -12,7 +12,7 @@ export interface BuildPlan {
   cwd: string
   outDir: string
   steps: BuildStep[]
-  skip?: 'missing-source' | 'no-package-json'
+  skip?: 'bad-id' | 'missing-source' | 'no-package-json'
 }
 
 export interface BuildResult {
@@ -26,7 +26,11 @@ export interface GamesManifest {
   games: Record<string, { ok: boolean; reason?: string }>
 }
 
+// the id becomes a folder that vite empties (--emptyOutDir); nothing but a plain name may pass
+const ID_RE = /^[a-z0-9-]+$/
+
 export function planBuild(game: { id: string; source?: string }, lobbyDir: string, exists: (p: string) => boolean): BuildPlan {
+  if (!ID_RE.test(game.id)) return { id: game.id, cwd: '', outDir: '', steps: [], skip: 'bad-id' }
   const cwd = path.resolve(lobbyDir, game.source ?? `../${game.id}`)
   const outDir = path.resolve(lobbyDir, '.games-build', game.id)
   const plan: BuildPlan = { id: game.id, cwd, outDir, steps: [] }

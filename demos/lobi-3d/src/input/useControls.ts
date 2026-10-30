@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import { snapTarget } from '../carousel/math'
 import { lobbyStore } from '../state/store'
 import { params } from '../state/params'
-import { createDragTracker, pxToSlots } from './drag'
+import { createDragTracker, dragThreshold, pxToSlots } from './drag'
 import { mapKey, type Action } from './hotkeys'
 import { createIdleTimer } from './idle'
 
@@ -95,7 +95,6 @@ export function useControls(): void {
     const drag = createDragTracker()
     let pointerId: number | null = null
     let startTarget = 0
-    let moved = false
 
     const onDown = (e: PointerEvent) => {
       if (lobbyStore.getState().phase !== 'lobby') return
@@ -104,14 +103,14 @@ export function useControls(): void {
       if (!(e.target instanceof Element) || !e.target.closest('.canvas')) return
       pointerId = e.pointerId
       startTarget = lobbyStore.getState().carouselTarget
-      moved = false
-      drag.start(e.clientX, e.timeStamp)
+      drag.start(e.clientX, e.timeStamp, dragThreshold(e.pointerType))
     }
     const onMove = (e: PointerEvent) => {
+      // hovering counts as someone being at the stand
+      if (lobbyStore.getState().phase === 'lobby') noteInput()
       if (e.pointerId !== pointerId) return
       const dx = drag.move(e.clientX, e.timeStamp)
-      if (Math.abs(dx) > 6) moved = true
-      if (moved) lobbyStore.getState().dragTo(startTarget + pxToSlots(dx, innerWidth))
+      if (drag.isDragging()) lobbyStore.getState().dragTo(startTarget + pxToSlots(dx, innerWidth))
     }
     const onUp = (e: PointerEvent) => {
       if (e.pointerId !== pointerId) return

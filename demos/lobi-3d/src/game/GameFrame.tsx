@@ -10,10 +10,12 @@ import { config } from '../config/lobbyConfig'
 import { mapKey } from '../input/hotkeys'
 import { createIdleTimer } from '../input/idle'
 import { params } from '../state/params'
-import { lobbyStore, useLobby, type Phase } from '../state/store'
+import { lobbyStore, useLobby } from '../state/store'
 
 const REVEAL_TIMEOUT_MS = 15000
-const FADE_OUT_MS = 220
+/** iframe opacity transition; the frame is blanked only after it has fully faded */
+const FADE_MS = 250
+const BLANK_AFTER_MS = FADE_MS + 60
 
 /** Fired on the lobby window for any input inside the game (exit button, idle timer). */
 export const GAME_ACTIVITY = 'lobby:game-activity'
@@ -21,11 +23,18 @@ const ACTIVITY_EVENTS = ['pointerdown', 'pointermove', 'keydown', 'touchstart', 
 
 type GameSlot = Extract<Slot, { kind: 'game' }>
 
-function Frame({ slot, phase }: { slot: GameSlot; phase: Phase }) {
+interface FrameProps {
+  slot: GameSlot
+  /** the camera has arrived and the game is ready: fade in */
+  revealed: boolean
+  /** the visitor left: fade out, blank, then onGone — independent of how fast the camera flies back */
+  closing: boolean
+  onGone: () => void
+}
+
+function Frame({ slot, revealed, closing, onGone }: FrameProps) {
   const ref = useRef<HTMLIFrameElement>(null)
   const readiness = useRef<Readiness | null>(null)
-  const [gone, setGone] = useState(false)
-  const revealed = phase === 'playing'
 
   useEffect(() => {
     const iframe = ref.current!
@@ -47,7 +56,7 @@ function Frame({ slot, phase }: { slot: GameSlot; phase: Phase }) {
 
   const onLoad = () => {
     const iframe = ref.current
-    if (!iframe || gone) return
+    if (!iframe || closing) return
     readiness.current?.loaded(() => probeCanvasFrames(iframe))
     const activity = () => window.dispatchEvent(new Event(GAME_ACTIVITY))
     const onKey = (e: KeyboardEvent) => {
@@ -67,7 +76,7 @@ function Frame({ slot, phase }: { slot: GameSlot; phase: Phase }) {
   }
 
   useEffect(() => {
-    if (phase !== 'playing') return
+    if (!revealed) return
     const iframe = ref.current
     const win = iframe?.contentWindow
     sendToGame(win, { type: 'clickable:visible' }, location.origin)
@@ -76,11 +85,11 @@ function Frame({ slot, phase }: { slot: GameSlot; phase: Phase }) {
     // in plain fullscreen Chrome leaves fullscreen on Esc; keyboard lock keeps Esc for us
     const keyboard = (navigator as Navigator & { keyboard?: { lock?: (keys: string[]) => Promise<void> } }).keyboard
     if (document.fullscreenElement) keyboard?.lock?.(['Escape']).catch(() => {})
-  }, [phase])
+  }, [revealed])
 
   // a visitor who walked away mid-game: back to the lobby, straight into attract mode
   useEffect(() => {
-    if (phase !== 'playing') return
+    if (!revealed) return
     const sec = params.idleReturnSec ?? slot.game.idleReturnSec ?? config.idleReturnSec
     if (!sec) return
     const idle = createIdleTimer(sec * 1000, () => lobbyStore.getState().requestExit(true))
@@ -93,28 +102,27 @@ function Frame({ slot, phase }: { slot: GameSlot; phase: Phase }) {
       window.removeEventListener(GAME_ACTIVITY, poke)
       window.removeEventListener('pointermove', poke)
     }
-  }, [phase, slot])
+  }, [revealed, slot])
 
   // keep the game's sound in step with the lobby's mute while it is on screen
   useEffect(() => {
-    if (phase !== 'playing') return
+    if (!revealed) return
     return lobbyStore.subscribe((s, prev) => {
       if (s.muted !== prev.muted) sendToGame(ref.current?.contentWindow, { type: 'clickable:mute', muted: s.muted }, location.origin)
     })
-  }, [phase])
+  }, [revealed])
 
   useEffect(() => {
-    if (phase !== 'exiting') return
+    if (!closing) return
     const t = setTimeout(() => {
       // blank first so the game stops its audio and GPU work before the node goes away
       if (ref.current) ref.current.src = 'about:blank'
-      setGone(true)
       window.focus()
-    }, FADE_OUT_MS)
+      onGone()
+    }, BLANK_AFTER_MS)
     return () => clearTimeout(t)
-  }, [phase])
+  }, [closing]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (gone) return null
   return (
     <iframe
       ref={ref}
@@ -125,14 +133,28 @@ function Frame({ slot, phase }: { slot: GameSlot; phase: Phase }) {
       title={slot.game.title}
       allow="autoplay; fullscreen; gamepad"
       onLoad={onLoad}
-      style={{ opacity: revealed ? 1 : 0, pointerEvents: revealed ? 'auto' : 'none' }}
+      style={{ opacity: revealed ? 1 : 0, pointerEvents: revealed ? 'auto' : 'none', transition: `opacity ${FADE_MS}ms ease` }}
     />
   )
 }
 
 export default function GameFrame() {
-  const slot = useLobby((s) => (s.openSlot === null ? null : s.slots[s.openSlot]))
+  const open = useLobby((s) => (s.openSlot === null ? null : s.slots[s.openSlot]))
+  const entry = useLobby((s) => s.entryToken)
   const phase = useLobby((s) => s.phase)
-  if (!slot || slot.kind !== 'game') return null
-  return <Frame key={slot.key} slot={slot} phase={phase} />
+  // the frame outlives the store's open slot until it has faded out on its own
+  const [frame, setFrame] = useState<{ slot: GameSlot; entry: number } | null>(null)
+  if (open?.kind === 'game' && frame?.entry !== entry && (phase === 'entering' || phase === 'playing')) setFrame({ slot: open, entry })
+  if (!frame) return null
+
+  const live = frame.entry === entry && (phase === 'entering' || phase === 'playing')
+  return (
+    <Frame
+      key={frame.entry}
+      slot={frame.slot}
+      revealed={live && phase === 'playing'}
+      closing={!live}
+      onGone={() => setFrame((f) => (f?.entry === frame.entry ? null : f))}
+    />
+  )
 }

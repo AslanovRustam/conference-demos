@@ -88,6 +88,18 @@ describe('enter and exit', () => {
     expect(s.getState().attract).toBe(false)
   })
 
+  test('every successful enter gets a new entryToken', () => {
+    const s = ready()
+    const t0 = s.getState().entryToken
+    s.getState().enter()
+    expect(s.getState().entryToken).toBe(t0 + 1)
+    s.getState().requestExit()
+    s.getState().exitDone()
+    s.getState().step(1)
+    s.getState().enter() // COMING SOON: refused, no new entry
+    expect(s.getState().entryToken).toBe(t0 + 1)
+  })
+
   test('exitDone outside exiting is ignored', () => {
     const s = ready()
     s.getState().exitDone()

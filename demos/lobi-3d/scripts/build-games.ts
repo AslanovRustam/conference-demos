@@ -6,13 +6,15 @@ import { spawnSync } from 'node:child_process'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { validateConfig } from '../src/config/games.ts'
 import { planBuild, toManifest, type BuildResult } from './lib/games-build.ts'
 
 const lobbyDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const buildDir = path.join(lobbyDir, '.games-build')
 const strict = process.argv.includes('--strict')
 
-const config = JSON.parse(readFileSync(path.join(lobbyDir, 'games.config.json'), 'utf8')) as { games: { id: string; source?: string }[] }
+// the same validation the lobby runs at startup: a bad config fails here, not as a black stand screen
+const config = validateConfig(JSON.parse(readFileSync(path.join(lobbyDir, 'games.config.json'), 'utf8')))
 
 // npm/npx are .cmd shims on Windows and need a shell; quote anything with spaces ourselves
 const quote = (a: string) => (/[\s"]/.test(a) ? `"${a.replace(/"/g, '\\"')}"` : a)
