@@ -69,7 +69,7 @@ export function Slots() {
           <mesh geometry={geometry} material={materials[k]} rotation-y={Math.PI / 8} />
           <Text
             font={GEM_FONT_URL}
-            fontSize={0.22}
+            fontSize={formatMultiplier(multipliers[k]).length >= 4 ? 0.24 : 0.3}
             position={[0, -0.02, 0.45]}
             anchorX="center"
             anchorY="middle"

@@ -6,7 +6,7 @@ import { computeFraming } from '../math/framing';
 import { boardLayout } from '../math/layout';
 import { useSim } from '../sim/SimProvider';
 import { useGame } from '../state/store';
-import { hudInsets } from '../ui/layoutMetrics';
+import { hudInsets, orientationOf, readSafeArea } from '../ui/layoutMetrics';
 import { fxHooks } from './fxStore';
 
 export const CAMERA_FOV = 35;
@@ -18,7 +18,9 @@ export function CameraRig() {
   const rows = useGame((s) => s.rows);
   const size = useThree((s) => s.size);
   const framing = useMemo(
-    () => computeFraming(boardLayout(rows).bounds, size, hudInsets(size), CAMERA_FOV),
+    // На вертикальном телефоне каждая доля ширины на счету: поля кадра меньше
+    () =>
+      computeFraming(boardLayout(rows).bounds, size, hudInsets(size, readSafeArea()), CAMERA_FOV, orientationOf(size) === 'portrait' ? 0.25 : 0.6),
     [rows, size],
   );
 

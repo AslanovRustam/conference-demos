@@ -1,0 +1,373 @@
+.hud {
+  --glass: rgba(255, 255, 255, 0.06);
+  --glass-border: rgba(201, 184, 255, 0.25);
+  --lavender: #c9b8ff;
+  --muted-text: rgba(255, 255, 255, 0.55);
+  --ck-chamfer: calc(14 * var(--u));
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  font-family: var(--ck-font-body);
+  color: var(--ck-white);
+}
+
+.hud button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.hud button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.topbar,
+.panel {
+  pointer-events: auto;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: calc(16 * var(--u));
+}
+
+.label {
+  font-weight: 600;
+  font-size: calc(10 * var(--u));
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted-text);
+}
+
+/* Верхняя панель */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: calc(12 * var(--u));
+  padding: calc(8 * var(--u)) calc(12 * var(--u));
+}
+
+.logo {
+  height: calc(16 * var(--u));
+  user-select: none;
+}
+
+.balance {
+  position: relative;
+  display: grid;
+  line-height: 1.1;
+}
+
+.balance .value {
+  font-family: var(--ck-font-display);
+  font-weight: 900;
+  font-size: calc(20 * var(--u));
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.balance .refill {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  margin-top: calc(4 * var(--u));
+  white-space: nowrap;
+  font-weight: 700;
+  font-size: calc(10 * var(--u));
+  letter-spacing: 0.1em;
+  color: #fff;
+  background: linear-gradient(90deg, #7a5cff, #ff4fd8);
+  padding: calc(3 * var(--u)) calc(8 * var(--u));
+  border-radius: 999px;
+  box-shadow: 0 0 18px rgba(255, 79, 216, 0.5);
+}
+
+.icons {
+  margin-left: auto;
+  display: flex;
+  gap: calc(6 * var(--u));
+}
+
+.icon-btn {
+  width: calc(36 * var(--u));
+  height: calc(36 * var(--u));
+  padding: calc(8 * var(--u));
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: var(--lavender) !important;
+}
+
+/* Панель управления */
+.panel {
+  display: grid;
+  gap: calc(8 * var(--u));
+  padding: calc(10 * var(--u));
+}
+
+.panel-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(calc(130 * var(--u)), 1fr));
+  gap: calc(8 * var(--u));
+}
+
+.field {
+  display: grid;
+  gap: calc(3 * var(--u));
+}
+
+.stepper {
+  display: grid;
+  grid-template-columns: calc(36 * var(--u)) 1fr calc(36 * var(--u));
+  align-items: center;
+  height: calc(36 * var(--u));
+  border-radius: calc(12 * var(--u));
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.step {
+  height: 100%;
+  font-size: calc(20 * var(--u)) !important;
+  color: var(--lavender) !important;
+}
+
+.step-value {
+  text-align: center;
+  font-family: var(--ck-font-display);
+  font-weight: 900;
+  font-size: calc(17 * var(--u));
+  font-variant-numeric: tabular-nums;
+}
+
+.segmented {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: calc(3 * var(--u));
+  height: calc(34 * var(--u));
+  padding: calc(3 * var(--u));
+  border-radius: calc(12 * var(--u));
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.segment {
+  border-radius: calc(9 * var(--u)) !important;
+  font-weight: 700 !important;
+  font-size: calc(11 * var(--u)) !important;
+  letter-spacing: 0.08em;
+  color: var(--muted-text) !important;
+  transition: background 0.2s, color 0.2s;
+}
+
+.segment.active {
+  background: rgba(201, 184, 255, 0.22) !important;
+  box-shadow: inset 0 0 0 1px rgba(201, 184, 255, 0.55);
+  color: #fff !important;
+}
+
+.actions {
+  grid-template-columns: 1fr 1.6fr;
+}
+
+.rain-btn {
+  height: calc(52 * var(--u));
+  border-radius: calc(14 * var(--u)) !important;
+  background: rgba(201, 184, 255, 0.1) !important;
+  box-shadow: inset 0 0 0 1px rgba(201, 184, 255, 0.45);
+  font-weight: 700 !important;
+  font-size: calc(12 * var(--u)) !important;
+  letter-spacing: 0.08em;
+}
+
+.drop-btn {
+  height: calc(52 * var(--u));
+  background: var(--ck-red-button) !important;
+  font-family: var(--ck-font-display) !important;
+  font-weight: 900 !important;
+  font-size: calc(24 * var(--u)) !important;
+  letter-spacing: 0.06em;
+  filter: drop-shadow(0 0 14px rgba(255, 25, 35, 0.55));
+}
+
+.drop-btn:active {
+  background: var(--ck-red-pressed) !important;
+}
+
+/* История результатов */
+.history {
+  display: flex;
+  gap: calc(6 * var(--u));
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.chip {
+  flex: none;
+  padding: calc(4 * var(--u)) calc(9 * var(--u));
+  border-radius: 999px;
+  font-family: var(--ck-font-display);
+  font-weight: 900;
+  font-size: calc(12 * var(--u));
+  text-align: center;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+/* Портрет: телефон */
+.portrait .hud-top {
+  position: absolute;
+  top: calc(env(safe-area-inset-top) + 10px);
+  left: 10px;
+  right: 10px;
+}
+
+.portrait .hud-history {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: calc(env(safe-area-inset-bottom) + 202px);
+}
+
+.portrait .hud-bottom {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: calc(env(safe-area-inset-bottom) + 8px);
+}
+
+/* Ландшафт: ноутбук */
+.landscape .hud-left {
+  position: absolute;
+  top: calc(12 * var(--u));
+  bottom: calc(12 * var(--u));
+  left: calc(env(safe-area-inset-left) + 12 * var(--u));
+  width: calc(var(--inset-left) - 24 * var(--u) - env(safe-area-inset-left));
+  display: flex;
+  flex-direction: column;
+  gap: calc(12 * var(--u));
+}
+
+.landscape .topbar {
+  flex-wrap: wrap;
+  row-gap: calc(10 * var(--u));
+  padding: calc(14 * var(--u));
+}
+
+.landscape .topbar .logo {
+  height: calc(18 * var(--u));
+}
+
+.landscape .topbar .balance {
+  order: 3;
+  flex-basis: 100%;
+}
+
+.landscape .topbar .balance .value {
+  font-size: calc(30 * var(--u));
+}
+
+.landscape .panel {
+  margin-top: auto;
+  gap: calc(12 * var(--u));
+  padding: calc(14 * var(--u));
+}
+
+.landscape .actions {
+  grid-template-columns: 1fr;
+}
+
+.landscape .drop-btn {
+  order: -1;
+  height: calc(76 * var(--u));
+  font-size: calc(32 * var(--u)) !important;
+}
+
+.landscape .rain-btn {
+  height: calc(46 * var(--u));
+}
+
+/* Низкий горизонтальный экран (телефон боком): всё в одну колонку покомпактнее */
+@media (max-height: 520px) {
+  .landscape .topbar {
+    flex-wrap: nowrap;
+    gap: 8px;
+    padding: 8px 10px;
+  }
+  .landscape .topbar .logo {
+    height: 10px;
+  }
+  .landscape .icons {
+    gap: 4px;
+  }
+  .landscape .topbar .balance {
+    order: 0;
+    flex-basis: auto;
+  }
+  .landscape .topbar .balance .value {
+    font-size: 15px;
+  }
+  .landscape .icon-btn {
+    width: 28px;
+    height: 28px;
+    padding: 6px;
+  }
+  .landscape .panel {
+    gap: 6px;
+    padding: 8px;
+  }
+  .landscape .panel-row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .landscape .stepper {
+    grid-template-columns: 26px 1fr 26px;
+    height: 32px;
+  }
+  .landscape .step-value {
+    font-size: 14px;
+  }
+  .landscape .segmented {
+    height: 30px;
+  }
+  .landscape .actions {
+    grid-template-columns: 1fr 1.4fr;
+  }
+  .landscape .drop-btn {
+    order: 0;
+    height: 44px;
+    font-size: 22px !important;
+  }
+  .landscape .rain-btn {
+    height: 44px;
+  }
+  .landscape .chip {
+    font-size: 11px;
+    padding: 3px 0;
+  }
+}
+
+.landscape .hud-right {
+  position: absolute;
+  top: calc(12 * var(--u));
+  bottom: calc(12 * var(--u));
+  right: calc(env(safe-area-inset-right) + 12 * var(--u));
+  width: calc(var(--inset-right) - 24 * var(--u) - env(safe-area-inset-right));
+  display: flex;
+  justify-content: center;
+}
+
+.landscape .history {
+  flex-direction: column;
+  align-items: center;
+  width: calc(96 * var(--u));
+  mask-image: linear-gradient(180deg, #000 70%, transparent);
+}
+
+.landscape .chip {
+  width: 100%;
+  font-size: calc(14 * var(--u));
+  padding: calc(6 * var(--u)) 0;
+}
