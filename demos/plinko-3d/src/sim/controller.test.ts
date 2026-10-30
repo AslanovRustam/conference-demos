@@ -93,6 +93,35 @@ test('rain balls stay out of history, player drops go in', () => {
   expect(st.getState().history).toHaveLength(0);
 });
 
+// Бросает по одному шарику и ждёт приземления; празднования закрываются сразу
+function dropOneByOne(kit: ReturnType<typeof setup>, n: number): string[] {
+  const tiers: string[] = [];
+  kit.bus.on('ball:land', (e) => e.kind === 'player' && tiers.push(e.tier));
+  kit.bus.on('celebrate:start', (e) => kit.bus.emit('celebrate:end', { kind: e.kind }));
+  for (let i = 0; i < n; i++) {
+    const before = tiers.length;
+    kit.ctl.drop();
+    while (tiers.length === before) kit.run(0.05);
+    kit.run(1);
+  }
+  return tiers;
+}
+
+test('every 5th player drop is a BIG or MEGA win', () => {
+  const kit = setup(20);
+  const tiers = dropOneByOne(kit, 10);
+  expect(['big', 'mega']).toContain(tiers[4]);
+  expect(['big', 'mega']).toContain(tiers[9]);
+});
+
+test('attract exit restarts the 5-drop count for the next visitor', () => {
+  const kit = setup(21);
+  dropOneByOne(kit, 3);
+  kit.ctl.endDemo();
+  const tiers = dropOneByOne(kit, 5);
+  expect(['big', 'mega']).toContain(tiers[4]);
+});
+
 test('free rain does not debit', () => {
   const { st, bus, ctl, run } = setup(13);
   let end: GameEvents['rain:end'] | undefined;

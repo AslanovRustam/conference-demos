@@ -20,3 +20,18 @@ export function pickForcedBig(t: Paytable, rng: Rng): number | null {
   if (t.multipliers[0] < 25) return null;
   return rng.chance(0.5) ? 0 : last;
 }
+
+const MEGA_SHARE = 0.35; // доля MEGA среди гарантированных крупных выигрышей
+
+/**
+ * Гарантированный крупный выигрыш (каждый 5-й бросок): BIG или MEGA, если они есть в таблице,
+ * иначе самая крупная (крайняя) ячейка.
+ */
+export function pickGuaranteedBig(t: Paytable, rng: Rng): number {
+  const last = t.multipliers.length - 1;
+  const mega = t.multipliers.flatMap((m, k) => (m >= 100 ? [k] : []));
+  const big = t.multipliers.flatMap((m, k) => (m >= 25 && m < 100 ? [k] : []));
+  if (mega.length && (!big.length || rng.chance(MEGA_SHARE))) return mega[rng.int(mega.length)];
+  if (big.length) return big[rng.int(big.length)];
+  return rng.chance(0.5) ? 0 : last;
+}

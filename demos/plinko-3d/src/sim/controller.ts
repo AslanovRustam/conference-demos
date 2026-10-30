@@ -1,17 +1,20 @@
 import type { StoreApi } from 'zustand/vanilla';
-import { MAX_ACTIVE_BALLS, MAX_DT, MAX_QUEUED_DROPS, QUEUE_STAGGER, RAIN_COUNT, RAIN_SPAWN_INTERVAL, START_BALANCE } from '../config';
+import { BIG_WIN_EVERY, MAX_ACTIVE_BALLS, MAX_DT, MAX_QUEUED_DROPS, QUEUE_STAGGER, RAIN_COUNT, RAIN_SPAWN_INTERVAL, START_BALANCE } from '../config';
 import type { EventBus, GameEvents } from '../core/events';
 import type { Rng } from '../core/rng';
 import type { BallKind, CelebrateKind, RainMode } from '../core/types';
 import { alternativeSlot, buildDecisions, type Step } from '../math/decisions';
 import { boardLayout } from '../math/layout';
-import { bigCells, pickForcedBig, pickSlot } from '../math/outcome';
+import { bigCells, pickForcedBig, pickGuaranteedBig, pickSlot } from '../math/outcome';
 import { getPaytable } from '../math/paytable';
 import { TIER_RANK, tierOf } from '../math/tiers';
 import { buildTrajectory } from '../math/trajectory';
 import type { GameState } from '../state/store';
 import type { BallSystem } from './BallSystem';
 import { slowMoReason, type SlowMoDirector } from './slowmo';
+
+/** Как выбирать ячейку: крайняя (ведущий), гарантированный крупный выигрыш (каждый 5-й) или по весам. */
+type Pick = 'edge' | 'guaranteed' | null;
 
 interface RainState {
   mode: RainMode;
@@ -38,6 +41,7 @@ export class GameController {
   private celebratingNow = false;
   private celebration: { kind: CelebrateKind; demo: boolean } | null = null;
   private flushTimer = 0;
+  private playerDrops = 0;
   /** Демо-шарики, оставшиеся после выхода из attract: долетают молча, без замедления и празднования. */
   private readonly silenced = new Set<number>();
 
@@ -92,12 +96,16 @@ export class GameController {
     }
     const { risk, rows } = this.store.getState();
     const hasBig = bigCells(getPaytable(risk, rows)).length > 0;
-    let force = opts.forceBig ?? false;
+    let pick: Pick = opts.forceBig ? 'edge' : null;
     if (kind === 'player' && this.forceNext && hasBig) {
-      force = true;
+      pick = 'edge';
       this.forceNext = false;
     }
-    this.spawn(kind, bet, force, true);
+    if (kind === 'player') {
+      this.playerDrops++;
+      if (!pick && this.playerDrops % BIG_WIN_EVERY === 0) pick = 'guaranteed';
+    }
+    this.spawn(kind, bet, pick, true);
     return true;
   }
 
@@ -115,6 +123,7 @@ export class GameController {
 
   /** Выход из attract: демо-дождь, демо-замедление и демо-празднование заканчиваются сразу. */
   endDemo(): void {
+    this.playerDrops = 0; // новый посетитель: отсчёт до гарантированного выигрыша заново
     if (this.rainState?.mode === 'demo') {
       for (const id of this.rainState.pending) this.silenced.add(id);
       this.rainState = null;
@@ -183,15 +192,17 @@ export class GameController {
         if (!this.store.getState().debit(r.bet)) continue;
         r.totalBet += r.bet;
       }
-      const ball = this.spawn(r.mode === 'demo' ? 'demo' : 'rain', r.bet, false, false);
+      const ball = this.spawn(r.mode === 'demo' ? 'demo' : 'rain', r.bet, null, false);
       r.pending.add(ball.id);
     }
   }
 
-  private spawn(kind: BallKind, bet: number, force: boolean, allowSlowMo: boolean) {
+  private spawn(kind: BallKind, bet: number, pick: Pick, allowSlowMo: boolean) {
     const { risk, rows } = this.store.getState();
     const table = getPaytable(risk, rows);
-    const slot = (force ? pickForcedBig(table, this.rng) : null) ?? pickSlot(table, this.rng);
+    const slot =
+      (pick === 'edge' ? pickForcedBig(table, this.rng) : pick === 'guaranteed' ? pickGuaranteedBig(table, this.rng) : null) ??
+      pickSlot(table, this.rng);
     const multiplier = table.multipliers[slot];
     const tier = tierOf(multiplier);
 
