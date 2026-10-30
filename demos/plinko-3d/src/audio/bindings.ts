@@ -2,9 +2,19 @@ import type { EventBus, GameEvents } from '../core/events';
 import type { Music } from './music';
 import type { Sfx } from './sfx';
 
-export function bindAudio(bus: EventBus<GameEvents>, sfx: Sfx, music: Music | null): () => void {
+// Сотня шариков дождя даёт сотни касаний в секунду: столько голосов только перегружают звук и процессор
+const RAIN_CHIME_INTERVAL = 0.03;
+
+export function bindAudio(bus: EventBus<GameEvents>, sfx: Sfx, music: Music | null, now: () => number = () => performance.now() / 1000): () => void {
+  let lastRainChime = -Infinity;
   const offs = [
-    bus.on('peg:hit', (e) => sfx.chime(e.row, e.kind === 'rain' ? 0.35 : Math.min(1, e.speed / 9))),
+    bus.on('peg:hit', (e) => {
+      if (e.kind !== 'rain') return sfx.chime(e.row, Math.min(1, e.speed / 9));
+      const t = now();
+      if (t - lastRainChime < RAIN_CHIME_INTERVAL) return;
+      lastRainChime = t;
+      sfx.chime(e.row, 0.35);
+    }),
     bus.on('ball:land', (e) => {
       if (e.kind !== 'rain') sfx.land(e.tier);
     }),

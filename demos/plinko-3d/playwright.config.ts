@@ -9,6 +9,8 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:4173',
     serviceWorkers: 'allow',
+    // Без этих флагов headless Chromium рисует WebGL программно (SwiftShader) и игра идёт в замедленном времени
+    launchOptions: { args: ['--enable-gpu', '--use-angle=d3d11', '--ignore-gpu-blocklist'] },
   },
   webServer: {
     command: 'npm run build && npm run preview -- --port 4173 --strictPort',

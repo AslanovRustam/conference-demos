@@ -86,6 +86,13 @@ test('paid rain spends at most 100 bets and emits total', () => {
   expect(ctl.rainActive).toBe(false);
 });
 
+test('rain balls stay out of history, player drops go in', () => {
+  const { st, ctl, run } = setup(15);
+  ctl.rain({ mode: 'free', count: 20 });
+  run(12);
+  expect(st.getState().history).toHaveLength(0);
+});
+
 test('free rain does not debit', () => {
   const { st, bus, ctl, run } = setup(13);
   let end: GameEvents['rain:end'] | undefined;

@@ -183,10 +183,9 @@ export class GameController {
   }
 
   private onLand(e: GameEvents['ball:land']) {
-    if (e.kind !== 'demo') {
-      this.store.getState().credit(e.win);
-      this.store.getState().pushHistory(e.multiplier);
-    }
+    if (e.kind !== 'demo') this.store.getState().credit(e.win);
+    // История показывает броски игрока; итог дождя виден в финале TOTAL WIN
+    if (e.kind === 'player') this.store.getState().pushHistory(e.multiplier);
     const r = this.rainState;
     if (r && r.pending.delete(e.ballId)) {
       r.totalWin += e.win;
