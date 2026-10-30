@@ -1,4 +1,7 @@
 import { useEffect, useState } from 'react';
+import { bindAudio } from './audio/bindings';
+import { createAudioEngine } from './audio/engine';
+import { createSfx } from './audio/sfx';
 import { seedFromSearch } from './core/rng';
 import { Stage } from './scene/Stage';
 import { SimContext, createSim } from './sim/SimProvider';
@@ -12,6 +15,26 @@ export function App() {
     // До заставки (задача 19) игра стартует сразу
     sim.store.getState().setMode('play');
   }, [sim]);
+
+  // Звук: движок создаётся по первому жесту, mute синхронизирован со стором
+  const [audio] = useState(() => createAudioEngine());
+  useEffect(() => {
+    const sfx = createSfx(audio);
+    const offAudio = bindAudio(sim.bus, sfx, null);
+    audio.setMuted(sim.store.getState().muted);
+    const offMuted = sim.store.subscribe((s, prev) => {
+      if (s.muted !== prev.muted) audio.setMuted(s.muted);
+    });
+    const unlock = () => void audio.unlock();
+    window.addEventListener('pointerdown', unlock, { capture: true });
+    window.addEventListener('keydown', unlock, { capture: true });
+    return () => {
+      offAudio();
+      offMuted();
+      window.removeEventListener('pointerdown', unlock, { capture: true });
+      window.removeEventListener('keydown', unlock, { capture: true });
+    };
+  }, [audio, sim]);
 
   // Пробел бросает шарик, но только в режиме игры
   useEffect(() => {

@@ -71,9 +71,9 @@ function makeTrail(): Trail {
   return { ballId: null, history: new Float32Array(POINTS * 2), filled: 0, opacity: 0, geometry, material, mesh };
 }
 
+// У шариков дождя шлейфа нет: при сотне шариков ленты сливаются в кашу
 function pickBalls(balls: Ball[]): Ball[] {
-  const regular = balls.filter((b) => b.kind !== 'rain' && !b.landed);
-  return (regular.length ? regular : balls.filter((b) => !b.landed)).slice(0, MAX_TRAILS);
+  return balls.filter((b) => b.kind !== 'rain' && !b.landed).slice(0, MAX_TRAILS);
 }
 
 export function Trails() {
