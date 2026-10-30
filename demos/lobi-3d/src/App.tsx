@@ -1,6 +1,9 @@
 import rawConfig from '../games.config.json'
 import { buildSlots, loadManifest, validateConfig, type GameEntry } from './config/games'
 import { useControls, wasJustDragged } from './input/useControls'
+import ExitButton from './game/ExitButton'
+import GameFrame from './game/GameFrame'
+import CameraRig from './scene/CameraRig'
 import Carousel from './scene/Carousel'
 import LobbyCanvas from './scene/LobbyCanvas'
 import { params } from './state/params'
@@ -35,8 +38,11 @@ export default function App() {
     <div className="app">
       <LobbyCanvas>
         <Carousel onSelect={selectCabinet} />
+        <CameraRig />
       </LobbyCanvas>
       <Hud />
+      <GameFrame />
+      <ExitButton />
       <LoadingScreen prepare={prepare} />
     </div>
   )

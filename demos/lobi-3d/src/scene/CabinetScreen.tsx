@@ -5,6 +5,7 @@ import { SCREEN } from './layout'
 import { createScreenMaterial, makeTitleTexture, SCREEN_MODE } from './screenMaterial'
 
 interface Props {
+  index: number
   slot: Slot
   loading: boolean
   dim: number
@@ -12,7 +13,7 @@ interface Props {
   z: number
 }
 
-export default function CabinetScreen({ slot, loading, dim, flash, z }: Props) {
+export default function CabinetScreen({ index, slot, loading, dim, flash, z }: Props) {
   const material = useMemo(createScreenMaterial, [])
 
   useEffect(() => {
@@ -48,7 +49,7 @@ export default function CabinetScreen({ slot, loading, dim, flash, z }: Props) {
   })
 
   return (
-    <mesh name="screen" position={[0, SCREEN.y, z]} material={material}>
+    <mesh name={`screen-${index}`} position={[0, SCREEN.y, z]} material={material}>
       <planeGeometry args={[SCREEN.w, SCREEN.h]} />
     </mesh>
   )

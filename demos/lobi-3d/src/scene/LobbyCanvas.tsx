@@ -16,7 +16,6 @@ export default function LobbyCanvas({ children }: { children?: ReactNode }) {
       frameloop={playing ? 'never' : 'always'}
       gl={{ antialias: false, powerPreference: 'high-performance', stencil: false }}
       camera={{ fov: FOV_HOME, near: 0.1, far: 80, position: CAMERA_HOME.position }}
-      onCreated={({ camera }) => camera.lookAt(...CAMERA_HOME.target)}
     >
       <color attach="background" args={['#000000']} />
       <fog attach="fog" args={['#050002', 8, 26]} />
