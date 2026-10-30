@@ -32,3 +32,6 @@ export function lampColor(active: boolean, flash: number): THREE.Color {
   const base = active ? WARM.clone().multiplyScalar(1.6) : RED.clone().multiplyScalar(0.6)
   return flash > 0 ? base.lerp(RED.clone().multiplyScalar(3), Math.min(1, flash)) : base
 }
+
+/** The glowing mark inside the glass core: luminance ~1.5, above the bloom ramp (1.1 + 0.3) at any pulse. */
+export const CORE_GLOW = new THREE.Color('#ff4a52').multiplyScalar(5.6)

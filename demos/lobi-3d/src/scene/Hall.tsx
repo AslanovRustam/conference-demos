@@ -50,11 +50,18 @@ function Platform() {
 }
 
 export default function Hall() {
+  // a spotlight's target must be in the scene, or its matrixWorld never updates and it aims at the origin
+  const keyTarget = useMemo(() => {
+    const o = new THREE.Object3D()
+    o.position.set(0, 1, 0)
+    return o
+  }, [])
   return (
     <group>
+      <primitive object={keyTarget} />
       <ambientLight intensity={0.06} />
       {/* warm key light from above the front, like the landing studios */}
-      <spotLight position={[3, 9, RADIUS + 6]} angle={0.55} penumbra={0.8} intensity={90} color="#fff1e0" target-position={[0, 1, 0]} />
+      <spotLight position={[3, 9, RADIUS + 6]} angle={0.55} penumbra={0.8} intensity={90} color="#fff1e0" target={keyTarget} />
       <Floor />
       <Platform />
     </group>

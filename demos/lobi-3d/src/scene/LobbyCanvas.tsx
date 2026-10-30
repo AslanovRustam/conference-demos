@@ -20,6 +20,8 @@ export default function LobbyCanvas({ children }: { children?: ReactNode }) {
       frameloop={playing ? 'never' : 'always'}
       gl={{ antialias: false, powerPreference: 'high-performance', stencil: false }}
       camera={{ fov: FOV_HOME, near: 0.1, far: 80, position: CAMERA_HOME.position }}
+      // lets automated browser checks inspect the scene; stripped from production builds
+      onCreated={(state) => void (import.meta.env.DEV && Object.assign(window, { __three: state }))}
     >
       <color attach="background" args={[LOUNGE_BG]} />
       <fogExp2 attach="fog" args={[LOUNGE_BG, 0.045]} />

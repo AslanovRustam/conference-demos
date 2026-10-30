@@ -7,7 +7,7 @@ import gsap from 'gsap'
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
 import { lobbyStore, useLobby } from '../state/store'
-import { coverDistance } from './cameraMath'
+import { coverDistance, orbitPose } from './cameraMath'
 import { fx } from './fx'
 import { CAMERA_HOME, FOV_HOME, FOV_PLAY, SCREEN } from './layout'
 
@@ -27,14 +27,6 @@ gsap.ticker.lagSmoothing(0)
 
 type Kind = keyof typeof DURATION
 type Flight = { kind: Kind; t: number; fromPos: THREE.Vector3; fromTarget: THREE.Vector3; fromFov: number; tween: gsap.core.Tween }
-
-/** Attract orbit at progress t: swing right, back, left, back, rising and closing in mid-way. */
-function orbitPose(t: number, out: THREE.Vector3): THREE.Vector3 {
-  const theta = Math.sin(t * Math.PI * 2) * 0.55
-  const lift = Math.sin(t * Math.PI)
-  const r = Math.hypot(HOME_POS.x, HOME_POS.z) * (1 - lift * 0.12)
-  return out.set(Math.sin(theta) * r, HOME_POS.y + lift * 0.9, Math.cos(theta) * r)
-}
 
 export default function CameraRig() {
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera
@@ -97,8 +89,7 @@ export default function CameraRig() {
   useFrame(() => {
     const f = flight.current
     if (f?.kind === 'orbit') {
-      orbitPose(f.t, camera.position)
-      target.current.copy(HOME_TARGET)
+      orbitPose(f.t, camera.position, target.current)
     } else if (f) {
       let endTarget = HOME_TARGET
       let endPos = HOME_POS

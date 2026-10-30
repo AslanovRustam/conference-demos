@@ -5,7 +5,7 @@ import * as THREE from 'three'
 import type { Slot } from '../config/games'
 import { useLobby } from '../state/store'
 import CabinetScreen from './CabinetScreen'
-import { CABINET, SCREEN } from './layout'
+import { CABINET, SCREEN, SCREEN_BEZEL, SCREEN_FRAME } from './layout'
 import { ceramicRed, chrome, lacquerDark, lampColor, whiteChrome } from './materials'
 import { previewShouldPlay } from './previewRules'
 
@@ -80,8 +80,8 @@ export default function Cabinet({ index, slot, active, distance, onSelect }: Pro
         <boxGeometry args={[w - 0.3, 0.035, 0.012]} />
       </mesh>
       {/* screen in a chrome frame on a dark lacquer bezel */}
-      <RoundedBox args={[SCREEN.w + 0.16, SCREEN.h + 0.16, 0.04]} radius={0.03} smoothness={3} position={[0, SCREEN.y, FRONT + 0.005]} material={lacquerDark()} />
-      <RoundedBox args={[SCREEN.w + 0.07, SCREEN.h + 0.07, 0.03]} radius={0.02} smoothness={3} position={[0, SCREEN.y, FRONT + 0.02]} material={chrome()} />
+      <RoundedBox args={[SCREEN.w + SCREEN_BEZEL.margin, SCREEN.h + SCREEN_BEZEL.margin, SCREEN_BEZEL.depth]} radius={SCREEN_BEZEL.radius} smoothness={3} position={[0, SCREEN.y, FRONT + 0.005]} material={lacquerDark()} />
+      <RoundedBox args={[SCREEN.w + SCREEN_FRAME.margin, SCREEN.h + SCREEN_FRAME.margin, SCREEN_FRAME.depth]} radius={SCREEN_FRAME.radius} smoothness={3} position={[0, SCREEN.y, FRONT + 0.02]} material={chrome()} />
       <CabinetScreen index={index} slot={slot} loading={loading} near={previewShouldPlay(distance, phase)} dim={dimFor(distance)} flash={flash} z={FRONT + 0.037} />
       {/* control deck with a glossy red button */}
       <mesh position={[0, screenBottom - 0.26, FRONT + 0.1]} rotation-x={-0.5} material={lacquerDark()}>

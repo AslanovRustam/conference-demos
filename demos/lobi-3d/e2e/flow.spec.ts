@@ -34,7 +34,7 @@ test('exit button in game returns to lobby and keyboard works', async ({ page })
   await openTestGame(page)
   await expect(frame(page)).toHaveAttribute('data-revealed', 'true', REVEAL)
   await page.frameLocator('[data-testid=game-frame]').locator('#exit').click()
-  await expect(frame(page)).toHaveCount(0)
+  await expect(frame(page)).toHaveCount(0, REVEAL)
   await expect.poll(() => phase(page), REVEAL).toBe('lobby')
   const before = (await lobby(page)).activeIndex
   await page.keyboard.press('ArrowRight')

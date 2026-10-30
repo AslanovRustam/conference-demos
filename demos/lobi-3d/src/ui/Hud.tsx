@@ -2,7 +2,7 @@ import { brandLogo } from '@brand/tokens'
 import { AnimatePresence, motion } from 'motion/react'
 import { applyAction } from '../input/useControls'
 import { useLobby } from '../state/store'
-import { hudTag } from './hudTag'
+import { hudCaption, hudTag } from './hudTag'
 
 const coarse = typeof matchMedia !== 'undefined' && matchMedia('(pointer: coarse)').matches
 
@@ -31,8 +31,7 @@ export default function Hud() {
   const slot = slots[activeIndex]
 
   const playable = slot?.kind === 'game'
-  const title = playable ? slot.game.title : (slot?.title ?? 'COMING SOON')
-  const subtitle = playable ? slot.game.subtitle : slot?.title ? 'In production at Clickable' : 'More games on the way'
+  const { title, subtitle } = slot ? hudCaption(slot) : { title: '', subtitle: '' }
 
   return (
     <AnimatePresence>

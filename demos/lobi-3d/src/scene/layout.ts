@@ -16,7 +16,11 @@ export const CAMERA_HOME = {
 }
 
 /** glass sphere with the glowing Clickable mark, above the middle of the ring */
-export const CORE = { y: 3.75, radius: 0.85 } as const
+export const CORE = { y: 3.65, radius: 0.85 } as const
 
 /** how strongly cabinets beside the front one turn toward the viewer (0 = face straight out) */
 export const TURN_TO_VIEWER = 0.55
+
+/** drei RoundedBox extrudes depth − 2·radius: a radius over half the depth folds the side walls inside out */
+export const SCREEN_BEZEL = { margin: 0.16, depth: 0.04, radius: 0.018 } as const
+export const SCREEN_FRAME = { margin: 0.07, depth: 0.03, radius: 0.014 } as const

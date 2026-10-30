@@ -1,5 +1,5 @@
 import { useFrame } from '@react-three/fiber'
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { carouselRotation, ringDistance, slotTransform } from '../carousel/math'
 import { lobbyStore, useLobby } from '../state/store'
@@ -20,6 +20,12 @@ export default function Carousel({ onSelect }: { onSelect: (index: number) => vo
   const activeIndex = useLobby((s) => s.activeIndex)
   const snapToken = useLobby((s) => s.snapToken)
   const n = slots.length
+  // three aims a spotlight via target.matrixWorld, which only updates for objects in the scene
+  const spotTarget = useMemo(() => {
+    const o = new THREE.Object3D()
+    o.position.set(0, 1.2, RADIUS)
+    return o
+  }, [])
 
   // presenter jumps (openGame) land instantly instead of spinning through the ring
   useEffect(() => {
@@ -40,7 +46,8 @@ export default function Carousel({ onSelect }: { onSelect: (index: number) => vo
   return (
     <>
       {/* the front position is always the active cabinet: one spotlight picks it out */}
-      <spotLight position={[0, 6.2, RADIUS + 1.6]} angle={0.32} penumbra={0.55} intensity={42} color="#fff1e0" target-position={[0, 1.2, RADIUS]} />
+      <primitive object={spotTarget} />
+      <spotLight name="front-spot" position={[0, 6.2, RADIUS + 1.6]} angle={0.32} penumbra={0.55} intensity={42} color="#fff1e0" target={spotTarget} />
     <group ref={ref}>
       {slots.map((slot, i) => {
         const t = slotTransform(i, n, RADIUS)

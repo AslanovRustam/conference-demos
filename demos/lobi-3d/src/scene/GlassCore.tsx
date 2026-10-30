@@ -7,6 +7,7 @@ import * as THREE from 'three'
 import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js'
 import markSvg from '../brand-extra/logo-mark.svg?raw'
 import { CORE } from './layout'
+import { CORE_GLOW } from './materials'
 
 const MARK_WIDTH = 0.95
 
@@ -47,8 +48,8 @@ export default function GlassCore() {
     return MARK_WIDTH / (b.max.x - b.min.x)
   }, [geometry])
   const glass = useMemo(glassMaterial, [])
-  // red-hot, brighter than the ceramic around it, so the mark reads as light
-  const glow = useMemo(() => new THREE.MeshBasicMaterial({ color: new THREE.Color('#ff4a52').multiplyScalar(3.2), toneMapped: false }), [])
+  // red-hot, bright enough to bloom, so the mark reads as light rather than red paint
+  const glow = useMemo(() => new THREE.MeshBasicMaterial({ color: CORE_GLOW.clone(), toneMapped: false }), [])
 
   useFrame(({ clock }) => {
     const t = clock.elapsedTime
