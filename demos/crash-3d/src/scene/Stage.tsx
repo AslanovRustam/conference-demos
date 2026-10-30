@@ -10,9 +10,11 @@ import { Lights } from './env/Lights'
 import { Earth } from './far/Earth'
 import { FarField } from './far/FarField'
 import { Moon } from './far/Moon'
+import { Nebula } from './far/Nebula'
 import { SkyDome } from './far/SkyDome'
 import { Stars } from './far/Stars'
 import { Sun } from './far/Sun'
+import { Warp } from './far/Warp'
 import { LaunchPad } from './pad/LaunchPad'
 import { Effects } from './post/Effects'
 import { isPrewarmed, prewarm } from './prewarm'
@@ -57,7 +59,8 @@ export function Stage() {
           <Sun />
           <Moon />
           <Earth />
-          {/* nebulae, warp: task 17 */}
+          <Nebula />
+          <Warp />
         </FarField>
         <LaunchPad />
         <Rocket />
