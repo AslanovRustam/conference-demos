@@ -1,0 +1,52 @@
+:root {
+  /* brand tokens (--ck-*) come from shared/brand/tokens.css */
+  --red: var(--ck-red);
+  --text: var(--ck-white);
+  --muted: var(--ck-gray);
+  /* everything scales with the screen: 1080p ≈ 17px, 4K ≈ 35px */
+  --u: clamp(11px, 1.6vmin, 40px);
+  font-size: var(--u);
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+  color: var(--text);
+  font-family: var(--ck-font-body);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  touch-action: none;
+  overscroll-behavior: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border: 0;
+  background: none;
+  padding: 0;
+}
+
+.app {
+  position: fixed;
+  inset: 0;
+}
+
+.splash-logo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 24rem;
+  transform: translate(-50%, -50%);
+}
