@@ -22,7 +22,7 @@ import { flicker } from '../rocket/plumeShader'
 import { groundReach } from './emission'
 import { padLit, syncPadEnv } from './envSync'
 import { Floodlights } from './Floodlights'
-import { GROUND_Y, HIDE_ALT_M, TRENCH_FLOOR_Y } from './layout'
+import { GROUND_Y, HARDSTAND_R, HIDE_ALT_M, TRENCH_FLOOR_Y } from './layout'
 import { concreteGeometry, groundGeometry, hardstandGeometry, steelGeometry, tableGeometry, trenchGeometry } from './padGeometry'
 import { disposePadTextures, loadPadTextures, type PadSet, type PadTextures } from './padTextures'
 import { notReflected, PlanarReflection, wetReflection } from './reflection'
@@ -48,7 +48,7 @@ function useMaterials(t: PadTextures, reflection: PlanarReflection) {
     // the planar reflection takes over from the environment map on the wet apron (its warm lamp banks at the
     // horizon would glaze the whole apron at grazing angles)
     const hardstand = pbr(t.hardstand, { envMapIntensity: 0, normalScale: new Vector2(0.6, 0.6) })
-    wetReflection(hardstand, reflection)
+    if (QUALITY.padReflection.enabled) wetReflection(hardstand, reflection)
     const ground = pbr(t.soil, { vertexColors: true, envMapIntensity: 0 })
     const deck = pbr(t.deck, { color: new Color(0.6, 0.6, 0.6), metalness: 0.35, envMapIntensity: 0.15 })
     const concrete = pbr(t.concrete, { envMapIntensity: 0.12 })
@@ -82,7 +82,7 @@ function Ground({ t }: { t: PadTextures }) {
   const scene = useThree((s) => s.scene)
   const size = useThree((s) => s.size)
   const dpr = useThree((s) => s.viewport.dpr)
-  const reflection = useMemo(() => new PlanarReflection(), [])
+  const reflection = useMemo(() => new PlanarReflection(HARDSTAND_R), [])
   const m = useMaterials(t, reflection)
   usePadLit(useMemo(() => Object.values(m), [m]))
   const geo = useMemo(
@@ -105,11 +105,13 @@ function Ground({ t }: { t: PadTextures }) {
   )
   useEffect(() => () => reflection.dispose(), [reflection])
 
-  // the mirrored pass, while the apron is close enough to matter
+  // the mirrored pass, while the apron is close enough to matter and in view
   useFrame(({ camera }) => {
-    reflection.setSize(size.width * dpr * QUALITY.padReflection, size.height * dpr * QUALITY.padReflection)
-    if (rig.altM > REFLECT_ALT_M) return
-    reflection.render(gl, scene, camera, GROUND_Y - rig.nearOffset)
+    if (!QUALITY.padReflection.enabled) return
+    const k = QUALITY.padReflection.scale * dpr
+    reflection.setSize(size.width * k, size.height * k)
+    if (rig.altM > REFLECT_ALT_M) reflection.off()
+    else reflection.render(gl, scene, camera, GROUND_Y - rig.nearOffset)
   })
 
   return (

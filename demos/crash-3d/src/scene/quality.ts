@@ -19,6 +19,6 @@ export const QUALITY = {
   padTexture: 2048, padDeckTexture: 1024, padTileTexture: 512,
   floodlights: 6, floodShadows: 4, floodShadowMap: 2048, beamSegments: 40,
   towerBay: 4, distantLights: 520, steamShare: 0.22,
-  // wet apron: the mirrored scene pass at this fraction of the drawing buffer
-  padReflection: 0.5,
+  // wet apron: the mirrored scene pass (only while the apron is in view) at this fraction of the drawing buffer
+  padReflection: { enabled: true, scale: 0.5 },
 } as const

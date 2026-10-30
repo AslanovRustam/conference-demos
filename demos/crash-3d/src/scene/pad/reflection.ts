@@ -1,4 +1,6 @@
 import {
+  Box3,
+  Frustum,
   HalfFloatType,
   LinearFilter,
   LinearMipmapLinearFilter,
@@ -14,17 +16,30 @@ import {
   type Scene,
   type WebGLRenderer,
 } from 'three'
+import { params } from '../../platform/params'
 
-// planar reflection for the wet apron: each frame the scene is drawn once more, at reduced size, from the camera
-// mirrored under the ground plane; the apron's material adds it as a mirror term where the concrete is wet
-// (sharp in puddles, blurred through the mip chain on damp concrete) with fresnel, so it shows mostly at grazing
-// angles. the extra pass skips shadow map updates and whatever registered itself as hidden (the ground, beams)
+// planar reflection for the wet apron: each frame the apron is in view, the scene is drawn once more, at reduced
+// size, from the camera mirrored under the ground plane; the apron's material adds it as a mirror term where the
+// concrete is wet (sharp in puddles, blurred through the mip chain on damp concrete) with fresnel, so it shows
+// mostly at grazing angles. the extra pass skips shadow map updates and whatever registered itself as hidden
+// (the ground, beams). with the apron out of view there is no pass: the old image is never seen, the next frame
+// that sees the apron draws a fresh one first
 
 const UP = new Vector3(0, 1, 0)
 const MAX_LOD = 6
 
 // objects left out of the reflection pass: the reflecting ground itself, the floodlight beams
 export const notReflected = new Set<Object3D>()
+
+declare global {
+  interface Window {
+    __padReflection?: { drawn: number; skipped: number }
+  }
+}
+
+// passes drawn and frames skipped since load; with ?debug=1 also on window.__padReflection
+export const reflectionStats = { drawn: 0, skipped: 0 }
+if (params.debug && typeof window !== 'undefined') window.__padReflection = reflectionStats
 
 export class PlanarReflection {
   readonly target: WebGLRenderTarget
@@ -35,12 +50,18 @@ export class PlanarReflection {
     uReflectGain: { value: 1 },
   }
   private readonly cam = new PerspectiveCamera()
+  private readonly frustum = new Frustum()
+  private readonly viewProj = new Matrix4()
+  private readonly apron = new Box3()
+  private readonly radius: number
   private readonly plane = new Plane()
   private readonly clip = new Vector4()
   private readonly q = new Vector4()
   private readonly v = { pos: new Vector3(), eye: new Vector3(), view: new Vector3(), look: new Vector3(), target: new Vector3(), rot: new Matrix4() }
 
-  constructor() {
+  // radius: half the size of the reflecting surface around the world origin, m
+  constructor(radius: number) {
+    this.radius = radius
     this.target = new WebGLRenderTarget(1, 1, {
       type: HalfFloatType,
       minFilter: LinearMipmapLinearFilter,
@@ -57,13 +78,30 @@ export class PlanarReflection {
     if (this.target.width !== w || this.target.height !== h) this.target.setSize(w, h)
   }
 
-  // mirror `camera` under the horizontal plane at world height y and draw the scene into the target
-  render(renderer: WebGLRenderer, scene: Scene, camera: Camera, y: number): void {
+  // nothing more to reflect (the apron is out of range): the wet term fades out instead of showing an old image
+  off(): void {
+    this.uniforms.uReflectGain.value = 0
+  }
+
+  // mirror `camera` under the horizontal plane at world height y and draw the scene into the target,
+  // if the apron is in its view; returns whether a pass was drawn
+  render(renderer: WebGLRenderer, scene: Scene, camera: Camera, y: number): boolean {
     const { pos, eye, view, look, target, rot } = this.v
+    // the camera rig moved the camera this frame; three refreshes its matrices only inside render()
+    camera.updateMatrixWorld()
     pos.set(0, y, 0)
     eye.setFromMatrixPosition(camera.matrixWorld)
-    // below the water line there is nothing to reflect
-    if (eye.y <= y) return
+    // below the water line there is nothing to reflect (and the apron shows its back)
+    if (eye.y <= y) {
+      this.off()
+      return this.skip()
+    }
+    // the apron out of frame (looking up, looking away): no pass
+    const r = this.radius
+    this.apron.min.set(-r, y - 0.5, -r)
+    this.apron.max.set(r, y + 0.5, r)
+    this.frustum.setFromProjectionMatrix(this.viewProj.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse))
+    if (!this.frustum.intersectsBox(this.apron)) return this.skip()
     view.subVectors(pos, eye).reflect(UP).negate().add(pos)
     rot.extractRotation(camera.matrixWorld)
     look.set(0, 0, -1).applyMatrix4(rot).add(eye)
@@ -96,6 +134,8 @@ export class PlanarReflection {
     p[6] = this.clip.y
     p[10] = this.clip.z + 1
     p[14] = this.clip.w
+    // the mirror camera is ours alone, but keep it whole for anything that reads the inverse
+    cam.projectionMatrixInverse.copy(cam.projectionMatrix).invert()
 
     const shown: Object3D[] = []
     for (const o of notReflected) {
@@ -113,6 +153,14 @@ export class PlanarReflection {
     renderer.setRenderTarget(prev)
     renderer.shadowMap.autoUpdate = autoShadows
     for (const o of shown) o.visible = true
+    this.uniforms.uReflectGain.value = 1
+    reflectionStats.drawn++
+    return true
+  }
+
+  private skip(): false {
+    reflectionStats.skipped++
+    return false
   }
 
   dispose(): void {
