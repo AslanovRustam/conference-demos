@@ -3,6 +3,7 @@ import { AltitudeScale } from './AltitudeScale'
 import { Balance } from './Balance'
 import { Banner } from './Banner'
 import { BetControls } from './BetControls'
+import { Confetti } from './Confetti'
 import { Countdown } from './Countdown'
 import { History } from './History'
 import './hud.css'
@@ -11,6 +12,7 @@ import { Multiplier } from './Multiplier'
 import { MuteButton } from './MuteButton'
 import { ResultOverlay } from './ResultOverlay'
 import { Telemetry } from './Telemetry'
+import { WinBurst } from './WinBurst'
 
 // broadcast hud over the scene; layout switches on aspect ratio in hud.css
 export function Hud() {
@@ -30,7 +32,9 @@ export function Hud() {
       <Multiplier />
       <AltitudeScale />
 
+      <Confetti />
       <Countdown />
+      <WinBurst />
       <ResultOverlay />
       <Banner />
 

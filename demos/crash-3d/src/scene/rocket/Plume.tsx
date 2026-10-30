@@ -12,6 +12,7 @@ const LIGHT_CD = 900 // candela at full thrust
 const LIGHT_Y = -3.5 // m below the exit plane, in the hot part of the flame
 const HAZE_Y = -2.5 // haze center below the center nozzle, m
 const HAZE_R = 6 // m around the engine cluster
+const EJECT_BOOST = 1.35
 const HAZE_STRENGTH = 0.006 // uv offset in screen heights at full thrust
 
 // the outer engines sit on this radius; the merged flame starts as wide as the cluster
@@ -65,14 +66,16 @@ export function Plume() {
     const t = rig.vtime
     const on = thrust > 0.002
     const expand = plumeExpansion(rig.stageF)
+    // freed of the capsule the rocket burns harder: a brighter, hotter plume
+    const boost = rig.ejected && rig.thrust > 0 ? EJECT_BOOST : 1
 
     for (let i = 0; i < mats.length; i++) {
       const mesh = meshes.current[i]
       if (mesh) mesh.visible = on
-      if (on) setPlume(mats[i], { thrust, expand, time: t, intensity: 0.88 + 0.24 * flicker(t, 11 + i) })
+      if (on) setPlume(mats[i], { thrust, expand, time: t, intensity: (0.88 + 0.24 * flicker(t, 11 + i)) * boost })
     }
 
-    plumeLight.intensity = on ? LIGHT_CD * Math.pow(thrust, 1.3) * (0.78 + 0.44 * flicker(t)) * (1 - 0.4 * expand) : 0
+    plumeLight.intensity = on ? boost * LIGHT_CD * Math.pow(thrust, 1.3) * (0.78 + 0.44 * flicker(t)) * (1 - 0.4 * expand) : 0
     plumeLight.position.set((flicker(t, 3) - 0.5) * 0.6, LIGHT_Y + (flicker(t, 5) - 0.5) * 1.2, (flicker(t, 7) - 0.5) * 0.6)
 
     // heat haze needs air: it fades out on the way up through the clouds

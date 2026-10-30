@@ -99,7 +99,8 @@ const wide: Shot = {
   },
 }
 
-// stays with the crew capsule after the eject, circling it slowly; before the eject it frames the nose
+// stays with the crew capsule after the eject, circling it slowly; before the eject it frames the nose.
+// under parachutes (a cash out low down) it pulls back and looks up so the canopy is in the frame too
 const capsuleAt = new Vector3()
 const capsuleFollow: Shot = {
   label: S.cam.capsuleFollow,
@@ -107,9 +108,11 @@ const capsuleFollow: Shot = {
     const c = rocketRefs.capsule
     if (c) c.getWorldPosition(capsuleAt)
     else capsuleAt.set(0, rig.rocketY + TOP, 0)
+    const chute = rig.ejectStage !== null && rig.ejectStage <= 1
     out.look.copy(capsuleAt)
-    around(out.pos, 26, 0.9 + age * 0.25, 0).add(capsuleAt)
-    out.pos.y += 5
+    out.look.y += chute ? 8 : 1.5
+    around(out.pos, chute ? 40 : 24, 0.9 + age * 0.25, 0).add(capsuleAt)
+    out.pos.y += chute ? 2 : 4
     out.fov = portraitFov(42, aspect)
   },
 }

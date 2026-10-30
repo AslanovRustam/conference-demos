@@ -1,9 +1,10 @@
 import { Stats } from '@react-three/drei'
-import { useFrame } from '@react-three/fiber'
-import { Suspense, useRef } from 'react'
+import { useFrame, useThree } from '@react-three/fiber'
+import { Suspense, useEffect, useRef } from 'react'
 import { markReady } from '../game/debug'
 import { params } from '../platform/params'
 import { CameraRig } from './camera/CameraRig'
+import { Eject } from './eject/Capsule'
 import { Lights } from './env/Lights'
 import { FarField } from './far/FarField'
 import { SkyDome } from './far/SkyDome'
@@ -11,15 +12,28 @@ import { Stars } from './far/Stars'
 import { Sun } from './far/Sun'
 import { LaunchPad } from './pad/LaunchPad'
 import { Effects } from './post/Effects'
+import { isPrewarmed, prewarm } from './prewarm'
 import { RigUpdater } from './RigUpdater'
 import { Rocket } from './rocket/Rocket'
 
 const READY_FRAMES = 30
 
-// frames rendered once everything above it in the Suspense boundary has loaded
+// compiles the mid-round effects once the scene has loaded (scene/prewarm.ts)
+function Prewarm() {
+  const gl = useThree((s) => s.gl)
+  const scene = useThree((s) => s.scene)
+  const camera = useThree((s) => s.camera)
+  useEffect(() => {
+    void prewarm(gl, scene, camera)
+  }, [gl, scene, camera])
+  return null
+}
+
+// frames rendered once everything above it in the Suspense boundary has loaded and the effects are compiled
 function Ready() {
   const frames = useRef(0)
   useFrame(() => {
+    if (!isPrewarmed()) return
     if (++frames.current === READY_FRAMES) markReady()
   })
   return null
@@ -42,7 +56,9 @@ export function Stage() {
         </FarField>
         <LaunchPad />
         <Rocket />
+        <Eject />
         <Effects />
+        <Prewarm />
         <Ready />
       </Suspense>
       {params.debug && <Stats />}

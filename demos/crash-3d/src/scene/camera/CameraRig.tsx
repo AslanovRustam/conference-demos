@@ -59,6 +59,7 @@ const FOV_WARP = 25
 const SHAKE_RAD = 0.006
 const PAD_RUMBLE_M = 250 // the ignition rumble fades out over the first metres of the climb
 const DOF_FADE_S = 0.6
+const MAX_SHOT_DT = 0.1
 
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x))
 
@@ -120,7 +121,8 @@ export function CameraRig() {
       applyShot(camera as PerspectiveCamera, held.pose)
       return
     }
-    const live = director.update(rig, dt, aspect)
+    // a hitch (a shader compile, a hidden tab) must not skip a whole shot
+    const live = director.update(rig, Math.min(dt, MAX_SHOT_DT), aspect)
     if (live.cut) {
       useGame.getState().setCamLabel(SHOTS[live.shot].label)
       fx.dofPulse = 1
