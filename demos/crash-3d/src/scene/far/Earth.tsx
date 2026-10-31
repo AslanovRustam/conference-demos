@@ -115,8 +115,9 @@ void main() {
   vec3 ground = texture2D(uDay, vUv).rgb;
   float shadow = texture2D(uClouds, vUv + uShadow.xy).r;
   ground *= 1.0 - uShadow.z * shadow;
-  // a warm band along the terminator, where the light comes through a lot of air
-  vec3 sunCol = mix(vec3(1.25, 0.55, 0.25), vec3(1.0, 0.97, 0.92), smoothstep(0.0, 0.25, ndl));
+  // a narrow warm edge along the terminator, where the light comes through a lot of air (a wide one turned the
+  // whole dawn side orange)
+  vec3 sunCol = mix(vec3(1.15, 0.72, 0.48), vec3(1.0, 0.97, 0.92), smoothstep(0.0, 0.07, ndl));
   vec3 col = ground * sunCol * max(ndl, 0.0) * 2.2;
   // city lights on the night side only, dimmed under clouds. from low orbit one texel of the map covers many
   // pixels, so the lit areas break up into a sparkle of small lights; from far away (several cells per pixel)
@@ -167,7 +168,7 @@ void main() {
   float c = texture2D(uClouds, vUv).r;
   c = mix(c, c * (0.45 + 1.1 * detail), near);
   float a = smoothstep(0.08, 0.8, c) * uAlpha;
-  vec3 sunCol = mix(vec3(1.3, 0.5, 0.25), vec3(1.0), smoothstep(0.0, 0.25, ndl));
+  vec3 sunCol = mix(vec3(1.2, 0.72, 0.5), vec3(1.0), smoothstep(0.0, 0.07, ndl));
   // lit tops, a faint grey on the night side where the moon and the cities touch them
   vec3 col = sunCol * max(ndl, 0.0) * 1.6 + vec3(0.012, 0.014, 0.02);
   gl_FragColor = vec4(col * a, a);
@@ -185,9 +186,10 @@ void main() {
   vec3 V = normalize(cameraPosition - vPos);
   float rim = pow(1.0 - abs(dot(N, V)), 4.0);
   float ndl = dot(normalize(vN), uSun);
-  float lit = smoothstep(-0.25, 0.35, ndl);
-  // rayleigh blue on the day side, red-orange at the terminator
-  vec3 col = mix(vec3(1.0, 0.35, 0.12), vec3(0.32, 0.6, 1.0), smoothstep(-0.05, 0.3, ndl));
+  float lit = smoothstep(-0.1, 0.15, ndl);
+  // rayleigh blue on the day side, a thin red-orange line right at the terminator (from low orbit the whole visible
+  // ground lies near the terminator: a wide band painted the earth orange)
+  vec3 col = mix(vec3(1.0, 0.42, 0.18), vec3(0.32, 0.6, 1.0), smoothstep(-0.07, 0.05, ndl));
   float a = rim * lit * uAlpha;
   gl_FragColor = vec4(col * a * 2.4, 0.0);
 }

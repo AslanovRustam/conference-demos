@@ -4,6 +4,7 @@ import { AdditiveBlending, Color, Mesh, NormalBlending, PlaneGeometry, ShaderMat
 import { horizonDip, smoothstep, sunTransmittance } from '../env/atmosphere'
 import { lightState, overrideSunElevation, sunAbove } from '../env/lightState'
 import { fx } from '../fx'
+import { registerPrewarm } from '../prewarm'
 import { rig } from '../rig'
 import { FAR_SKY_R } from './FarField'
 import { cameraAltitudeM } from './skyCurves'
@@ -117,6 +118,8 @@ export function Sun() {
     m.frustumCulled = false
     return m
   }, [])
+  // the god rays draw their source outside the scene: compile it with the rest at load
+  useEffect(() => registerPrewarm(sunRaysSource()), [])
   useEffect(
     () => () => {
       mesh.geometry.dispose()

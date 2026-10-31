@@ -31,6 +31,10 @@ export function Rocket() {
   useEffect(() => {
     const maps = createEnvMaps(gl)
     env.current = maps
+    // on the scene right away: the load-time compile (scene/prewarm.ts) runs before the first frame, and a lit program
+    // built without an environment is built again when it first draws with one (the debris at the first crash)
+    scene.environment = maps.pad
+    envLit.sync(scene, maps.pad, lightState.envScale, lightState.envRotation)
     return () => {
       env.current = null
       if (scene.environment === maps.pad || scene.environment === maps.space) {

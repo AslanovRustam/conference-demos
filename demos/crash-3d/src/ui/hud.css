@@ -324,12 +324,17 @@ html {
 }
 .hud-mult[data-crashed] .mult-crash-word {
   height: auto;
+  overflow: visible; /* the halo must not be clipped to a box */
   margin-bottom: calc(var(--mult) * 0.08);
   opacity: 1;
 }
-.hud-mult[data-crashed] .mult-num {
+/* a dark halo, not a red glow: the explosion washes the frame red, red on red would not read */
+.hud-mult[data-crashed] .mult-num,
+.hud-mult[data-crashed] .mult-crash-word {
   color: var(--red);
-  text-shadow: 0 0 2.4rem rgba(255, 25, 35, 0.35);
+  text-shadow:
+    0 0 0.5rem rgba(0, 0, 0, 0.6),
+    0 0 2.4rem rgba(0, 0, 0, 0.45);
 }
 .hud-mult[data-crashed] .mult-value,
 .hud-mult[data-crashed] .mult-crash-word {
