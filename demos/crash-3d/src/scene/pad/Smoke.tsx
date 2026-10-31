@@ -165,7 +165,7 @@ function rocketVent(r: Rng, out: Float32Array, birth: number, v: (typeof ROCKET_
   const t = (r() - 0.5) * 1.2
   return puff(
     out,
-    [ox * rad, rig.altM + v.y, oz * rad],
+    [rig.downrange + ox * rad, rig.altM + v.y, oz * rad],
     [ox * sp + oz * t, -0.5 + r() * 0.6, oz * sp - ox * t],
     birth, 4.5 + r() * 2.5, [0.3 + r() * 0.3, 3.5 + r() * 2.5], 0, r(), 1.6, -1.6, (r() - 0.5) * 0.8, 0.08 + 0.06 * r(),
   )
@@ -361,8 +361,9 @@ export function Smoke() {
     u.uTime.value = now
     const flame = plumeLight.intensity
     u.uFlameCol.value.copy(FLAME_COLOR).multiplyScalar(flame)
-    u.uFlameA.value.set(0, rig.altM - 0.5, 0)
-    u.uFlameB.value.set(0, Math.max(rig.altM - 34, TRENCH_FLOOR_Y + 1), 0)
+    // the rocket in the pad's frame: downrange of it as it leans over
+    u.uFlameA.value.set(rig.downrange, rig.altM - 0.5, 0)
+    u.uFlameB.value.set(rig.downrange, Math.max(rig.altM - 34, TRENCH_FLOOR_Y + 1), 0)
     built.floods.forEach((f, i) => u.uFloodCol.value[i].copy(f.col).multiplyScalar(on ? 1 : 0))
 
     st.started = true

@@ -4,6 +4,7 @@ import {
   envScaleAt,
   lightState,
   MOON_DIR,
+  overrideSunAzimuth,
   overrideSunElevation,
   SPACE_ENV_STAGE,
   sunAbove,
@@ -34,7 +35,10 @@ function structuredCloneState(s: LightState) {
   }
 }
 
-afterEach(() => overrideSunElevation(null))
+afterEach(() => {
+  overrideSunElevation(null)
+  overrideSunAzimuth(null)
+})
 
 test('the sun climbs out of the twilight: -8 degrees on the pad, the space map sun from stage 3', () => {
   expect(sunElevationAt(0)).toBeCloseTo(SUN_PAD_ELEVATION, 9)
@@ -115,4 +119,14 @@ test('the sunrise event takes the elevation over and hands it back', () => {
   expect(lightState.sunElevation).toBeCloseTo(-20 * DEG, 9)
   overrideSunElevation(null)
   expect(at(3).sunAbove).toBe(1)
+})
+
+test('a sunrise round can turn the sun into the crash view: the azimuth override wins and hands back', () => {
+  overrideSunAzimuth(Math.PI + 0.4)
+  at(3)
+  expect(Math.atan2(lightState.sunDir.x, lightState.sunDir.z)).toBeCloseTo(-Math.PI + 0.4, 6)
+  overrideSunAzimuth(null)
+  at(3)
+  const az = Math.atan2(lightState.sunDir.x, lightState.sunDir.z)
+  expect(Math.abs(az - (-Math.PI + 0.4))).toBeGreaterThan(0.1)
 })

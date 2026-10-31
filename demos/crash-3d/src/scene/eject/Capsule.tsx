@@ -68,7 +68,7 @@ function flashMaterial(): ShaderMaterial {
 
 // the cash out: the crew capsule leaves the rocket. the capsule on the rocket hides and a copy of it flies on in
 // the world (y = altitude - nearOffset), on parachutes low down or on braking thrusters higher up, while the
-// adapter shell bursts into panels. the camera director follows rocketRefs.capsule for the first moments
+// adapter shell bursts into panels. rocketRefs.capsule points at the free capsule while it flies
 export function Eject() {
   const holder = useRef<Group>(null) // follows the capsule's position
   const body = useRef<Group>(null) // the capsule's tumble and roll

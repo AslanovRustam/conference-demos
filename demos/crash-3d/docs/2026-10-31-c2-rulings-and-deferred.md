@@ -137,3 +137,15 @@
 - Final: minor (deferred): M6 howler, @types/howler and gsap are unused dependencies
 - Final: minor (deferred): M9 ~8 audio parameter automations scheduled every frame whether or not the value changed (rocket.ts, music.ts)
 - Final: minor (deferred): M10 confetti canvas sized only at spawn: a rotation mid-burst stretches it for up to 1.2 s
+
+## После плана: единый вид и скорость (2026-10-31, по просьбе заказчика)
+
+- Ruling: the broadcast director (camera cuts, CAM labels, `?shot=`, rare-event camera requests) is replaced by one crash view (scene/camera/crashView.ts): a fixed side camera solved each frame so the rocket's middle lands on the chart's tip; the tip runs from the launch point (bottom left) to an anchor (upper right) over the first 6 s, then holds — cost if wrong: the cinematic close-ups are gone (debug `cam=` close-ups stay)
+- Ruling: the diagonal flight is a gravity turn (rig.tiltAt/downrangeAt: upright to 60 m, 38° lean by 2.5 km) with the near field sliding back by the downrange (pad group, smoke emission, cloud deck offsets) — the rocket stays at x = 0 so the rocket, plume, capsule and explosion code is unchanged — cost if wrong: the cloud deck/pad drift by tens of km at most, beyond that they are hidden
+- Ruling: the multiplier chart is a dom svg over the canvas (ui/Chart.tsx) whose geometry comes from the same crashView functions as the camera; axis labels stay under the big multiplier (tickCeiling) — cost if wrong: shake moves the rocket a few pixels off the tip
+- Ruling: on the pad the camera stands at half distance and pulls back over the first 2.5 s of flight (distAt) — the countdown frame was a tiny rocket in an empty sky — cost if wrong: one constant
+- Ruling: quality tiers ultra/medium/low picked from the gpu name (discrete → ultra, other desktop → medium, touch → low; `?debug=1&quality=` overrides); medium = 0.7 render scale, FXAA, no chromatic aberration pass, no wet-apron mirror, fewer cloud steps/smoke/shadows; low = 1–1.25 device px per css px, no god rays or flare — profiling showed the integrated gpu bound by full-screen post passes at 1080p, not by scene objects — cost if wrong: a slightly softer image on integrated gpus
+- Ruling: the depth-of-field focus pull is removed (it only served camera cuts) — cost if wrong: none
+- Ruling: a sunrise round turns the sun into the view (lightState.overrideSunAzimuth, π − 0.4: right of centre by the rocket) — the fixed camera could not see the flight sun's azimuth — cost if wrong: the rocket is lit from the front-right in sunrise rounds
+- Ruling: scripts/shot.mjs blocks service workers — a production build's worker kept serving stale builds to screenshots (and `vite preview` must be restarted after a build: it caches its file list) — cost if wrong: none
+- Deferred: after a cash out above the clouds the capsule falls behind the climbing rocket at once and leaves the frame within a second (the old capsule camera is gone); keeping it in frame needs the capsule to drift in the rocket's frame for a few seconds

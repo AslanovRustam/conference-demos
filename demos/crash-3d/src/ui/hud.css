@@ -155,25 +155,6 @@ html {
 .tel-clock {
   color: var(--white);
 }
-.hud-cam {
-  position: absolute;
-  left: var(--edge-l);
-  bottom: calc(var(--btn-b) + var(--btn-h) + 7.4rem);
-  display: flex;
-  align-items: center;
-  gap: 0.5em;
-  color: var(--grey);
-  font-size: 0.6rem;
-  letter-spacing: 0.32em;
-  white-space: nowrap;
-}
-.hud-cam::before {
-  content: '';
-  width: 0.4em;
-  height: 0.4em;
-  border-radius: 50%;
-  background: var(--white);
-}
 
 /* ------------------------------------------------------------ balance + history */
 
@@ -837,13 +818,6 @@ html {
     font-size: 1.2rem;
     letter-spacing: 0.14em;
   }
-  .hud-cam {
-    top: calc(var(--top) + 3.6rem);
-    bottom: auto;
-    left: auto;
-    right: var(--edge-r);
-    font-size: 0.95rem;
-  }
 
   .hud-mult {
     top: 37.4%;
@@ -1196,5 +1170,52 @@ html {
   /* the telemetry shares the top right corner with it */
   .hud[data-embed] .hud-telemetry {
     right: calc(var(--edge-r) + 8rem);
+  }
+}
+
+/* ------------------------------------------------------------ crash chart (ui/Chart.tsx) */
+
+.hud-chart {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  opacity: 1;
+  transition: opacity 0.6s var(--ease);
+}
+.hud-chart[data-state='off'] {
+  opacity: 0;
+}
+.chart-line {
+  fill: none;
+  stroke: var(--red);
+  stroke-width: 0.28rem;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 0.5rem rgba(255, 25, 35, 0.7));
+}
+.hud-chart[data-state='crashed'] .chart-line {
+  stroke: rgba(255, 25, 35, 0.5);
+  filter: none;
+}
+.chart-tick {
+  transition: opacity 0.4s var(--ease);
+}
+.chart-tick line {
+  stroke: rgba(255, 255, 255, 0.12);
+  stroke-width: 1;
+  stroke-dasharray: 2 6;
+}
+.chart-tick text {
+  fill: var(--grey);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+}
+@media (min-aspect-ratio: 1/1) {
+  .chart-tick text {
+    font-size: 1rem;
   }
 }

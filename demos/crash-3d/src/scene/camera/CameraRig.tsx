@@ -1,16 +1,12 @@
 import { useFrame } from '@react-three/fiber'
-import { useMemo } from 'react'
 import { Vector3, type Camera, type PerspectiveCamera } from 'three'
-import { createRng, randomSeed } from '../../core/rng'
 import { useGame } from '../../game/store'
 import { params, type DebugCam } from '../../platform/params'
 import { lightState } from '../env/lightState'
 import { fx } from '../fx'
 import { GROUND_Y } from '../pad/layout'
 import { rig } from '../rig'
-import { createDirector } from './director'
-import { frameShot } from './shotFrame'
-import { SHOTS, type CameraPose } from './shots'
+import { cameraFor, distAt, layoutFor, tipAt } from './crashView'
 
 // debug close-ups (?debug=1&cam=...): fixed poses near the hull, heights relative to the rocket base.
 // close: the livery band and stage 1; base: engines, fins and soot; top: capsule and escape tower;
@@ -53,15 +49,15 @@ function sunShot(camera: Camera) {
   camera.lookAt(nose)
 }
 
-// on top of every shot: the lens widens with speed (scaled to the lens, so a telephoto keeps its framing),
-// and the camera shakes with speed and thrust, hardest while the engines roar on the pad
-const FOV_SPEED = 12
-const FOV_WARP = 25
-const SHAKE_RAD = 0.006
+// the crash view (camera/crashView.ts): one fixed side camera keeping the rocket's middle on the chart's tip. the
+// lens widens a little with speed and in the warp (the rocket stays on the tip), and the camera shakes with speed
+// and thrust, hardest while the engines roar on the pad
+const FOV_SPEED = 6
+const FOV_WARP = 16
+const SHAKE_RAD = 0.004
 const PAD_RUMBLE_M = 250 // the ignition rumble fades out over the first metres of the climb
-const DOF_FADE_S = 0.6
-const MAX_SHOT_DT = 0.1
-const dir = new Vector3()
+const ROCKET_MID = 24 // the rocket's middle above its base, along the hull
+const center = new Vector3()
 
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x))
 
@@ -75,29 +71,9 @@ function jitter(t: number, a: number, b: number) {
   return Math.sin(t * a) * 0.6 + Math.sin(t * b + 1.3) * 0.4
 }
 
-function applyShot(camera: PerspectiveCamera, pose: CameraPose) {
-  camera.position.copy(pose.pos)
-  camera.lookAt(pose.look)
-  const amp = shakeAmount() * SHAKE_RAD
-  if (amp > 0) {
-    camera.rotateX(amp * jitter(rig.vtime, 31.7, 47.3))
-    camera.rotateY(amp * jitter(rig.vtime, 29.1, 53.9))
-  }
-  const boost = FOV_SPEED * rig.speed + FOV_WARP * clamp01(rig.stageF - 5)
-  const fov = pose.fov + boost * (pose.fov / 40)
-  if (Math.abs(camera.fov - fov) > 1e-3) {
-    camera.fov = fov
-    camera.updateProjectionMatrix()
-  }
-  fx.focus.copy(pose.look)
-}
-
-// the broadcast director, or a fixed debug pose with ?debug=1&cam=…; ?debug=1&shot=… holds one broadcast camera
+// the crash view, or a fixed debug pose with ?debug=1&cam=…
 export function CameraRig() {
-  const director = useMemo(() => createDirector(createRng((params.seed ?? randomSeed()) + 1)), [])
-  const held = useMemo(() => ({ pose: { pos: new Vector3(), look: new Vector3(), fov: 40 } as CameraPose, age: 0 }), [])
-
-  useFrame(({ camera, size }, dt) => {
+  useFrame(({ camera, size }) => {
     if (params.cam === 'pad') {
       padShot(camera)
       return
@@ -113,26 +89,23 @@ export function CameraRig() {
       camera.lookAt(0, rig.rocketY + lookY, 0)
       return
     }
+    const cam = camera as PerspectiveCamera
     const aspect = size.width / Math.max(1, size.height)
-    fx.dofPulse = Math.max(0, fx.dofPulse - dt / DOF_FADE_S)
-    if (params.shot) {
-      const shot = SHOTS[params.shot]
-      const first = held.age === 0
-      if (first) useGame.getState().setCamLabel(shot.label)
-      held.age += dt
-      shot.pose(rig, held.age, aspect, held.pose)
-      applyShot(camera as PerspectiveCamera, held.pose)
-      if (first) frameShot(camera.getWorldDirection(dir))
-      return
+    const L = layoutFor(aspect)
+    const fov = L.fov + FOV_SPEED * rig.speed + FOV_WARP * clamp01(rig.stageF - 5)
+    if (Math.abs(cam.fov - fov) > 1e-3) {
+      cam.fov = fov
+      cam.updateProjectionMatrix()
     }
-    // a hitch (a shader compile, a hidden tab) must not skip a whole shot
-    const live = director.update(rig, Math.min(dt, MAX_SHOT_DT), aspect)
-    if (live.cut) {
-      useGame.getState().setCamLabel(SHOTS[live.shot].label)
-      fx.dofPulse = 1
+    center.set(Math.sin(rig.tilt) * ROCKET_MID, rig.rocketY + Math.cos(rig.tilt) * ROCKET_MID, 0)
+    const t = useGame.getState().snap.t
+    cameraFor(center, tipAt(t, L), distAt(t, L), fov, aspect, cam.position)
+    cam.rotation.set(0, 0, 0)
+    const amp = shakeAmount() * SHAKE_RAD
+    if (amp > 0) {
+      cam.rotateX(amp * jitter(rig.vtime, 31.7, 47.3))
+      cam.rotateY(amp * jitter(rig.vtime, 29.1, 53.9))
     }
-    applyShot(camera as PerspectiveCamera, live.pose)
-    if (live.cut) frameShot(camera.getWorldDirection(dir))
   }, -5)
   return null
 }

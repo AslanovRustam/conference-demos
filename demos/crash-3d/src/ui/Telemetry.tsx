@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { COUNTDOWN_S } from '../core/config'
 import { telemetry } from '../core/telemetry'
 import type { RoundSnapshot } from '../core/types'
-import { onSnap, useGame } from '../game/store'
+import { onSnap } from '../game/store'
 import { formatAlt, formatClock, formatVel } from './format'
 
 // the clock holds at T-3 while betting, counts down, then runs from liftoff
@@ -12,9 +12,8 @@ function clockOf(snap: RoundSnapshot): string {
   return formatClock(snap.t)
 }
 
-// broadcast telemetry line plus the camera label from the director
+// broadcast telemetry line: mission clock, altitude, velocity
 export function Telemetry() {
-  const camLabel = useGame((s) => s.camLabel)
   const clock = useRef<HTMLSpanElement>(null)
   const alt = useRef<HTMLSpanElement>(null)
   const vel = useRef<HTMLSpanElement>(null)
@@ -35,13 +34,10 @@ export function Telemetry() {
   }, [])
 
   return (
-    <>
-      <div className="hud-telemetry">
-        <span ref={clock} className="tel-clock" />
-        <span ref={alt} />
-        <span ref={vel} />
-      </div>
-      {camLabel && <div className="hud-cam">{camLabel}</div>}
-    </>
+    <div className="hud-telemetry">
+      <span ref={clock} className="tel-clock" />
+      <span ref={alt} />
+      <span ref={vel} />
+    </div>
   )
 }

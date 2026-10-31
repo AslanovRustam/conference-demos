@@ -96,13 +96,19 @@ export function overrideSunElevation(rad: number | null): void {
   sunElevationOverride = rad
 }
 
+// the sunrise event also turns the sun into the crash view, where the camera can see it rise; null hands it back
+let sunAzimuthOverride: number | null = null
+export function overrideSunAzimuth(rad: number | null): void {
+  sunAzimuthOverride = rad
+}
+
 const sunKey = new Color()
 const part = new Color()
 
 // refreshes lightState for the rig's stage and altitude
 export function updateLightState(stageF: number, altM: number, s: LightState = lightState): LightState {
   const el = sunElevationOverride ?? sunElevationAt(stageF)
-  const az = sunAzimuthAt(stageF)
+  const az = sunAzimuthOverride ?? sunAzimuthAt(stageF)
   dirFromAzEl(az, el, s.sunDir)
   s.sunElevation = el
   s.horizon = -horizonDip(altM)

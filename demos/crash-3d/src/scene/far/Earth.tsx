@@ -208,7 +208,8 @@ export function Earth() {
   const mats = useMemo(() => {
     day.colorSpace = SRGBColorSpace
     night.colorSpace = SRGBColorSpace
-    for (const t of [day, night, clouds, spec]) t.anisotropy = 8
+    // anisotropic taps on four 8K maps are a real cost on an integrated gpu
+    for (const t of [day, night, clouds, spec]) t.anisotropy = Math.min(8, QUALITY.anisotropy)
     const sun = { value: new Vector3() }
     const alpha = { value: 0 }
     const surface = shaderMaterial(surfaceFragment, {

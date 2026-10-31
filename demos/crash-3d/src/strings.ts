@@ -18,18 +18,6 @@ export const S = {
   presenterWarp: 'NEXT ROUND: WARP',
   presenterBoom: 'NEXT ROUND: BOOM',
 
-  // broadcast camera labels (scene/camera/shots.ts)
-  cam: {
-    groundTele: 'CAM 1 · GROUND',
-    onboard: 'CAM 2 · ONBOARD',
-    sideChase: 'CAM 3 · CHASE',
-    wide: 'CAM 4 · WIDE',
-    padWide: 'CAM 5 · PAD',
-    padClose: 'CAM 6 · TOWER',
-    capsuleFollow: 'CAM 7 · CAPSULE',
-    crashWide: 'CAM 8 · RANGE',
-    sunrise: 'CAM 9 · HORIZON',
-  },
 
   // glyphs and telemetry units
   times: '×',

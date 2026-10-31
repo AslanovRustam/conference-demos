@@ -7,22 +7,18 @@ import { runtime } from './runtime'
 interface GameState {
   snap: RoundSnapshot
   muted: boolean
-  camLabel: string
   presenterOpen: boolean
   ready: boolean // the scene is loaded, compiled and on screen
   setMuted(v: boolean): void
-  setCamLabel(v: string): void
   setPresenterOpen(v: boolean): void
 }
 
 export const useGame = create<GameState>((set) => ({
   snap: runtime.engine.snapshot(),
   muted: loadMuted(safeStorage),
-  camLabel: '',
   presenterOpen: false,
   ready: false,
   setMuted: (muted) => set({ muted }),
-  setCamLabel: (camLabel) => set({ camLabel }),
   setPresenterOpen: (presenterOpen) => set({ presenterOpen }),
 }))
 

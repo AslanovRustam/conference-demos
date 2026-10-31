@@ -240,12 +240,13 @@ export class CloudsEffect extends Effect {
     u.uFar.value = cam.far
     u.uCamAlt.value = camAlt
     // noise origins: the camera's place in the drifting deck, wrapped to each tile so the shader stays precise
-    const dx = pos.x - WIND.x * t
+    // the deck lies in the ground's frame, which slides back by the downrange
+    const dx = pos.x + rig.downrange - WIND.x * t
     const dz = pos.z - WIND.y * t
     u.uWeatherOff.value.set(wrap(dx, WEATHER_TILE_M), wrap(dz, WEATHER_TILE_M))
     u.uShapeOff.value.set(wrap(dx, SHAPE_TILE_M), wrap(dz, SHAPE_TILE_M))
     u.uDetailOff.value.set(wrap(dx - WIND.x * t * 0.4, DETAIL_TILE_M), wrap(-BOIL * t, DETAIL_TILE_M), wrap(dz - WIND.y * t * 0.4, DETAIL_TILE_M))
-    u.uAxis.value.set(-pos.x, -pos.z)
+    u.uAxis.value.set(-rig.downrange - pos.x, -pos.z)
     u.uRocketAlt.value = rig.altM
     u.uAirFade.value = 1 / (60000 + 100000 * smoothstep(2000, 12000, camAlt))
 
@@ -269,7 +270,7 @@ export class CloudsEffect extends Effect {
     lc[0].copy(plumeLight.color).multiplyScalar(flame)
     shape[0].set(-2, -1, PLUME_SHAPE[0] ** 2, PLUME_SHAPE[1])
     const padOn = rig.altM <= HIDE_ALT_M ? 1 : 0
-    lp[1].set(-pos.x, PAD_GLOW_Y - rig.nearOffset - pos.y, -pos.z)
+    lp[1].set(-rig.downrange - pos.x, PAD_GLOW_Y - rig.nearOffset - pos.y, -pos.z)
     lc[1].copy(PAD_GLOW).multiplyScalar(PAD_GLOW_CD * padOn * UNDER_MS)
     shape[1].set(-2, -1, PAD_SHAPE[0] ** 2, PAD_SHAPE[1])
     for (let i = 0; i < UNDER_LIGHTS - 2; i++) {
@@ -280,8 +281,9 @@ export class CloudsEffect extends Effect {
         continue
       }
       const head = floodPos(f)
+      head.x -= rig.downrange
       head.y -= rig.nearOffset
-      ld[k].set(f.aim[0], f.aim[1] - rig.nearOffset, f.aim[2]).sub(head).normalize()
+      ld[k].set(f.aim[0] - rig.downrange, f.aim[1] - rig.nearOffset, f.aim[2]).sub(head).normalize()
       lp[k].copy(head).sub(pos)
       lc[k].setRGB(...f.color).multiplyScalar(f.cd * SEARCH_GAIN * padOn * UNDER_MS)
       shape[k].set(Math.cos(f.angle), Math.cos(f.angle * (1 - f.penumbra)), SEARCH_SHAPE[0] ** 2, SEARCH_SHAPE[1])

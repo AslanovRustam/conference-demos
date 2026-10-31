@@ -2,7 +2,7 @@ import { expect, test } from 'vitest'
 import { multiplierAt, timeAt } from '../core/curve'
 import { stageAt } from '../core/stages'
 import type { RoundSnapshot } from '../core/types'
-import { computeRig, initialRig } from './rig'
+import { computeRig, downrangeAt, initialRig, TILT_FROM_M, TILT_FULL_M, TILT_MAX, tiltAt } from './rig'
 
 // a full snapshot with defaults; the rocket clock follows the multiplier unless given
 function snapAt(partial: Partial<RoundSnapshot>): RoundSnapshot {
@@ -109,4 +109,28 @@ test('computeRig does not mutate the previous rig', () => {
   const copy = { ...prev }
   computeRig(prev, snapAt({ phase: 'flight', multiplier: 5 }), 0.016)
   expect(prev).toEqual(copy)
+})
+
+test('the rocket leaves the pad upright, leans over once clear of the tower, and flies on at the full lean', () => {
+  expect(tiltAt(0)).toBe(0)
+  expect(tiltAt(TILT_FROM_M)).toBe(0)
+  expect(tiltAt(TILT_FULL_M)).toBeCloseTo(TILT_MAX, 9)
+  expect(tiltAt(1e8)).toBeCloseTo(TILT_MAX, 9)
+  for (let a = 0; a < TILT_FULL_M; a += 50) expect(tiltAt(a + 50)).toBeGreaterThanOrEqual(tiltAt(a))
+})
+
+test('downrange is the ground covered at that lean: none on the way up the tower, then tan(lean) per metre', () => {
+  expect(downrangeAt(0)).toBe(0)
+  expect(downrangeAt(TILT_FROM_M)).toBe(0)
+  // the slope matches the lean everywhere
+  for (const a of [300, 900, 1800, 5000, 40_000]) {
+    const slope = (downrangeAt(a + 1) - downrangeAt(a - 1)) / 2
+    expect(slope).toBeCloseTo(Math.tan(tiltAt(a)), 2)
+  }
+})
+
+test('the rig carries the lean and the downrange of the climb', () => {
+  const r = computeRig(initialRig(), snapAt({ phase: 'flight', t: 5, multiplier: 2.13 }), 1 / 60)
+  expect(r.tilt).toBeCloseTo(tiltAt(r.altM), 9)
+  expect(r.downrange).toBeCloseTo(downrangeAt(r.altM), 9)
 })

@@ -81,7 +81,11 @@ export function Rocket() {
   // before the default priority: the plume and later scene parts read the rocket's world transform.
   // reflections: the night pad until the sun is up, then space; strength and turn from the light state (Lights, -8)
   useFrame(() => {
-    if (root.current) root.current.position.y = rig.rocketY
+    if (root.current) {
+      root.current.position.y = rig.rocketY
+      // the gravity turn: leaning towards downrange, screen right in the crash view
+      root.current.rotation.z = -rig.tilt
+    }
     // blown up: the hull is gone until the next round (the plume and its light stay, at thrust 0)
     if (hull.current) hull.current.visible = rig.crashAge === null
     const maps = env.current

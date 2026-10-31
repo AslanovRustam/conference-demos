@@ -146,10 +146,15 @@ export function Warp() {
     su.uStretch.value = 0.6 + speed * (0.004 + 0.014 * warp)
     su.uAlpha.value = space
     streaks.lines.visible = space > 0.001
+    // the stars stream past along the leaning rocket's axis
+    streaks.lines.rotation.z = -rig.tilt
 
     tunnel.m.uniforms.uScroll.value += step * (2 + 10 * warp) * moving
     tunnel.m.uniforms.uAlpha.value = warp
-    if (tube.current) tube.current.visible = warp > 0.001
+    if (tube.current) {
+      tube.current.visible = warp > 0.001
+      tube.current.rotation.z = -rig.tilt
+    }
 
     // colour splits in the warp. no zoom blur for speed: it blurs towards the screen centre, but the rocket flies up
     // the screen, so it smeared the passing stars sideways into blocks; the stretched streaks carry the speed

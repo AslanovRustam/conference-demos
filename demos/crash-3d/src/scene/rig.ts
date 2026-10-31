@@ -21,6 +21,8 @@ export interface FlightRig {
   altM: number // telemetry(m).altKm * 1000
   rocketY: number // min(altM, NEAR_CAP_M)
   nearOffset: number // max(0, altM - NEAR_CAP_M)
+  tilt: number // the rocket's lean towards downrange (+x, screen right), radians
+  downrange: number // ground covered at that lean, metres: the near field slides back by it (-x)
   speed: number // 0..1 = clamp(stageF / 5) while flying, eases to 0 after the crash
   thrust: number // 0 in betting, ramps 0→1 over the last 1.5 s of countdown, 1 in flight, 0 after crash
   ejected: boolean // the player cashed out this round (stays true through the crash)
@@ -32,7 +34,7 @@ export interface FlightRig {
 
 export function initialRig(): FlightRig {
   return {
-    phase: 'betting', m: 1, stageF: 0, altM: 0, rocketY: 0, nearOffset: 0, speed: 0, thrust: 0,
+    phase: 'betting', m: 1, stageF: 0, altM: 0, rocketY: 0, nearOffset: 0, tilt: 0, downrange: 0, speed: 0, thrust: 0,
     ejected: false, ejectStage: null, crashAge: null, slowmo: 1, vtime: 0,
   }
 }
@@ -42,6 +44,30 @@ export const rig: FlightRig = initialRig()
 
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x))
 const smooth = (x: number) => x * x * (3 - 2 * x)
+
+// the gravity turn of the crash view: upright past the tower, then leaning over towards downrange, flying on at
+// the full lean so the rocket rides the chart up and to the right
+export const TILT_MAX = (38 * Math.PI) / 180
+export const TILT_FROM_M = 60
+export const TILT_FULL_M = 2500
+const TURN_STEPS = 32
+
+export function tiltAt(altM: number): number {
+  return TILT_MAX * smooth(clamp01((altM - TILT_FROM_M) / (TILT_FULL_M - TILT_FROM_M)))
+}
+
+// ground covered: the integral of tan(tilt) over the climb (simpson through the turn, straight past it)
+export function downrangeAt(altM: number): number {
+  if (altM <= TILT_FROM_M) return 0
+  const top = Math.min(altM, TILT_FULL_M)
+  const h = (top - TILT_FROM_M) / TURN_STEPS
+  let sum = 0
+  for (let i = 0; i <= TURN_STEPS; i++) {
+    const w = i === 0 || i === TURN_STEPS ? 1 : i % 2 ? 4 : 2
+    sum += w * Math.tan(tiltAt(TILT_FROM_M + i * h))
+  }
+  return (sum * h) / 3 + Math.max(0, altM - TILT_FULL_M) * Math.tan(TILT_MAX)
+}
 
 // the snapshot multiplier is floored to cents, which steps the rocket ~20 m at a time near the pad;
 // the rocket clock gives the same curve unfloored, so the hud and the picture still agree
@@ -85,6 +111,8 @@ export function computeRig(prev: FlightRig, snap: RoundSnapshot, dt: number): Fl
     altM,
     rocketY: Math.min(altM, NEAR_CAP_M),
     nearOffset: Math.max(0, altM - NEAR_CAP_M),
+    tilt: tiltAt(altM),
+    downrange: downrangeAt(altM),
     speed,
     thrust: thrustOf(snap),
     ejected: snap.cashedAt !== null,

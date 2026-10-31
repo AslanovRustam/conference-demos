@@ -32,6 +32,8 @@ mkdirSync(dirname(out), { recursive: true })
 const context = await chromium.launchPersistentContext('shots/.chrome-profile', {
   channel: 'chrome',
   headless: true,
+  // a production build registers a service worker: it would keep serving the last cached build
+  serviceWorkers: 'block',
   args: ['--use-angle=d3d11', '--ignore-gpu-blocklist', '--force_high_performance_gpu'],
   ...(portrait
     ? { viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true }

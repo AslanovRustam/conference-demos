@@ -44,9 +44,12 @@ export function Lights() {
     const s = updateLightState(rig.stageF, rig.altM)
     key.color.copy(s.keyColor)
     key.intensity = s.keyIntensity
-    const y = rig.rocketY + ROCKET_MID
-    key.target.position.set(0, y, 0)
+    // the shadow box rides the middle of the leaning rocket
+    const x = Math.sin(rig.tilt) * ROCKET_MID
+    const y = rig.rocketY + Math.cos(rig.tilt) * ROCKET_MID
+    key.target.position.set(x, y, 0)
     key.position.copy(s.keyDir).multiplyScalar(KEY_DIST)
+    key.position.x += x
     key.position.y += y
     key.target.updateMatrixWorld()
     fill.color.copy(s.fillSky)

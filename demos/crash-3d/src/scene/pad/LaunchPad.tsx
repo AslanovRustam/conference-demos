@@ -303,7 +303,8 @@ export function LaunchPad() {
 
   // after the rig (-10), before the rest of the pad reads its own transform
   useFrame(() => {
-    if (root.current) root.current.position.y = -rig.nearOffset
+    // the near field slides back as the rocket climbs (y) and leans over downrange (x)
+    if (root.current) root.current.position.set(-rig.downrange, -rig.nearOffset, 0)
     if (visual.current) visual.current.visible = rig.altM <= HIDE_ALT_M
   }, -1)
 

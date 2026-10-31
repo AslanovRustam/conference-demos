@@ -6,6 +6,7 @@ import { AttractOverlay } from './AttractOverlay'
 import { Balance } from './Balance'
 import { Banner } from './Banner'
 import { BetControls } from './BetControls'
+import { Chart } from './Chart'
 import { Confetti } from './Confetti'
 import { Countdown } from './Countdown'
 import { History } from './History'
@@ -32,6 +33,7 @@ export function Hud() {
       <div className="hud-shade" aria-hidden />
       <div className="hud-bar hud-bar--top" aria-hidden />
       <div className="hud-bar hud-bar--bottom" aria-hidden />
+      <Chart />
 
       <div className="hud-brand">
         <span className="hud-logo-hold" {...hold}>
