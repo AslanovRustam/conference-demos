@@ -15,7 +15,7 @@ import {
   WARP_FORCE_RANGE,
 } from './config'
 import { multiplierAt, timeAt } from './curve'
-import { sampleCrashPoint } from './crashPoint'
+import { samplePlayerCrash } from './crashPoint'
 import type { Emitter } from './events'
 import { payoutFor } from './payout'
 import { floor2, type Rng } from './rng'
@@ -237,7 +237,7 @@ export class RoundEngine {
     this.armed = null
     if (forced === 'instant') return 1
     if (forced === 'warp') return floor2(WARP_FORCE_RANGE[0] + this.rng() * (WARP_FORCE_RANGE[1] - WARP_FORCE_RANGE[0]))
-    return sampleCrashPoint(this.rng())
+    return samplePlayerCrash(this.rng())
   }
 
   private planRare(crash: number): RarePlan | null {

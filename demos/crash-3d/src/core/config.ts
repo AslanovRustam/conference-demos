@@ -11,6 +11,8 @@ export const MAX_MULT = 1000
 
 // [multiplier, survival probability]
 export const CRASH_ANCHORS = [[1.01, 0.97], [2, 0.5], [5, 0.25], [15, 0.1], [50, 0.025], [1000, 0.0005]] as const
+// a player round always flies at least this long before it can blow up: time to watch it and cash out
+export const MIN_FLIGHT_S = 10
 
 export const STAGE_THRESHOLDS = [1, 1.2, 1.8, 3, 8, 30] as const
 export const ALT_ANCHORS_KM = [0, 0.4, 3.5, 40, 400, 20000, 400000]

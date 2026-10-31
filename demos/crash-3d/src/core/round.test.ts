@@ -65,7 +65,8 @@ test('cash out at 1.15 credits exactly 115 (integer-cent payout)', () => {
 })
 
 test('without cash out the rocket crashes exactly at the crash point and the bet is lost', () => {
-  const { engine, events } = setup([0.5]) // crash ×2
+  const { engine, events } = setup([0.5])
+  engine.setNextCrash(2)
   engine.launch()
   run(engine, 3 + timeAt(2) + 0.1)
   const s = engine.snapshot()
@@ -84,7 +85,8 @@ test('auto cash out pays exactly the auto value', () => {
 })
 
 test('auto value equal to the crash point loses', () => {
-  const { engine } = setup([0.5]) // crash ×2, auto ×2
+  const { engine } = setup([0.5]) // auto ×2
+  engine.setNextCrash(2)
   engine.toggleAuto()
   engine.launch()
   run(engine, 3 + timeAt(2) + 0.1)
@@ -104,8 +106,9 @@ test('after cash out the rest of the flight takes at most 6 s', () => {
   expect(real).toBeLessThanOrEqual(6.05)
 })
 
-test('crash at 1.00 explodes right at liftoff', () => {
+test('a crash point of 1.00 (the presenter or debug) explodes right at liftoff', () => {
   const { engine } = setup([0.99])
+  engine.setNextCrash(1)
   engine.launch()
   run(engine, 3.05)
   expect(engine.snapshot().phase).toBe('crashed')
@@ -113,6 +116,7 @@ test('crash at 1.00 explodes right at liftoff', () => {
 
 test('crashed → result → betting with the configured durations', () => {
   const { engine, events } = setup([0.99])
+  engine.setNextCrash(1)
   engine.launch()
   run(engine, 3.05 + 1.6 + 2.5 + 0.1)
   expect(engine.snapshot().phase).toBe('betting')
@@ -122,6 +126,7 @@ test('crashed → result → betting with the configured durations', () => {
 test('refuels to 10 000 when the balance cannot cover the minimum bet', () => {
   const { engine, events } = setupWithBalance(15, [0.99])
   expect(engine.snapshot().bet).toBe(10)
+  engine.setNextCrash(1)
   engine.launch()
   run(engine, 3.05 + 1.6 + 2.5 + 0.1)
   expect(engine.snapshot().balance).toBe(10_000)
@@ -149,6 +154,7 @@ test('stepBet walks the ladder and never exceeds the balance', () => {
 test('history keeps the last 15 rounds, newest first', () => {
   const { engine } = setup([0.99])
   for (let i = 0; i < 16; i++) {
+    engine.setNextCrash(1)
     engine.launch()
     run(engine, 3.05 + 1.6 + 2.5 + 0.1)
   }
@@ -159,8 +165,10 @@ test('history keeps the last 15 rounds, newest first', () => {
 
 test('history records the crash point and outcome, newest first', () => {
   const { engine } = setup([0.99, 0.5])
+  engine.setNextCrash(1)
   engine.launch()
   run(engine, 3.05 + 1.6 + 2.5 + 0.1)
+  engine.setNextCrash(2)
   engine.launch()
   run(engine, 3 + timeAt(2) + 0.1 + 1.6 + 2.5 + 0.2)
   expect(engine.snapshot().history).toEqual([{ crash: 2, won: false }, { crash: 1, won: false }])
@@ -181,7 +189,8 @@ test('arm forces the next round once', () => {
 })
 
 test('stage events fire once per stage reached, in order', () => {
-  const { engine, events } = setup([0.025]) // crash x50
+  const { engine, events } = setup([0.025])
+  engine.setNextCrash(50)
   engine.launch()
   run(engine, 3 + timeAt(50) + 0.2)
   const stages = events.filter((e) => e.type === 'stage').map((e) => (e as { stage: number }).stage)
@@ -246,6 +255,7 @@ test('entering attract resets balance, bet and auto for the next visitor', () =>
   const { engine } = setup([0.99])
   engine.stepBet(1)
   engine.toggleAuto()
+  engine.setNextCrash(1)
   engine.launch()
   run(engine, 3.05 + 1.6 + 2.5 + 0.1)
   engine.setAttract(true)
@@ -288,4 +298,21 @@ test('a forced rare kind (debug) plans every round and the frozen flight', () =>
   engine.abortToBetting()
   engine.freezeAt(5)
   expect(engine.snapshot().rare).toEqual(forcedRare('aurora'))
+})
+
+test('a player round never crashes in the first 10 s of flight, even on the unluckiest draw', () => {
+  const { engine } = setup([0.99999])
+  engine.launch()
+  run(engine, 3 + 9.9)
+  expect(engine.snapshot().phase).toBe('flight')
+  run(engine, 0.3)
+  expect(engine.snapshot()).toMatchObject({ phase: 'crashed', crashPoint: 4.56 })
+})
+
+test('the presenter can still blow the next round up on the pad', () => {
+  const { engine } = setup([0.5])
+  engine.arm('instant')
+  engine.launch()
+  run(engine, 3.2)
+  expect(engine.snapshot()).toMatchObject({ phase: 'crashed', crashPoint: 1 })
 })
