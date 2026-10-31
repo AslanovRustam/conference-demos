@@ -50,7 +50,8 @@ export function bindKeyboard(
     if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return
     // no page scroll, no click on a focused button
     if (SCROLL_KEYS.has(e.code)) e.preventDefault()
-    if (h.anyInput() !== true) act(e.code)
+    // a key that only woke the game does nothing else; Escape (back to the lobby) is safe in every phase
+    if (h.anyInput() !== true || e.code === 'Escape') act(e.code)
     // letters by physical key, so codes work on any layout
     const letter = /^Key([A-Z])$/.exec(e.code)
     if (letter) h.code(letter[1])

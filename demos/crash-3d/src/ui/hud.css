@@ -1169,6 +1169,11 @@ html {
 
 /* ------------------------------------------------------------ lobby exit (?embed=1) */
 
+/* its own layer over the splash (50) and the idle loop */
+.hud-top {
+  z-index: 60;
+}
+
 .hud-exit {
   --ck-chamfer: 0.5rem;
   position: absolute;

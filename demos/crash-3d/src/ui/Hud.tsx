@@ -8,7 +8,6 @@ import { Banner } from './Banner'
 import { BetControls } from './BetControls'
 import { Confetti } from './Confetti'
 import { Countdown } from './Countdown'
-import { ExitButton } from './ExitButton'
 import { History } from './History'
 import './hud.css'
 import { MainButton } from './MainButton'
@@ -42,7 +41,6 @@ export function Hud() {
         <MuteButton />
       </div>
       <Telemetry />
-      <ExitButton />
       <Balance />
       <History />
       <Multiplier />

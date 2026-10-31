@@ -119,3 +119,9 @@ test('a key that wakes the game from attract does nothing else but still counts 
   // space still must not press a focused button or scroll
   expect(preventDefault).toHaveBeenCalledTimes(1)
 })
+
+test('Escape always reaches exit, even when the key only woke the game or the stage is still loading', () => {
+  const { fire, calls } = setupKeys(true)
+  fire({ code: 'Escape', key: 'Escape' })
+  expect(calls).toMatchObject({ exit: 1, anyInput: 1 })
+})

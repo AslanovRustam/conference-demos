@@ -39,3 +39,35 @@ test('without embed there is no EXIT and Esc posts nothing', async ({ page }) =>
   await page.waitForTimeout(300)
   expect(await page.evaluate(() => (window as unknown as { __msgs: unknown[] }).__msgs)).toEqual([])
 })
+
+test('while the game still loads in the lobby, EXIT is on top, Esc leaves, and a progress line shows', async ({ page, baseURL }) => {
+  await page.route('**/__lobby.html', (r) => r.fulfill({ contentType: 'text/html', body: '<!doctype html><body></body>' }))
+  await page.goto('/__lobby.html')
+  await page.evaluate((src) => {
+    const w = window as unknown as { __msgs: unknown[] }
+    w.__msgs = []
+    window.addEventListener('message', (e) => w.__msgs.push(e.data))
+    const f = document.createElement('iframe')
+    f.src = src
+    f.style.cssText = 'width:1280px;height:720px;border:0'
+    document.body.replaceChildren(f)
+  }, baseURL + '/?embed=1&debug=1')
+  const frame = page.frameLocator('iframe')
+  await expect(frame.locator('.hud-exit')).toBeVisible()
+  const game = (await (await page.locator('iframe').elementHandle())!.contentFrame())!
+  await expect(frame.locator('.splash-track')).toBeVisible()
+  await expect(frame.locator('.splash-logo')).toHaveCount(0)
+  // still loading, nothing covers the button, and Esc goes out (checked in the page: the loading main thread is too
+  // busy for playwright's click stability checks)
+  const before = await game.evaluate(() => {
+    const ready = (window as unknown as { __crashReady?: boolean }).__crashReady === true
+    const r = document.querySelector('.hud-exit')!.getBoundingClientRect()
+    const onTop = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)?.closest('.hud-exit') !== null
+    window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Escape', key: 'Escape' }))
+    return { ready, onTop }
+  })
+  expect(before).toEqual({ ready: false, onTop: true })
+  await expect
+    .poll(() => page.evaluate(() => (window as unknown as { __msgs: { type?: string }[] }).__msgs.map((m) => m?.type)))
+    .toContain('clickable:exit')
+})

@@ -11,7 +11,7 @@ const COMPILE_S = 12 // the shader compile has no progress of its own: the bar c
 
 // the load screen over the stage: the red logo and a thin red progress line on black, it dissolves once the scene
 // is on screen. textures, the cloud noise and the fonts fill most of the line, the shader compile the rest.
-// embedded, the lobby runs its own transition: plain black
+// embedded, the lobby shows its own branding: the line alone (the lobby may reveal the game before it is ready)
 export function Splash() {
   const ready = useGame((s) => s.ready)
   const textures = useProgress((s) => s.progress) / 100
@@ -49,14 +49,10 @@ export function Splash() {
 
   return (
     <div className={`splash${ready ? ' splash--out' : ''}`} role="progressbar" aria-label={S.loading} aria-valuenow={Math.round(value * 100)}>
-      {!params.embed && (
-        <>
-          <img className="splash-logo" src={brandLogo.red} alt="Clickable" draggable={false} />
-          <div className="splash-track">
-            <div className="splash-bar" style={{ transform: `scaleX(${value.toFixed(4)})` }} />
-          </div>
-        </>
-      )}
+      {!params.embed && <img className="splash-logo" src={brandLogo.red} alt="Clickable" draggable={false} />}
+      <div className="splash-track">
+        <div className="splash-bar" style={{ transform: `scaleX(${value.toFixed(4)})` }} />
+      </div>
     </div>
   )
 }

@@ -19,3 +19,14 @@ test('does nothing without the api and never throws', () => {
   })
   expect(() => angry(40)).not.toThrow()
 })
+
+test('stays still while the gate is closed (the idle loop plays to nobody)', () => {
+  const calls: unknown[] = []
+  let open = false
+  const vibrate = createVibrate({ vibrate: (p: number | number[]) => (calls.push(p), true) }, () => open)
+  vibrate(40)
+  expect(calls).toEqual([])
+  open = true
+  vibrate(40)
+  expect(calls).toEqual([40])
+})

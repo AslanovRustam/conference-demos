@@ -7,7 +7,8 @@ body,
   background: #000;
   overflow: hidden;
   overscroll-behavior: none;
-  touch-action: manipulation;
+  /* no pinch zoom or page gestures (ios ignores user-scalable=no); the game reads its own pointers */
+  touch-action: none;
   user-select: none;
   -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;

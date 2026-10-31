@@ -9,18 +9,29 @@ import { primaryAction, runtime } from './game/runtime'
 import { toggleMute, useGame } from './game/store'
 import { bindKeyboard } from './platform/input'
 import { params } from './platform/params'
+import { reloadOnContextLoss } from './platform/contextLoss'
 import { exitToLobby, parseLobbyMessage, readyToLobby } from './platform/embed'
+import { gateVibrate } from './platform/haptics'
+import { createSafeStorage } from './platform/storage'
 import { createCodeDetector } from './platform/presenter'
 import { loadCloudNoise } from './scene/clouds/noise'
 import { QUALITY } from './scene/quality'
 import { rig } from './scene/rig'
 import { Stage } from './scene/Stage'
 import { Hud } from './ui/Hud'
+import { ExitButton } from './ui/ExitButton'
 import { Splash } from './ui/Splash'
 import './ui/splash.css'
 
 // the cloud noise takes a moment in its workers: start it with the page, the stage waits for it while it loads
 void loadCloudNoise()
+// the idle loop plays to nobody: no buzzing an idle phone
+gateVibrate(() => !useGame.getState().snap.attract)
+
+// production only: dev remounts dispose the renderer (a context loss of its own)
+function onCanvas({ gl }: { gl: { domElement: HTMLCanvasElement } }) {
+  if (import.meta.env.PROD) reloadOnContextLoss(gl.domElement, () => location.reload(), createSafeStorage(() => sessionStorage))
+}
 
 // the 3d stage fills the screen, the dom hud sits on top
 export default function App() {
@@ -101,11 +112,16 @@ export default function App() {
         shadows="percentage"
         gl={{ antialias: false, powerPreference: 'high-performance', stencil: false }}
         camera={{ near: 0.5, far: 30000, fov: 40 }}
+        onCreated={onCanvas}
       >
         <Stage />
       </Canvas>
       <Hud />
       <Splash />
+      {/* over the splash and the idle loop: the lobby's way out works from the first moment */}
+      <div className="hud hud-top" data-embed={params.embed || undefined}>
+        <ExitButton />
+      </div>
     </>
   )
 }

@@ -34,3 +34,9 @@ test('rotating mid-flight keeps the round going and the layout valid', async ({ 
   expect((await snap(page)).phase).toBe('flight')
   await buttonInside(page)
 })
+
+test('no pinch zoom or page gestures anywhere: touch-action none on the page', async ({ page }) => {
+  await open(page)
+  const actions = await page.evaluate(() => ['html', 'body', '#root'].map((s) => getComputedStyle(document.querySelector(s)!).touchAction))
+  expect(actions).toEqual(['none', 'none', 'none'])
+})
