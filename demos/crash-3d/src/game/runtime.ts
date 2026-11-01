@@ -18,9 +18,10 @@ function createRuntime(): Runtime {
 
 export const runtime: Runtime = createRuntime()
 
-// launch while betting, cash out in flight, nothing otherwise
-export function primaryAction(): void {
-  const phase = runtime.engine.snapshot().phase
-  if (phase === 'betting') runtime.engine.launch()
-  else if (phase === 'flight') runtime.engine.cashOut()
+// launch while betting, cash out in flight, play again once the round is won (the engine refuses it otherwise)
+export function primaryAction(engine = runtime.engine): void {
+  const phase = engine.snapshot().phase
+  if (phase === 'betting') engine.launch()
+  else if (phase === 'flight') engine.cashOut()
+  else engine.playAgain()
 }

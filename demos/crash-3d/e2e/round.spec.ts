@@ -48,3 +48,21 @@ test('touch spam never double-launches or goes negative @touch', async ({ page }
   expect(s.balance).toBeGreaterThanOrEqual(0)
   expect(await page.evaluate(() => window.visualViewport?.scale ?? 1)).toBe(1)
 })
+
+test('a win: the card offers PLAY AGAIN, straight back to the bets with the round in history', async ({ page }) => {
+  await open(page)
+  if ((await snap(page)).attract) await page.keyboard.press('Space')
+  await nextCrash(page, 50)
+  await page.keyboard.press('Space')
+  await page.waitForFunction(() => window.__crash.snap().multiplier >= 1.5, null, { timeout: 60_000 })
+  await page.keyboard.press('Space')
+  const again = page.locator('.wincard-btn--again')
+  await expect(again).toBeVisible()
+  // the card's buttons take over from the main button; outside the lobby there is no EXIT
+  await expect(page.locator('.hud-main')).toBeHidden()
+  await expect(page.locator('.wincard-btn')).toHaveCount(1)
+  await again.click()
+  await waitPhase(page, 'betting')
+  expect((await snap(page)).history[0]).toEqual({ crash: 50, won: true })
+  await expect(page.locator('.mb')).toBeVisible()
+})

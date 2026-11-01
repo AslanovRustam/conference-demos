@@ -1,8 +1,8 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 
-test('embed hides splash, shows EXIT and posts clickable:exit', async ({ page, baseURL }) => {
-  // a lobby stand-in on the same origin (a page from elsewhere may not frame a local server): the game in an iframe,
-  // the host collecting what it posts
+// a lobby stand-in on the same origin (a page from elsewhere may not frame a local server): the game in an iframe,
+// the host collecting what it posts
+async function openInLobby(page: Page, baseURL: string | undefined) {
   await page.route('**/__lobby.html', (r) => r.fulfill({ contentType: 'text/html', body: '<!doctype html><body></body>' }))
   await page.goto('/__lobby.html')
   await page.evaluate((src) => {
@@ -16,14 +16,35 @@ test('embed hides splash, shows EXIT and posts clickable:exit', async ({ page, b
     document.body.replaceChildren(f)
   }, baseURL + '/?embed=1&debug=1')
   const frame = page.frameLocator('iframe')
-  await expect(frame.locator('.splash-logo')).toHaveCount(0)
   const game = (await (await page.locator('iframe').elementHandle())!.contentFrame())!
+  return { frame, game }
+}
+
+const posted = (page: Page) =>
+  page.evaluate(() => (window as unknown as { __msgs: { type?: string }[] }).__msgs.map((m) => m?.type))
+
+test('embed hides splash, shows EXIT and posts clickable:exit', async ({ page, baseURL }) => {
+  const { frame, game } = await openInLobby(page, baseURL)
+  await expect(frame.locator('.splash-logo')).toHaveCount(0)
   await game.waitForFunction(() => (window as unknown as { __crashReady?: boolean }).__crashReady === true, null, { timeout: 110_000 })
   await expect(frame.locator('.hud-exit')).toBeVisible()
   await frame.locator('.hud-exit').click()
-  await expect
-    .poll(() => page.evaluate(() => (window as unknown as { __msgs: { type?: string }[] }).__msgs.map((m) => m?.type)))
-    .toEqual(expect.arrayContaining(['clickable:ready', 'clickable:exit']))
+  await expect.poll(() => posted(page)).toEqual(expect.arrayContaining(['clickable:ready', 'clickable:exit']))
+})
+
+test("in the lobby the win card's EXIT leaves for the lobby", async ({ page, baseURL }) => {
+  const { frame, game } = await openInLobby(page, baseURL)
+  await game.waitForFunction(() => (window as unknown as { __crashReady?: boolean }).__crashReady === true, null, { timeout: 110_000 })
+  type Debug = { __crash: { snap: () => { multiplier: number }; setNextCrash: (x: number) => void } }
+  await game.evaluate(() => (window as unknown as Debug).__crash.setNextCrash(50))
+  await frame.locator('.mb').click()
+  await game.waitForFunction(() => (window as unknown as Debug).__crash.snap().multiplier >= 1.5, null, { timeout: 60_000 })
+  await frame.locator('.mb').click()
+  const exit = frame.locator('.wincard-btn', { hasText: 'EXIT' })
+  await expect(exit).toBeVisible()
+  expect(await posted(page)).not.toContain('clickable:exit')
+  await exit.click()
+  await expect.poll(() => posted(page)).toContain('clickable:exit')
 })
 
 test('without embed there is no EXIT and Esc posts nothing', async ({ page }) => {

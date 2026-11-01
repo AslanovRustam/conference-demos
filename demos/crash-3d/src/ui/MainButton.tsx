@@ -29,6 +29,8 @@ function view(snap: RoundSnapshot): [string, string, number] {
 // launch / cash out: the ejection handle. reacts on pointerdown for zero latency
 export function MainButton() {
   const phase = useGame((s) => s.snap.phase)
+  // a won round: the win card's play again takes over (ui/WinBurst.tsx)
+  const won = useGame((s) => s.snap.cashedAt !== null && s.snap.phase !== 'flight')
   const action = useRef<HTMLSpanElement>(null)
   const amount = useRef<HTMLSpanElement>(null)
   const fill = useRef<HTMLSpanElement>(null)
@@ -60,7 +62,7 @@ export function MainButton() {
   }
 
   return (
-    <div className="hud-main" data-phase={phase}>
+    <div className="hud-main" data-phase={phase} data-won={won || undefined}>
       <div className="mb-glow" aria-hidden />
       <button className="mb ck-chamfer" tabIndex={-1} disabled={!live} onPointerDown={onDown}>
         <span ref={fill} className="mb-fill" aria-hidden />

@@ -7,8 +7,8 @@ import { Balance } from './Balance'
 import { Banner } from './Banner'
 import { BetControls } from './BetControls'
 import { Chart } from './Chart'
-import { Confetti } from './Confetti'
 import { Countdown } from './Countdown'
+import { FullscreenButton } from './FullscreenButton'
 import { History } from './History'
 import './hud.css'
 import { MainButton } from './MainButton'
@@ -20,6 +20,7 @@ import { ResultOverlay } from './ResultOverlay'
 import { Telemetry } from './Telemetry'
 import { useLongPress } from './useLongPress'
 import { WinBurst } from './WinBurst'
+import { WinFx } from './WinFx'
 
 const PRESENTER_HOLD_MS = 2000
 
@@ -40,7 +41,10 @@ export function Hud() {
           <img className="hud-logo" src={brandLogo.red} alt="Clickable" draggable={false} />
           <PresenterDot />
         </span>
-        <MuteButton />
+        <span className="hud-icons">
+          <MuteButton />
+          <FullscreenButton />
+        </span>
       </div>
       <Telemetry />
       <Balance />
@@ -48,9 +52,9 @@ export function Hud() {
       <Multiplier />
       <AltitudeScale />
 
-      <Confetti />
       <Countdown />
       <WinBurst />
+      <WinFx />
       <ResultOverlay />
       <Banner />
 

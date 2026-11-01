@@ -10,6 +10,7 @@ import {
   HISTORY_LEN,
   MAX_DT,
   MAX_MULT,
+  PLAY_AGAIN_AFTER_S,
   RESULT_S,
   START_BALANCE,
   WARP_FORCE_RANGE,
@@ -41,6 +42,7 @@ export class RoundEngine {
   private auto = { enabled: false, value: DEFAULT_AUTO }
   private t = 0
   private cashedAt: number | null = null
+  private cashAge = 0 // real seconds since the cash out
   private payout = 0
   private crashPoint = 1
   private crashTime = 0
@@ -118,6 +120,7 @@ export class RoundEngine {
     const value = auto ? this.autoValue()! : floor2(multiplierAt(this.t))
     this.payout = payoutFor(this.bet, value)
     this.cashedAt = value
+    this.cashAge = 0
     if (!this.scripted) this.balance += this.payout
     const rem = this.crashTime - this.t
     this.tailRate = Math.max(1, rem / EJECT_TAIL_MAX_S)
@@ -131,6 +134,7 @@ export class RoundEngine {
     if (!(dt > 0)) return
     if (this.frozen && this.phase === 'countdown') return
     this.phaseAge += dt
+    this.cashAge += dt
     switch (this.phase) {
       case 'countdown':
         this.tickCountdown()
@@ -190,6 +194,17 @@ export class RoundEngine {
 
   abortToBetting(): void {
     this.enterBetting()
+  }
+
+  // the win card's play again: a won round needs none of its tail, straight back to betting. a round cut short
+  // before its crash still goes into the history with its crash point
+  playAgain(): boolean {
+    const tail = this.phase === 'ejected'
+    if (this.cashedAt === null || !(tail || this.phase === 'crashed' || this.phase === 'result')) return false
+    if (this.cashAge < PLAY_AGAIN_AFTER_S - 1e-9) return false
+    if (tail) this.record(true)
+    this.enterBetting()
+    return true
   }
 
   freezeAt(m: number): void {
@@ -294,13 +309,16 @@ export class RoundEngine {
       const cashedOut = this.cashedAt !== null
       this.setPhase('crashed')
       this.emitter.emit({ type: 'crash', multiplier: this.crashPoint, cashedOut, stage: stageAt(this.crashPoint) })
-      if (!this.scripted) {
-        this.history.unshift({ crash: this.crashPoint, won: cashedOut })
-        this.history.length = Math.min(this.history.length, HISTORY_LEN)
-      }
+      this.record(cashedOut)
     } else {
       this.emitStages()
     }
+  }
+
+  private record(won: boolean): void {
+    if (this.scripted) return
+    this.history.unshift({ crash: this.crashPoint, won })
+    this.history.length = Math.min(this.history.length, HISTORY_LEN)
   }
 
   private emitStages(): void {

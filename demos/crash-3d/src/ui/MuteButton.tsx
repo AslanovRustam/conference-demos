@@ -12,7 +12,7 @@ export function MuteButton() {
   }
   return (
     <button
-      className="hud-mute"
+      className="hud-icon hud-mute"
       tabIndex={-1}
       aria-label={muted ? S.aria.unmute : S.aria.mute}
       aria-pressed={muted}

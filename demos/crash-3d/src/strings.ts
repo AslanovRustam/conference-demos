@@ -18,6 +18,7 @@ export const S = {
   pressToLaunch: 'PRESS SPACE TO LAUNCH',
   tapToLaunch: 'TAP TO LAUNCH',
   exit: 'EXIT',
+  playAgain: 'PLAY AGAIN',
   loading: 'LOADING',
   presenterWarp: 'NEXT ROUND: WARP',
   presenterBoom: 'NEXT ROUND: BOOM',
@@ -34,10 +35,18 @@ export const S = {
   km: 'KM',
   kms: 'KM/S',
 
+  // key hints (laptop only)
+  keys: {
+    space: 'SPACE',
+    esc: 'ESC',
+  },
+
   // accessible names
   aria: {
     mute: 'Mute sound',
     unmute: 'Unmute sound',
+    fullscreen: 'Full screen',
+    exitFullscreen: 'Leave full screen',
     betDown: 'Lower bet',
     betUp: 'Raise bet',
     autoToggle: 'Auto cash out',

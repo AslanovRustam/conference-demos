@@ -3,6 +3,7 @@ import { Emitter, type GameEvent } from './events'
 import { payoutFor } from './payout'
 import { forcedRare, RARE_WINDOWS } from './rare'
 import { RoundEngine } from './round'
+import { PLAY_AGAIN_AFTER_S } from './config'
 import { timeAt } from './curve'
 
 function build(us: number[], balance?: number) {
@@ -315,4 +316,75 @@ test('the presenter can still blow the next round up on the pad', () => {
   engine.launch()
   run(engine, 3.2)
   expect(engine.snapshot()).toMatchObject({ phase: 'crashed', crashPoint: 1 })
+})
+
+test('play again right after a cash out skips the rest of the round: the win stays, the round goes into history', () => {
+  const { engine, events } = setup([0.5])
+  engine.setNextCrash(5)
+  engine.launch()
+  run(engine, 3 + timeAt(1.5))
+  engine.cashOut()
+  const { payout } = engine.snapshot()
+  run(engine, PLAY_AGAIN_AFTER_S)
+  expect(engine.playAgain()).toBe(true)
+  expect(engine.snapshot()).toMatchObject({ phase: 'betting', balance: 9_900 + payout, payout: 0, cashedAt: null, t: 0 })
+  expect(engine.snapshot().history).toEqual([{ crash: 5, won: true }])
+  expect(events.at(-1)).toEqual({ type: 'betting' })
+  expect(events.some((e) => e.type === 'crash')).toBe(false)
+})
+
+test('play again also ends the crash scene and the result, recording the round only once', () => {
+  // the cash out at ×1.5 leaves 1.9 s to the crash at ×2: the crash scene after 2.4 s, the result after 4 s
+  for (const [wait, phase] of [[2.4, 'crashed'], [4, 'result']] as const) {
+    const { engine } = setup([0.5])
+    engine.setNextCrash(2)
+    engine.launch()
+    run(engine, 3 + timeAt(1.5))
+    engine.cashOut()
+    run(engine, wait)
+    expect(engine.snapshot().phase).toBe(phase)
+    expect(engine.playAgain()).toBe(true)
+    expect(engine.snapshot().phase).toBe('betting')
+    expect(engine.snapshot().history).toEqual([{ crash: 2, won: true }])
+  }
+})
+
+test('play again is refused unless the round was won', () => {
+  const { engine } = setup([0.5])
+  expect(engine.playAgain()).toBe(false)
+  engine.setNextCrash(2)
+  engine.launch()
+  run(engine, 3 + 1)
+  expect(engine.playAgain()).toBe(false)
+  expect(engine.snapshot().phase).toBe('flight')
+  run(engine, timeAt(2))
+  expect(engine.snapshot().phase).toBe('crashed')
+  expect(engine.playAgain()).toBe(false)
+  expect(engine.snapshot().phase).toBe('crashed')
+})
+
+test('play again in an attract round leaves the history alone', () => {
+  const { engine } = setup([0.5])
+  engine.setAttract(true)
+  engine.launchScripted(3, 2)
+  run(engine, 3 + timeAt(2) + 0.1)
+  expect(engine.snapshot().phase).toBe('ejected')
+  run(engine, PLAY_AGAIN_AFTER_S)
+  expect(engine.playAgain()).toBe(true)
+  expect(engine.snapshot()).toMatchObject({ phase: 'betting', balance: 10_000, history: [] })
+})
+
+test('play again waits for the win card to show its amount, even when the crash comes right after the cash out', () => {
+  expect(PLAY_AGAIN_AFTER_S).toBeCloseTo(1.2)
+  const { engine } = setup([0.5])
+  engine.setNextCrash(2)
+  engine.launch()
+  run(engine, 3 + timeAt(2) - 0.05)
+  engine.cashOut()
+  expect(engine.playAgain()).toBe(false) // a second space press right after the cash out
+  run(engine, 0.5)
+  expect(engine.snapshot().phase).toBe('crashed')
+  expect(engine.playAgain()).toBe(false)
+  run(engine, PLAY_AGAIN_AFTER_S - 0.5)
+  expect(engine.playAgain()).toBe(true)
 })

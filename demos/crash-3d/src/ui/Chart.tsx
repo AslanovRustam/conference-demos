@@ -12,12 +12,13 @@ const px = (x: number, w: number) => ((x + 1) / 2) * w
 const py = (y: number, h: number) => ((1 - y) / 2) * h
 
 // the classic crash chart over the scene: the multiplier curve from the launch point to the rocket riding its tip,
-// a soft red fill under it and round multipliers up the left. both axes rescale as the round goes on
+// a red fill under it and round multipliers up the left. both axes rescale as the round goes on
 // (scene/camera/crashView.ts); the scene's camera keeps the rocket on the tip
 export function Chart() {
   const svg = useRef<SVGSVGElement>(null)
   const line = useRef<SVGPathElement>(null)
   const area = useRef<SVGPathElement>(null)
+  const heat = useRef<SVGPathElement>(null)
   const ticks = useRef<(SVGGElement | null)[]>([])
 
   useEffect(() => {
@@ -40,7 +41,9 @@ export function Chart() {
       line.current.setAttribute('d', d)
       const base = py(L.origin[1], h).toFixed(1)
       const last = pts[pts.length - 1]
-      area.current.setAttribute('d', `${d} L${px(last.x, w).toFixed(1)} ${base} L${px(pts[0].x, w).toFixed(1)} ${base} Z`)
+      const fill = `${d} L${px(last.x, w).toFixed(1)} ${base} L${px(pts[0].x, w).toFixed(1)} ${base} Z`
+      area.current.setAttribute('d', fill)
+      heat.current?.setAttribute('d', fill)
       const marks = chartTicks(snap.t, L)
       for (let i = 0; i < TICK_SLOTS; i++) {
         const g = ticks.current[i]
@@ -63,9 +66,15 @@ export function Chart() {
   return (
     <svg ref={svg} className="hud-chart" data-state="off" aria-hidden>
       <defs>
+        {/* the fill: deep red under the curve fading down, and a second layer lighting up towards the rocket */}
         <linearGradient id="chart-fill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="var(--red)" stopOpacity="0.14" />
-          <stop offset="1" stopColor="var(--red)" stopOpacity="0" />
+          <stop offset="0" stopColor="var(--red)" stopOpacity="0.5" />
+          <stop offset="0.55" stopColor="var(--red)" stopOpacity="0.22" />
+          <stop offset="1" stopColor="var(--red)" stopOpacity="0.06" />
+        </linearGradient>
+        <linearGradient id="chart-heat" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0.3" stopColor="var(--red)" stopOpacity="0" />
+          <stop offset="1" stopColor="var(--red)" stopOpacity="0.3" />
         </linearGradient>
       </defs>
       {Array.from({ length: TICK_SLOTS }, (_, i) => (
@@ -81,6 +90,7 @@ export function Chart() {
         </g>
       ))}
       <path ref={area} className="chart-area" fill="url(#chart-fill)" />
+      <path ref={heat} className="chart-area" fill="url(#chart-heat)" />
       <path ref={line} className="chart-line" />
     </svg>
   )

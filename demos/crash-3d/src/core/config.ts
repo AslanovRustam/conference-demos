@@ -22,6 +22,8 @@ export const EJECT_TAIL_MAX_S = 6
 export const CRASH_SCENE_S = 1.6
 export const CRASH_SCENE_SHORT_S = 1.0
 export const RESULT_S = 2.5
+// the win card's play again (and space) only after its amount has counted up: a doubled cash out press must not skip it
+export const PLAY_AGAIN_AFTER_S = 1.2
 export const HISTORY_LEN = 15
 export const IDLE_TO_ATTRACT_S = 45
 export const WARP_FORCE_RANGE = [40, 150] as const

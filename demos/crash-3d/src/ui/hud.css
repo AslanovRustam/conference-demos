@@ -95,7 +95,7 @@ html {
   display: none;
 }
 
-/* ------------------------------------------------------------ brand + mute */
+/* ------------------------------------------------------------ brand, sound, full screen */
 
 .hud-brand {
   position: absolute;
@@ -111,7 +111,12 @@ html {
   height: 1.05rem;
   width: auto;
 }
-.hud-mute {
+.hud-icons {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.hud-icon {
   display: grid;
   place-items: center;
   width: 2rem;
@@ -119,7 +124,7 @@ html {
   color: var(--grey);
   transition: color 0.2s;
 }
-.hud-mute svg {
+.hud-icon svg {
   width: 1.25rem;
   height: 1.25rem;
   fill: none;
@@ -128,7 +133,7 @@ html {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-.hud-mute:hover {
+.hud-icon:hover {
   color: var(--white);
 }
 .hud-mute[data-muted] {
@@ -172,6 +177,14 @@ html {
   font-weight: 600;
   letter-spacing: 0.04em;
   font-variant-numeric: tabular-nums;
+  transition: text-shadow 0.5s var(--ease);
+}
+/* the win's credits landing (ui/WinFx.tsx) */
+.hud-balance[data-win] .balance-value {
+  text-shadow:
+    0 0 0.5rem rgba(255, 25, 35, 0.95),
+    0 0 1.4rem rgba(255, 25, 35, 0.6);
+  transition-duration: 0.15s;
 }
 
 .hud-history {
@@ -343,7 +356,7 @@ html {
 
 /* ------------------------------------------------------------ cash out */
 
-.hud-confetti {
+.hud-winfx {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -368,6 +381,7 @@ html {
   position: absolute;
   inset: -45% -35%;
   z-index: -1;
+  pointer-events: none;
   background: radial-gradient(closest-side, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.3) 55%, rgba(0, 0, 0, 0));
 }
 .wincard-label {
@@ -413,6 +427,76 @@ html {
   color: var(--white);
   font-weight: 700;
   letter-spacing: 0.06em;
+}
+/* slow light rays behind the amount, under the dark scrim (ui/WinFx.tsx bursts over them) */
+.wincard-rays {
+  --rays: 30rem;
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  width: var(--rays);
+  height: var(--rays);
+  margin: calc(var(--rays) / -2) 0 0 calc(var(--rays) / -2);
+  z-index: -2;
+  border-radius: 50%;
+  background: repeating-conic-gradient(
+    rgba(255, 25, 35, 0.34) 0deg,
+    rgba(255, 25, 35, 0) 5deg,
+    rgba(255, 25, 35, 0) 13deg,
+    rgba(255, 25, 35, 0.34) 18deg
+  );
+  -webkit-mask-image: radial-gradient(closest-side, #000 15%, rgba(0, 0, 0, 0.5) 50%, transparent);
+  mask-image: radial-gradient(closest-side, #000 15%, rgba(0, 0, 0, 0.5) 50%, transparent);
+  animation:
+    wincard-rays-in 0.9s var(--ease) both,
+    wincard-rays-spin 40s linear infinite;
+}
+@keyframes wincard-rays-in {
+  from {
+    opacity: 0;
+    scale: 0.4;
+  }
+}
+@keyframes wincard-rays-spin {
+  to {
+    rotate: 360deg;
+  }
+}
+.wincard-actions {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 1.1rem;
+}
+.wincard-btn {
+  --ck-chamfer: 0.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  height: 3rem;
+  padding: 0 1.4rem;
+  background: rgba(255, 255, 255, 0.12);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  white-space: nowrap;
+  text-shadow: none;
+  transition:
+    background-color 0.2s,
+    filter 0.2s;
+}
+.wincard-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+.wincard-btn--again {
+  background: var(--red);
+  box-shadow: 0 0 1.6rem rgba(255, 25, 35, 0.55);
+}
+.wincard-btn--again:hover {
+  background: var(--red);
+  filter: brightness(1.15);
+}
+.wincard-btn .bet-keys {
+  color: rgba(255, 255, 255, 0.6);
 }
 
 /* ------------------------------------------------------------ altitude rail */
@@ -881,14 +965,16 @@ html {
   .hud-logo {
     height: 2.1rem;
   }
-  .hud-mute {
-    width: 2.6rem;
-    height: 2.6rem;
+  .hud-icons {
+    gap: 0.6rem;
     padding-left: 1.6rem;
-    box-sizing: content-box;
     border-left: 1px solid var(--hair);
   }
-  .hud-mute svg {
+  .hud-icon {
+    width: 2.6rem;
+    height: 2.6rem;
+  }
+  .hud-icon svg {
     width: 1.6rem;
     height: 1.6rem;
   }
@@ -939,6 +1025,19 @@ html {
     font-size: 8.5rem;
   }
   .wincard-sub {
+    font-size: 1.05rem;
+  }
+  .wincard-rays {
+    --rays: 52rem;
+  }
+  .wincard-actions {
+    gap: 1rem;
+    margin-top: 1.6rem;
+  }
+  .wincard-btn {
+    --ck-chamfer: 0.8rem;
+    height: 3.8rem;
+    padding: 0 2rem;
     font-size: 1.05rem;
   }
 
@@ -1145,8 +1244,13 @@ html {
     opacity 0.3s var(--ease),
     visibility 0.3s;
 }
+/* a won round: the button bows out (after a beat that shows the press) for the win card's buttons */
+.hud-main[data-won] {
+  transition-delay: 0.35s;
+}
 .hud[data-attract] .hud-bets,
-.hud[data-attract] .hud-main {
+.hud[data-attract] .hud-main,
+.hud-main[data-won] {
   opacity: 0;
   visibility: hidden;
 }
@@ -1292,6 +1396,12 @@ html {
   stroke-linecap: round;
   stroke-linejoin: round;
   filter: drop-shadow(0 0 0.5rem rgba(255, 25, 35, 0.7));
+}
+.chart-area {
+  transition: opacity 0.4s var(--ease);
+}
+.hud-chart[data-state='crashed'] .chart-area {
+  opacity: 0.4;
 }
 .hud-chart[data-state='crashed'] .chart-line {
   stroke: rgba(255, 25, 35, 0.5);

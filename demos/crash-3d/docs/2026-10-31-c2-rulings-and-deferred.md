@@ -136,7 +136,7 @@
 - Final: minor (deferred): M5 the 3 s noise buffer starts at a random offset up to 1.5 s, so the crash rumble / liftoff wash sometimes end early (sfx.ts:35)
 - Final: minor (deferred): M6 howler, @types/howler and gsap are unused dependencies
 - Final: minor (deferred): M9 ~8 audio parameter automations scheduled every frame whether or not the value changed (rocket.ts, music.ts)
-- Final: minor (deferred): M10 confetti canvas sized only at spawn: a rotation mid-burst stretches it for up to 1.2 s
+- Final: minor (deferred): M10 confetti canvas sized only at spawn: a rotation mid-burst stretches it for up to 1.2 s (the same holds for the win burst that replaced it, ui/WinFx.tsx, up to 2 s)
 
 ## После плана: единый вид и скорость (2026-10-31, по просьбе заказчика)
 
@@ -159,3 +159,14 @@
 - Ruling: the win is a card under the capsule (YOU WON, the payout counting up in Clickable Black with a red glow, CASHED OUT AT ×…) that stays until the next round; the round's result card is for losses only — cost if wrong: none
 - Ruling: the bet controls are two cards over the launch button (BET and AUTO CASH OUT with an explicit ON/OFF, a big value between − and +; laptop key hints) — cost if wrong: CSS
 - Ruling: the earlier carry/punch-in of the capsule (cec32e2) is replaced by the capsule camera — cost if wrong: none
+
+## Правки по отзыву заказчика, второй круг (2026-11-01)
+
+- Ruling: the cash-out confetti is replaced by a burst around the win card (ui/WinFx.tsx, pure sim ui/winFxSim.ts): a flash, two soft shock rings, sparks with streak tails starting from the amount's rim (the number stays readable), star glints, and twelve comet credits flying from the amount into the balance; the balance rolls up between the first and last landing (0.75–1.5 s) and glows meanwhile; slow red light rays turn behind the amount while the card is up — the user found the confetti too plain — cost if wrong: taste; the rays measured within noise on the Intel UHD (p95 frame about 21 ms either way)
+- Ruling: PLAY AGAIN ends a won round at once (RoundEngine.playAgain: from ejected, crashed or result; a round cut short before its crash still goes into the history with its crash point) and lands on the betting screen — the game's own start screen in the lobby; the stand's splash and idle loop are not a "start screen" a player would want back — cost if wrong: a route to the splash instead
+- Ruling: PLAY AGAIN (button and Space) only works 1.2 s after the cash out, when the amount has counted up and the buttons fade in (PLAY_AGAIN_AFTER_S) — a doubled Space press on the cash out would otherwise skip the whole win — cost if wrong: a 1.2 s wait for a very fast player
+- Ruling: without a choice the card does not wait: the round plays out and returns to betting as before — the stand must never hang on a card nobody answers — cost if wrong: the buttons disappear on their own after about 4–10 s
+- Ruling: EXIT on the win card shows only in the lobby (?embed=1), like the top EXIT and plinko's — outside the lobby there is nothing to exit to — cost if wrong: a standalone EXIT (to the idle loop?) would need its own meaning
+- Ruling: the main button hides while a won round's card is up (after 0.35 s so the press still shows) — the card's buttons sat on top of it in landscape, and CASHED OUT · N repeated the card — cost if wrong: CSS
+- Ruling: full screen is an icon next to the sound toggle (ui/FullscreenButton.tsx, platform/fullscreen.ts as in plinko), shown only where the page may go full screen (the lobby's iframe allows it; iPhone Safari has none); it toggles on click, not pointerdown, because a touch grants full screen only once the finger lifts — cost if wrong: none
+- Ruling: the chart fill is a red gradient from 0.5 under the curve to 0.06 at the base plus a second layer heating up towards the rocket (0 → 0.3 left to right), dimmed on a crash — the user found the 0.14 fill nearly invisible — cost if wrong: two stop values
