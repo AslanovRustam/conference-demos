@@ -15,8 +15,9 @@ const RISER_MAX_HZ = 1400
 
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x))
 
+// after a cash out the camera stays with the capsule and the rocket flies on out of frame, unheard
 export function rocketMix(rig: FlightRig): RocketMix {
-  const flying = rig.phase === 'flight' || rig.phase === 'ejected'
+  const flying = rig.phase === 'flight'
   const thrust = rig.phase === 'countdown' || flying ? clamp01(rig.thrust) : 0
   const vacuum = clamp01((rig.stageF - 1.5) / (AIR_TOP - 1.5))
   // the riser: about an octave per 3.7× of multiplier, so the tension keeps climbing all the way to ×1000

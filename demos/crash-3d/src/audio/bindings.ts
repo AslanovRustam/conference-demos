@@ -14,10 +14,16 @@ export interface SfxApi {
   ui(): void
 }
 
-// game events → sounds. a cash out in the air (stages 0–1) opens a parachute
+// game events → sounds. a cash out in the air (stages 0–1) opens a parachute; after it the rocket flies on out of
+// frame, its stages pass without a sound
 export function bindAudio(emitter: Emitter, sfx: SfxApi): () => void {
+  let cashedOut = false
   return emitter.on((e) => {
     switch (e.type) {
+      case 'launch':
+      case 'betting':
+        cashedOut = false
+        break
       case 'countdown':
         sfx.countdown(e.n)
         break
@@ -25,9 +31,10 @@ export function bindAudio(emitter: Emitter, sfx: SfxApi): () => void {
         sfx.liftoff()
         break
       case 'stage':
-        sfx.stage(e.stage)
+        if (!cashedOut) sfx.stage(e.stage)
         break
       case 'cashout':
+        cashedOut = true
         sfx.cashout()
         if (e.stage <= 1) sfx.parachute()
         sfx.win(e.payout)

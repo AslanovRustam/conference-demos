@@ -64,6 +64,20 @@ test('every new stage gets its whoosh, and unbinding stops all sounds', () => {
   expect(calls).toEqual(['stage:2'])
 })
 
+test('after a cash out the rocket flying on out of frame makes no stage sounds, until the next round', () => {
+  const calls: string[] = []
+  const emitter = new Emitter()
+  bindAudio(emitter, fakeSfx(calls))
+  emitter.emit({ type: 'stage', stage: 1 })
+  emitter.emit({ type: 'cashout', multiplier: 4, payout: 400, stage: 2, auto: false })
+  emitter.emit({ type: 'stage', stage: 3 })
+  emitter.emit({ type: 'stage', stage: 5 })
+  emitter.emit({ type: 'betting' })
+  emitter.emit({ type: 'launch', bet: 100 })
+  emitter.emit({ type: 'stage', stage: 1 })
+  expect(calls).toEqual(['stage:1', 'cashout', 'win:400', 'stage:1'])
+})
+
 test('muted state persists through safeStorage and defaults to unmuted when storage throws', () => {
   const mem = new Map<string, string>()
   const ok = createSafeStorage(() => ({ getItem: (k: string) => mem.get(k) ?? null, setItem: (k: string, v: string) => mem.set(k, v) }) as unknown as Storage)

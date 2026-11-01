@@ -32,3 +32,10 @@ test('after the crash or a cash out of nothing everything fades out', () => {
   expect(crash.roar).toBe(0)
   expect(crash.riser).toBe(0)
 })
+
+test('a cash out silences the engine at once: the camera stays with the capsule, the rocket flies on unheard', () => {
+  const mix = rocketMix(at({ phase: 'ejected', thrust: 1, stageF: 2, m: 3, ejected: true, ejectStage: 2 }))
+  expect(mix.roar).toBe(0)
+  expect(mix.sub).toBe(0)
+  expect(mix.riser).toBe(0)
+})
