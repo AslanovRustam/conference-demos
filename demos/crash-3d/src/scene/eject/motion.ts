@@ -104,3 +104,14 @@ export function stepEject(s: EjectState, dt: number): void {
   s.alt += s.vy * dt
   s.z += s.vz * dt
 }
+
+// the crash view keeps its camera on the climbing rocket: the capsule rides along with it for a moment (its own
+// separation, chutes and thrusters still play out), then falls behind, slowly at first, out of the frame. the share
+// of the rocket's climb since the separation the capsule keeps
+export const CARRY_HOLD_S = 1.8
+export const CARRY_FADE_S = 1.4
+
+export function carryAt(t: number): number {
+  const k = clamp01((t - CARRY_HOLD_S) / CARRY_FADE_S)
+  return 1 - k * k * (3 - 2 * k)
+}

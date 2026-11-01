@@ -1,4 +1,5 @@
 import { useFrame } from '@react-three/fiber'
+import { useRef } from 'react'
 import { Vector3, type Camera, type PerspectiveCamera } from 'three'
 import { useGame } from '../../game/store'
 import { params, type DebugCam } from '../../platform/params'
@@ -6,7 +7,7 @@ import { lightState } from '../env/lightState'
 import { fx } from '../fx'
 import { GROUND_Y } from '../pad/layout'
 import { rig } from '../rig'
-import { cameraFor, distAt, layoutFor, tipAt } from './crashView'
+import { cameraFor, distAt, layoutFor, punchAt, tipAt } from './crashView'
 
 // debug close-ups (?debug=1&cam=...): fixed poses near the hull, heights relative to the rocket base.
 // close: the livery band and stage 1; base: engines, fins and soot; top: capsule and escape tower;
@@ -73,6 +74,9 @@ function jitter(t: number, a: number, b: number) {
 
 // the crash view, or a fixed debug pose with ?debug=1&cam=…
 export function CameraRig() {
+  // when the capsule separated (visual clock), for the cash-out punch-in
+  const ejectAt = useRef<number | null>(null)
+
   useFrame(({ camera, size }) => {
     if (params.cam === 'pad') {
       padShot(camera)
@@ -99,7 +103,10 @@ export function CameraRig() {
     }
     center.set(Math.sin(rig.tilt) * ROCKET_MID, rig.rocketY + Math.cos(rig.tilt) * ROCKET_MID, 0)
     const t = useGame.getState().snap.t
-    cameraFor(center, tipAt(t, L), distAt(t, L), fov, aspect, cam.position)
+    if (!rig.ejected) ejectAt.current = null
+    else if (ejectAt.current === null) ejectAt.current = rig.vtime
+    const punch = punchAt(ejectAt.current === null ? null : rig.vtime - ejectAt.current)
+    cameraFor(center, tipAt(t, L), distAt(t, L) * punch, fov, aspect, cam.position)
     cam.rotation.set(0, 0, 0)
     const amp = shakeAmount() * SHAKE_RAD
     if (amp > 0) {

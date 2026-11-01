@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { drogueOpen, ejectKind, mainOpen, retroThrust, startEject, stepEject } from './motion'
+import { CARRY_FADE_S, CARRY_HOLD_S, carryAt, drogueOpen, ejectKind, mainOpen, retroThrust, startEject, stepEject } from './motion'
 
 const DT = 1 / 60
 
@@ -47,4 +47,14 @@ test('on thrusters the capsule peels off to the side and drops below its startin
   const { s } = run('retro', 2)
   expect(s.x).toBeGreaterThan(15)
   expect(s.alt).toBeLessThan(1000)
+})
+
+test('in the crash view the capsule rides along with the rocket for a moment, then falls behind smoothly', () => {
+  expect(carryAt(0)).toBe(1)
+  expect(carryAt(CARRY_HOLD_S)).toBe(1)
+  expect(carryAt(CARRY_HOLD_S + CARRY_FADE_S)).toBe(0)
+  expect(carryAt(30)).toBe(0)
+  for (let t = 0; t < 4; t += 0.05) expect(carryAt(t + 0.05)).toBeLessThanOrEqual(carryAt(t))
+  // it eases out: no jump when the hold ends
+  expect(1 - carryAt(CARRY_HOLD_S + 0.05)).toBeLessThan(0.01)
 })

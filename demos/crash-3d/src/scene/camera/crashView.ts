@@ -44,6 +44,18 @@ export function distAt(t: number, L: ViewLayout): number {
   return L.dist * mix(PAD_ZOOM, 1, smooth(t / PULL_S))
 }
 
+// a cash out: the camera punches in on the rocket while the capsule separates (it is a few metres across, a speck at
+// the layout's distance), holds, then eases back. a factor on the distance; age: seconds since the separation
+export const PUNCH = 0.4
+const PUNCH_IN_S = 0.35
+const PUNCH_HOLD_S = 1.6
+const PUNCH_OUT_S = 1.2
+export function punchAt(age: number | null): number {
+  if (age === null) return 1
+  const k = smooth(age / PUNCH_IN_S) * (1 - smooth((age - PUNCH_HOLD_S) / PUNCH_OUT_S))
+  return mix(1, PUNCH, k)
+}
+
 // the chart: n points of (τ, m(τ)) for τ in [0, t], scaled into the box from the origin to the rocket. time runs
 // along x, the multiplier up y; both axes rescale as the round goes on, so the curve always ends at the rocket
 export function chartPoints(t: number, n: number, L: ViewLayout): { x: number; y: number }[] {

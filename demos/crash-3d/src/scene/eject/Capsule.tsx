@@ -22,7 +22,7 @@ import { plumeGeometry, plumeMaterial, setPlume, type PlumeMaterial } from '../r
 import { rocketRefs } from '../rocket/refs'
 import { rig } from '../rig'
 import { Fairing } from './Fairing'
-import { ejectKind, retroThrust, startEject, stepEject, type EjectState } from './motion'
+import { carryAt, ejectKind, retroThrust, startEject, stepEject, type EjectState } from './motion'
 import { Parachute } from './Parachute'
 
 const RETRO_SCALE = 0.08
@@ -76,6 +76,7 @@ export function Eject() {
   const original = useRef<Object3D | null>(null)
   const copy = useRef<Object3D | null>(null)
   const pyroAge = useRef(PYRO_S)
+  const liftAt = useRef(0) // the rocket's altitude at the separation
   const at = useMemo(() => ({ p: new Vector3(), q: new Quaternion(), axis: new Vector3(), tilt: new Quaternion(), roll: new Quaternion() }), [])
 
   const retro = useMemo(() => {
@@ -131,7 +132,8 @@ export function Eject() {
       copy.current = twin
       cap.visible = false
       state.current = startEject(ejectKind(e.stage), { x: at.p.x, alt: at.p.y + rig.nearOffset, z: at.p.z }, Math.random() * Math.PI * 2)
-      // the camera follows the free capsule from here
+      liftAt.current = rig.altM
+      // the free capsule from here
       rocketRefs.capsule = holder.current
       pyroAge.current = 0
     })
@@ -162,7 +164,9 @@ export function Eject() {
       s.alt = floor
       s.vx = s.vy = s.vz = 0
     }
-    h.position.set(s.x, s.alt - rig.nearOffset, s.z)
+    // it rides along with the climbing rocket for a moment, then falls behind (motion.ts carryAt)
+    const alt = s.alt + (rig.altM - liftAt.current) * carryAt(s.t)
+    h.position.set(s.x, alt - rig.nearOffset, s.z)
     if (body.current) {
       at.axis.set(-Math.sin(s.heading), 0, Math.cos(s.heading))
       at.tilt.setFromAxisAngle(at.axis, s.tilt)

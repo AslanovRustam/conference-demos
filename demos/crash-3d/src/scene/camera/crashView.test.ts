@@ -1,7 +1,7 @@
 import { PerspectiveCamera, Vector3 } from 'three'
 import { expect, test } from 'vitest'
 import { multiplierAt } from '../../core/curve'
-import { cameraFor, chartPoints, chartTicks, distAt, LANDSCAPE, layoutFor, PORTRAIT, tipAt } from './crashView'
+import { cameraFor, chartPoints, chartTicks, distAt, LANDSCAPE, layoutFor, PORTRAIT, PUNCH, punchAt, tipAt } from './crashView'
 
 test('on the pad the rocket sits at the chart origin, then climbs to the anchor and stays there', () => {
   const L = LANDSCAPE
@@ -93,4 +93,14 @@ test('on the pad the camera stands closer (the rocket and its tower fill the cor
     expect(distAt(30, L)).toBe(L.dist)
     for (let t = 0; t < 3; t += 0.1) expect(distAt(t + 0.1, L)).toBeGreaterThanOrEqual(distAt(t, L))
   }
+})
+
+test('a cash out punches the camera in on the separating capsule for a moment, then eases back', () => {
+  expect(punchAt(null)).toBe(1)
+  expect(punchAt(0)).toBe(1)
+  expect(punchAt(0.5)).toBeCloseTo(PUNCH, 9)
+  expect(punchAt(1.4)).toBeCloseTo(PUNCH, 9)
+  expect(punchAt(3)).toBe(1)
+  for (let t = 0; t < 0.35; t += 0.05) expect(punchAt(t + 0.05)).toBeLessThanOrEqual(punchAt(t))
+  for (let t = 1.6; t < 3; t += 0.05) expect(punchAt(t + 0.05)).toBeGreaterThanOrEqual(punchAt(t))
 })
