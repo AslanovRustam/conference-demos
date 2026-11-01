@@ -16,6 +16,8 @@ export interface GameEntry {
   idleReturnSec?: number
   /** false: do not send clickable:visible (for a game that auto-starts on it instead of waiting for a tap) */
   sendVisible?: boolean
+  /** true: reveal only on clickable:ready (sent when the scene is really on screen), never on the canvas probe */
+  waitForReady?: boolean
   /** extra wait after the game's readiness signal (ready message or first canvas frames) before revealing it */
   revealDelayMs?: number
 }

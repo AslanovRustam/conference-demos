@@ -71,3 +71,17 @@ test('dispose stops the timeout', async () => {
   await vi.advanceTimersByTimeAsync(5000)
   expect(done).toBe(false)
 })
+
+test('a game that announces ready is not revealed by the canvas probe', async () => {
+  const r = createReadiness({ timeoutMs: 15000, revealDelayMs: 0, waitForReady: true })
+  let done = false
+  r.result.then(() => {
+    done = true
+  })
+  r.loaded(async () => true)
+  await vi.advanceTimersByTimeAsync(5000)
+  expect(done).toBe(false)
+  r.messageReady()
+  await vi.advanceTimersByTimeAsync(0)
+  await expect(r.result).resolves.toBe('message')
+})

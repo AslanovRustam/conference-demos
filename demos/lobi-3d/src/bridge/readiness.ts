@@ -12,7 +12,8 @@ export interface Readiness {
   dispose(): void
 }
 
-export function createReadiness(opts: { timeoutMs: number; revealDelayMs: number }): Readiness {
+/** waitForReady: the game reliably sends clickable:ready, so its canvas appearing proves nothing (its own loader draws too) */
+export function createReadiness(opts: { timeoutMs: number; revealDelayMs: number; waitForReady?: boolean }): Readiness {
   let settle!: (reason: ReadyReason) => void
   let settled = false
   let disposed = false
@@ -36,6 +37,7 @@ export function createReadiness(opts: { timeoutMs: number; revealDelayMs: number
       else settle('message')
     },
     loaded(probe) {
+      if (opts.waitForReady) return
       probe().then(
         (ok) => {
           if (ok && !settled && !disposed) timers.push(setTimeout(() => settle('probe'), opts.revealDelayMs))

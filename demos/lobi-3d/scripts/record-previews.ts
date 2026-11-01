@@ -19,6 +19,8 @@ const RECORD_SEC = 15
 /** key that starts a round in each game (spin, launch, drop); Space when not listed */
 const PLAY_KEY: Record<string, string> = {}
 const PLAY_EVERY_MS = 3500
+/** per-game rhythm: crash launches, flies ~7 s (warp, clouds), then cashes out (capsule eject) */
+const PLAY_EVERY: Record<string, number> = { 'crash-3d': 7000 }
 /** games whose embed mode opens on a splash: the button to press (the opening itself goes into the loop) */
 const INTRO_BUTTON: Record<string, RegExp> = { 'slot-3d': /open the vault/i }
 /** games show their own loader after the canvas appears; the loop starts once it is gone */
@@ -34,6 +36,8 @@ if (!existsSync(manifestPath)) {
   process.exit(1)
 }
 const manifest: GamesManifest = JSON.parse(readFileSync(manifestPath, 'utf8'))
+const config = JSON.parse(readFileSync(path.join(lobbyDir, 'games.config.json'), 'utf8')) as { games: { id: string; waitForReady?: boolean }[] }
+const waitForReady = new Set(config.games.filter((g) => g.waitForReady).map((g) => g.id))
 const games = Object.entries(manifest.games)
   .filter(([, g]) => g.ok)
   .map(([id]) => id)
@@ -61,6 +65,10 @@ const index: Record<string, { video: string; poster: string; start: number }> = 
 for (const id of games) {
   const ctx = await browser.newContext({ viewport: SIZE, recordVideo: { dir: tmp, size: VIDEO } })
   const page = await ctx.newPage()
+  // opened top-level, a game's clickable:ready goes to its own window: catch it to start on time
+  await page.addInitScript({
+    content: "window.__ready=false;addEventListener('message',function(e){if(e.data&&e.data.type==='clickable:ready')window.__ready=true})",
+  })
   const t0 = Date.now()
   await page.goto(`http://localhost:${PORT}/games/${id}/?embed=1`)
   try {
@@ -70,7 +78,11 @@ for (const id of games) {
     await ctx.close()
     continue
   }
-  await page.waitForTimeout(SETTLE_MS)
+  // games that reliably announce ready (waitForReady in games.config.json) start a beat after it,
+  // however long their scene takes to load; the others get the fixed settle time
+  const announced = waitForReady.has(id) && (await page.waitForFunction('window.__ready === true', null, { timeout: 45000 }).then(() => true, () => false))
+  if (waitForReady.has(id) && !announced) console.warn(`  ${id}: no clickable:ready within 45 s`)
+  await page.waitForTimeout(announced ? 1500 : SETTLE_MS)
   const start = (Date.now() - t0) / 1000
   const intro = INTRO_BUTTON[id]
   if (intro) {
@@ -83,7 +95,7 @@ for (const id of games) {
   let posterTaken = false
   while (Date.now() < end) {
     await page.keyboard.press(key)
-    await page.waitForTimeout(PLAY_EVERY_MS)
+    await page.waitForTimeout(PLAY_EVERY[id] ?? PLAY_EVERY_MS)
     if (!posterTaken && Date.now() > end - (RECORD_SEC * 1000) / 2) {
       await page.screenshot({ path: path.join(outDir, `${id}.jpg`), type: 'jpeg', quality: 82 })
       posterTaken = true

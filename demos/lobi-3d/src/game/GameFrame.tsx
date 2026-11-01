@@ -39,7 +39,7 @@ function Frame({ slot, revealed, closing, onGone }: FrameProps) {
 
   useEffect(() => {
     const iframe = ref.current!
-    const r = createReadiness({ timeoutMs: REVEAL_TIMEOUT_MS, revealDelayMs: slot.game.revealDelayMs ?? 0 })
+    const r = createReadiness({ timeoutMs: REVEAL_TIMEOUT_MS, revealDelayMs: slot.game.revealDelayMs ?? 0, waitForReady: slot.game.waitForReady })
     readiness.current = r
     r.result.then(() => lobbyStore.getState().markGameReady())
 
