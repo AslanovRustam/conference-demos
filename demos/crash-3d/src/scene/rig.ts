@@ -1,0 +1,132 @@
+import { CRASH_SCENE_S, CRASH_SCENE_SHORT_S } from '../core/config'
+import { multiplierAt } from '../core/curve'
+import { stageAt, stageFloat, type StageId } from '../core/stages'
+import { telemetry } from '../core/telemetry'
+import type { Phase, RoundSnapshot } from '../core/types'
+
+// floating origin: the rocket climbs up to this height, past it the near field moves down instead
+export const NEAR_CAP_M = 6000
+export const CLOUD_BASE_M = 1200
+export const CLOUD_TOP_M = 2600
+
+export const THRUST_RAMP_S = 1.5 // engines spool up over the last part of the countdown
+const SLOWMO_MIN = 0.3
+const SLOWMO_S = 1.5
+const SPEED_FADE = 3 // 1/s, how fast the sense of speed dies after the crash
+
+export interface FlightRig {
+  phase: Phase
+  m: number // visual multiplier: unfloored in flight, the crash point after the crash
+  stageF: number // stageFloat(m), 0..6
+  altM: number // telemetry(m).altKm * 1000; after a cash out held at the separation (the capsule's world)
+  rocketY: number // min(altM, NEAR_CAP_M)
+  nearOffset: number // max(0, altM - NEAR_CAP_M)
+  tilt: number // the rocket's lean towards downrange (+x, screen right), radians
+  downrange: number // ground covered at that lean, metres: the near field slides back by it (-x)
+  rocketClimb: number // after a cash out the world holds at the capsule's height: the rocket is drawn this much higher
+  speed: number // 0..1 = clamp(stageF / 5) while flying, eases to 0 after the crash
+  thrust: number // 0 in betting, ramps 0→1 over the last 1.5 s of countdown, 1 in flight, 0 after crash
+  ejected: boolean // the player cashed out this round (stays true through the crash)
+  ejectStage: StageId | null // stageAt(cashedAt)
+  crashAge: number | null // real seconds since the crash
+  slowmo: number // 0.3 at the crash, eases back to 1 by crashAge 1.5
+  vtime: number // visual clock, += dt * slowmo
+}
+
+export function initialRig(): FlightRig {
+  return {
+    phase: 'betting', m: 1, stageF: 0, altM: 0, rocketY: 0, nearOffset: 0, tilt: 0, downrange: 0, rocketClimb: 0, speed: 0, thrust: 0,
+    ejected: false, ejectStage: null, crashAge: null, slowmo: 1, vtime: 0,
+  }
+}
+
+// shared per-frame state of the flight; RigUpdater refreshes it before anything else reads it
+export const rig: FlightRig = initialRig()
+
+const clamp01 = (x: number) => Math.min(1, Math.max(0, x))
+const smooth = (x: number) => x * x * (3 - 2 * x)
+
+// the gravity turn of the crash view: upright past the tower, then leaning over towards downrange, flying on at
+// the full lean so the rocket rides the chart up and to the right
+export const TILT_MAX = (38 * Math.PI) / 180
+export const TILT_FROM_M = 60
+export const TILT_FULL_M = 2500
+const TURN_STEPS = 32
+
+export function tiltAt(altM: number): number {
+  return TILT_MAX * smooth(clamp01((altM - TILT_FROM_M) / (TILT_FULL_M - TILT_FROM_M)))
+}
+
+// ground covered: the integral of tan(tilt) over the climb (simpson through the turn, straight past it)
+export function downrangeAt(altM: number): number {
+  if (altM <= TILT_FROM_M) return 0
+  const top = Math.min(altM, TILT_FULL_M)
+  const h = (top - TILT_FROM_M) / TURN_STEPS
+  let sum = 0
+  for (let i = 0; i <= TURN_STEPS; i++) {
+    const w = i === 0 || i === TURN_STEPS ? 1 : i % 2 ? 4 : 2
+    sum += w * Math.tan(tiltAt(TILT_FROM_M + i * h))
+  }
+  return (sum * h) / 3 + Math.max(0, altM - TILT_FULL_M) * Math.tan(TILT_MAX)
+}
+
+// the snapshot multiplier is floored to cents, which steps the rocket ~20 m at a time near the pad;
+// the rocket clock gives the same curve unfloored, so the hud and the picture still agree
+function visualMultiplier(snap: RoundSnapshot): number {
+  const live = snap.phase === 'flight' || snap.phase === 'ejected'
+  return live ? Math.max(snap.multiplier, multiplierAt(snap.t)) : snap.multiplier
+}
+
+function crashAgeOf(snap: RoundSnapshot): number | null {
+  if (snap.phase === 'crashed') return snap.phaseAge
+  if (snap.phase === 'result') return (snap.cashedAt !== null ? CRASH_SCENE_SHORT_S : CRASH_SCENE_S) + snap.phaseAge
+  return null
+}
+
+function thrustOf(snap: RoundSnapshot): number {
+  switch (snap.phase) {
+    case 'countdown':
+      return clamp01((THRUST_RAMP_S - snap.countdown) / THRUST_RAMP_S)
+    case 'flight':
+    case 'ejected':
+      return 1
+    default:
+      return 0
+  }
+}
+
+// pure: everything but the visual clock and the speed fade comes from the snapshot
+export function computeRig(prev: FlightRig, snap: RoundSnapshot, dt: number): FlightRig {
+  const m = visualMultiplier(snap)
+  // after a cash out the camera stays with the capsule: the scene's world (sky, earth, clouds, pad) holds at the
+  // height of the separation, and the rocket climbs away above it
+  const view = snap.cashedAt ?? m
+  const stageF = Math.min(6, Math.max(0, stageFloat(Math.max(1, view))))
+  const altM = telemetry(view).altKm * 1000
+  const rocketClimb = snap.cashedAt !== null ? telemetry(m).altKm * 1000 - altM : 0
+  const crashAge = crashAgeOf(snap)
+  // the slow motion is for a crash the player rode into; after a cash out the camera stays on the capsule
+  const slowed = crashAge !== null && snap.cashedAt === null
+  const slowmo = slowed ? 1 - (1 - SLOWMO_MIN) * (1 - smooth(clamp01(crashAge / SLOWMO_S))) : 1
+  const vdt = dt * slowmo
+  const flying = snap.phase === 'flight' || snap.phase === 'ejected'
+  const speed = flying ? clamp01(stageF / 5) : crashAge !== null ? prev.speed * Math.exp(-SPEED_FADE * vdt) : 0
+  return {
+    phase: snap.phase,
+    m,
+    stageF,
+    altM,
+    rocketY: Math.min(altM, NEAR_CAP_M),
+    nearOffset: Math.max(0, altM - NEAR_CAP_M),
+    tilt: tiltAt(altM),
+    downrange: downrangeAt(altM),
+    rocketClimb,
+    speed,
+    thrust: thrustOf(snap),
+    ejected: snap.cashedAt !== null,
+    ejectStage: snap.cashedAt !== null ? stageAt(snap.cashedAt) : null,
+    crashAge,
+    slowmo,
+    vtime: prev.vtime + vdt,
+  }
+}

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#000000"/>
+  <g fill="#FF1923">
+    <!-- nose and body -->
+    <path d="M256 64c-38 40-58 96-58 160v136h116V224c0-64-20-120-58-160z"/>
+    <!-- fins -->
+    <path d="M198 290l-62 66v52l62-22z"/>
+    <path d="M314 290l62 66v52l-62-22z"/>
+    <!-- nozzle -->
+    <path d="M222 372h68l-10 30h-48z"/>
+    <!-- flame -->
+    <path d="M236 414h40c0 24-8 42-20 56-12-14-20-32-20-56z" opacity="0.75"/>
+  </g>
+  <!-- porthole -->
+  <circle cx="256" cy="210" r="22" fill="#000000"/>
+</svg>

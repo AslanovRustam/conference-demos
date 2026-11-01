@@ -1,0 +1,35 @@
+/* ------------------------------------------------------------ load screen */
+
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 2.4rem;
+  background: #000;
+  transition: opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.splash--out {
+  opacity: 0;
+  pointer-events: none;
+}
+.splash-logo {
+  display: block;
+  width: min(56vw, 22rem);
+  height: auto;
+  -webkit-user-drag: none;
+}
+.splash-track {
+  width: min(56vw, 22rem);
+  height: 2px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.1);
+}
+.splash-bar {
+  height: 100%;
+  background: var(--ck-red);
+  transform-origin: left center;
+  transition: transform 0.3s linear;
+}

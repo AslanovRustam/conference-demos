@@ -1,0 +1,37 @@
+import { create } from 'zustand'
+import { loadMuted, saveMuted } from '../audio/bindings'
+import type { RoundSnapshot } from '../core/types'
+import { safeStorage } from '../platform/storage'
+import { runtime } from './runtime'
+
+interface GameState {
+  snap: RoundSnapshot
+  muted: boolean
+  presenterOpen: boolean
+  ready: boolean // the scene is loaded, compiled and on screen
+  setMuted(v: boolean): void
+  setPresenterOpen(v: boolean): void
+}
+
+export const useGame = create<GameState>((set) => ({
+  snap: runtime.engine.snapshot(),
+  muted: loadMuted(safeStorage),
+  presenterOpen: false,
+  ready: false,
+  setMuted: (muted) => set({ muted }),
+  setPresenterOpen: (presenterOpen) => set({ presenterOpen }),
+}))
+
+// shared by the M key and the mute button; persisted across visits
+export function toggleMute(): void {
+  const muted = !useGame.getState().muted
+  useGame.getState().setMuted(muted)
+  saveMuted(safeStorage, muted)
+}
+
+// per-frame readers: called now and on every store update, returns unsubscribe.
+// the hud writes fast text through refs with this instead of re-rendering each frame
+export function onSnap(fn: (snap: RoundSnapshot) => void): () => void {
+  fn(useGame.getState().snap)
+  return useGame.subscribe((s) => fn(s.snap))
+}

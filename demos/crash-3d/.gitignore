@@ -1,0 +1,9 @@
+node_modules
+dist
+dev-dist
+shots
+test-results
+playwright-report
+.superpowers/**/state/
+.superpowers/sdd/
+.texcache
