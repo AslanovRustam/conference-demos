@@ -7,7 +7,9 @@ import { lightState } from '../env/lightState'
 import { fx } from '../fx'
 import { GROUND_Y } from '../pad/layout'
 import { rig } from '../rig'
-import { cameraFor, distAt, layoutFor, punchAt, tipAt } from './crashView'
+import { rocketRefs } from '../rocket/refs'
+import { ejectKind } from '../eject/motion'
+import { cameraFor, capsuleDist, distAt, followAt, layoutFor, tipAt } from './crashView'
 
 // debug close-ups (?debug=1&cam=...): fixed poses near the hull, heights relative to the rocket base.
 // close: the livery band and stage 1; base: engines, fins and soot; top: capsule and escape tower;
@@ -59,6 +61,8 @@ const SHAKE_RAD = 0.004
 const PAD_RUMBLE_M = 250 // the ignition rumble fades out over the first metres of the climb
 const ROCKET_MID = 24 // the rocket's middle above its base, along the hull
 const center = new Vector3()
+const capsule = new Vector3()
+const onCapsule = new Vector3()
 
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x))
 
@@ -74,7 +78,7 @@ function jitter(t: number, a: number, b: number) {
 
 // the crash view, or a fixed debug pose with ?debug=1&cam=…
 export function CameraRig() {
-  // when the capsule separated (visual clock), for the cash-out punch-in
+  // when the capsule separated (visual clock): the camera hands over to it
   const ejectAt = useRef<number | null>(null)
 
   useFrame(({ camera, size }) => {
@@ -105,10 +109,19 @@ export function CameraRig() {
     const t = useGame.getState().snap.t
     if (!rig.ejected) ejectAt.current = null
     else if (ejectAt.current === null) ejectAt.current = rig.vtime
-    const punch = punchAt(ejectAt.current === null ? null : rig.vtime - ejectAt.current)
-    cameraFor(center, tipAt(t, L), distAt(t, L) * punch, fov, aspect, cam.position)
+    cameraFor(center, tipAt(t, L), distAt(t, L), fov, aspect, cam.position)
+    const follow = followAt(ejectAt.current === null ? null : rig.vtime - ejectAt.current)
+    const free = rocketRefs.capsule
+    if (follow > 0 && free && rig.ejectStage !== null) {
+      free.updateWorldMatrix(true, false)
+      free.getWorldPosition(capsule)
+      const spot = { x: L.capsule[0], y: L.capsule[1] }
+      cameraFor(capsule, spot, capsuleDist(ejectKind(rig.ejectStage)) * L.capsuleZoom, fov, aspect, onCapsule)
+      cam.position.lerp(onCapsule, follow)
+    }
     cam.rotation.set(0, 0, 0)
-    const amp = shakeAmount() * SHAKE_RAD
+    // the rocket's rumble stays with the rocket: the capsule camera is calm
+    const amp = shakeAmount() * SHAKE_RAD * (1 - follow)
     if (amp > 0) {
       cam.rotateX(amp * jitter(rig.vtime, 31.7, 47.3))
       cam.rotateY(amp * jitter(rig.vtime, 29.1, 53.9))

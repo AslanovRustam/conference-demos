@@ -354,13 +354,65 @@ html {
 .hud-winburst {
   padding-top: 62%;
 }
-.winburst {
+/* the win card: under the capsule the camera follows after a cash out */
+.wincard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 1.2rem 2.6rem 1.3rem;
+  text-align: center;
+}
+.wincard-glow {
+  position: absolute;
+  inset: -45% -35%;
+  z-index: -1;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.3) 55%, rgba(0, 0, 0, 0));
+}
+.wincard-label {
+  color: var(--white);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.55em;
+  margin-right: -0.55em;
+}
+.wincard-amount {
   font-family: var(--ck-font-display);
   font-weight: 900;
-  font-size: 4.6rem;
+  font-size: 4.8rem;
+  line-height: 1;
   letter-spacing: 0.01em;
   font-variant-numeric: tabular-nums;
-  text-shadow: 0 0 2.6rem rgba(0, 0, 0, 0.5);
+  color: #fff;
+  text-shadow:
+    0 0 0.8rem rgba(255, 25, 35, 0.9),
+    0 0 2.8rem rgba(255, 25, 35, 0.55),
+    0 0.2rem 0.4rem rgba(0, 0, 0, 0.5);
+}
+.wincard-plus {
+  color: var(--red);
+  margin-right: 0.04em;
+}
+.wincard-rule {
+  width: 70%;
+  height: 0.18rem;
+  background: var(--red);
+  box-shadow: 0 0 0.8rem rgba(255, 25, 35, 0.8);
+  transform-origin: center;
+}
+.wincard-sub {
+  color: var(--grey);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.32em;
+  margin-right: -0.32em;
+  white-space: nowrap;
+}
+.wincard-sub b {
+  color: var(--white);
+  font-weight: 700;
+  letter-spacing: 0.06em;
 }
 
 /* ------------------------------------------------------------ altitude rail */
@@ -522,89 +574,126 @@ html {
 
 /* ------------------------------------------------------------ bet + auto */
 
+/* two cards over the launch button: BET and AUTO CASH OUT, each a label, a big value and − / + on its sides */
 .hud-bets {
   position: absolute;
   left: var(--edge-l);
   right: var(--edge-r);
-  bottom: calc(var(--btn-b) + var(--btn-h) + 0.9rem);
+  bottom: calc(var(--btn-b) + var(--btn-h) + 0.7rem);
 }
 .bets {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+.bet-card {
+  --ck-chamfer: 0.6rem;
   display: flex;
   flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.6rem 0.6rem 0.65rem;
+  background: rgba(10, 10, 14, 0.74);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  pointer-events: auto;
 }
-.bets-rule {
-  height: 1px;
-  background: var(--hair);
-}
-.bet-group {
+.bet-card-head {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  height: 3.1rem;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 1.4rem;
 }
-.bet-label {
-  min-width: 2.6rem;
+.label-long {
+  display: none;
+}
+.bet-card-label {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  white-space: nowrap;
+}
+.bet-keys {
+  display: none;
+  font-family: inherit;
+  color: var(--grey-dim);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+}
+.bet-card-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.4rem;
 }
 .bet-value {
-  flex: 1;
-  font-size: 1.05rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-align: right;
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-align: center;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   transition: opacity 0.25s;
 }
-.bet-group[data-off] .bet-value {
+.bet-card[data-off] .bet-value {
   opacity: 0.4;
 }
 .auto-x {
   margin-left: 0.06em;
   font-weight: 500;
 }
-.steps {
-  display: flex;
-  gap: 0.4rem;
-}
 .step {
   display: grid;
   place-items: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  border: 1px solid var(--hair-strong);
+  width: 2.3rem;
+  height: 2.3rem;
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3);
   transition:
-    border-color 0.2s,
     background-color 0.2s,
+    box-shadow 0.2s,
     opacity 0.2s;
 }
 .step svg {
-  width: 0.75rem;
-  height: 0.75rem;
+  width: 0.8rem;
+  height: 0.8rem;
   fill: none;
   stroke: currentColor;
-  stroke-width: 1.4;
+  stroke-width: 1.8;
   stroke-linecap: square;
 }
 .step:not(:disabled):hover {
-  border-color: rgba(255, 255, 255, 0.7);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.75);
 }
 .step:not(:disabled):active {
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.2);
 }
 .step:disabled {
-  opacity: 0.28;
+  opacity: 0.25;
 }
 .auto-toggle {
   display: flex;
   align-items: center;
-  gap: 0.7rem;
-  height: 100%;
+  gap: 0.5rem;
 }
-.auto-toggle .bet-label {
-  min-width: 0;
+.auto-state {
+  min-width: 1.9em;
+  color: var(--grey);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-align: left;
+  transition: color 0.25s;
+}
+.bet-card:not([data-off]) .auto-state {
+  color: var(--white);
 }
 .switch {
   position: relative;
+  flex: none;
   width: 2.1rem;
   height: 1.15rem;
   border: 1px solid var(--hair-strong);
@@ -626,12 +715,12 @@ html {
     transform 0.3s var(--ease),
     background-color 0.25s;
 }
-.bet-group:not([data-off]) .switch {
-  background: var(--white);
-  border-color: var(--white);
+.bet-card:not([data-off]) .switch {
+  background: var(--red);
+  border-color: var(--red);
 }
-.bet-group:not([data-off]) .switch-knob {
-  background: var(--ck-dark);
+.bet-card:not([data-off]) .switch-knob {
+  background: var(--white);
   transform: translateX(0.92rem);
 }
 
@@ -745,10 +834,7 @@ html {
     min-width: 44px;
     min-height: 44px;
   }
-  /* the row grows with its touch targets so it never reaches into the button */
-  .bet-group {
-    min-height: 44px;
-  }
+
 }
 
 /* ============================================================ landscape */
@@ -846,8 +932,14 @@ html {
   .hud-winburst {
     padding-top: 22%;
   }
-  .winburst {
-    font-size: 7rem;
+  .wincard-label {
+    font-size: 1.25rem;
+  }
+  .wincard-amount {
+    font-size: 8.5rem;
+  }
+  .wincard-sub {
+    font-size: 1.05rem;
   }
 
   .hud-alt {
@@ -911,58 +1003,64 @@ html {
   .hud-bets {
     left: 0;
     right: 0;
-    bottom: calc(var(--btn-b) + var(--btn-h) + 1.4rem);
+    bottom: calc(var(--btn-b) + var(--btn-h) + 1.2rem);
     display: flex;
     justify-content: center;
   }
   .bets {
-    flex-direction: row;
-    align-items: center;
-    gap: 2.4rem;
-  }
-  .bets-rule {
-    width: 1px;
-    height: 2rem;
-  }
-  .bet-group {
-    gap: 1.2rem;
-    height: 2.8rem;
-  }
-  .bet-label {
-    min-width: 0;
-  }
-  .bet-value {
-    flex: none;
-    min-width: 3.6em;
-    font-size: 1.6rem;
-    text-align: center;
-  }
-  .steps {
-    gap: 0.5rem;
-  }
-  .step {
-    width: 2.6rem;
-    height: 2.6rem;
-  }
-  .step svg {
-    width: 0.9rem;
-    height: 0.9rem;
-  }
-  .auto-toggle {
+    grid-template-columns: 19rem 26rem;
     gap: 1rem;
   }
+  .label-long {
+    display: inline;
+  }
+  .label-short {
+    display: none;
+  }
+  .bet-card {
+    --ck-chamfer: 0.9rem;
+    gap: 0.6rem;
+    padding: 0.9rem 1rem 1rem;
+  }
+  .bet-card-head {
+    min-height: 1.8rem;
+  }
+  .bet-card-label {
+    font-size: 0.95rem;
+    letter-spacing: 0.26em;
+  }
+  .bet-value {
+    font-size: 2.3rem;
+  }
+  .bet-card-row {
+    gap: 0.8rem;
+  }
+  .step {
+    width: 3.4rem;
+    height: 3.4rem;
+  }
+  .step svg {
+    width: 1.05rem;
+    height: 1.05rem;
+  }
+  .auto-toggle {
+    gap: 0.8rem;
+  }
+  .auto-state {
+    font-size: 0.9rem;
+  }
   .switch {
-    width: 2.6rem;
-    height: 1.4rem;
+    width: 2.8rem;
+    height: 1.5rem;
   }
   .switch-knob {
     left: 0.22rem;
-    width: 0.92rem;
-    height: 0.92rem;
-    margin-top: -0.46rem;
+    width: 1rem;
+    height: 1rem;
+    margin-top: -0.5rem;
   }
-  .bet-group:not([data-off]) .switch-knob {
-    transform: translateX(1.18rem);
+  .bet-card:not([data-off]) .switch-knob {
+    transform: translateX(1.26rem);
   }
 
   .countdown-num {
@@ -1217,5 +1315,13 @@ html {
 @media (min-aspect-ratio: 1/1) {
   .chart-tick text {
     font-size: 1rem;
+  }
+}
+
+/* the keys for the bet cards, on a laptop only */
+@media (min-aspect-ratio: 1/1) and (pointer: fine) {
+  .bet-keys {
+    display: inline;
+    font-size: 0.85rem;
   }
 }

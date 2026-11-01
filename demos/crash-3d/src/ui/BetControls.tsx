@@ -15,32 +15,21 @@ function press(fn: () => void) {
   }
 }
 
-interface StepsProps {
-  down: string
-  up: string
-  canDown: boolean
-  canUp: boolean
-  onStep: (dir: 1 | -1) => void
-}
+const MINUS = 'M2.5 6h7'
+const PLUS = 'M2.5 6h7M6 2.5v7'
 
-function Steps({ down, up, canDown, canUp, onStep }: StepsProps) {
+function Step({ label, path, enabled, onStep }: { label: string; path: string; enabled: boolean; onStep: () => void }) {
   return (
-    <span className="steps">
-      <button className="step" tabIndex={-1} aria-label={down} disabled={!canDown} onPointerDown={press(() => onStep(-1))}>
-        <svg viewBox="0 0 12 12" aria-hidden>
-          <path d="M2.5 6h7" />
-        </svg>
-      </button>
-      <button className="step" tabIndex={-1} aria-label={up} disabled={!canUp} onPointerDown={press(() => onStep(1))}>
-        <svg viewBox="0 0 12 12" aria-hidden>
-          <path d="M2.5 6h7M6 2.5v7" />
-        </svg>
-      </button>
-    </span>
+    <button className="step" tabIndex={-1} aria-label={label} disabled={!enabled} onPointerDown={press(onStep)}>
+      <svg viewBox="0 0 12 12" aria-hidden>
+        <path d={path} />
+      </svg>
+    </button>
   )
 }
 
-// BET 100 [−][+]   AUTO [on/off] 2.00× [−][+]; only exists while betting
+// two cards over the launch button, only while betting: BET [−] 100 [+] and AUTO CASH OUT on/off [−] 2.00× [+].
+// on a laptop the keys sit next to the labels
 export function BetControls() {
   const betting = useGame((s) => s.snap.phase === 'betting')
   const bet = useGame((s) => s.snap.bet)
@@ -64,43 +53,51 @@ export function BetControls() {
             exit={{ opacity: 0, y: 10, transition: { duration: 0.18, ease: 'easeIn' } }}
             transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
           >
-            <div className="bet-group">
-              <span className="hud-label bet-label">{S.bet}</span>
-              <span className="bet-value">{formatCredits(bet)}</span>
-              <Steps
-                down={S.aria.betDown}
-                up={S.aria.betUp}
-                canDown={bi > 0}
-                canUp={bi < BET_LADDER.length - 1 && BET_LADDER[bi + 1] <= balance}
-                onStep={(d) => engine.stepBet(d)}
-              />
+            <div className="bet-card ck-chamfer">
+              <div className="bet-card-head">
+                <span className="bet-card-label">{S.bet}</span>
+                <kbd className="bet-keys">↑ ↓</kbd>
+              </div>
+              <div className="bet-card-row">
+                <Step label={S.aria.betDown} path={MINUS} enabled={bi > 0} onStep={() => engine.stepBet(-1)} />
+                <span className="bet-value">{formatCredits(bet)}</span>
+                <Step
+                  label={S.aria.betUp}
+                  path={PLUS}
+                  enabled={bi < BET_LADDER.length - 1 && BET_LADDER[bi + 1] <= balance}
+                  onStep={() => engine.stepBet(1)}
+                />
+              </div>
             </div>
-            <div className="bets-rule" aria-hidden />
-            <div className="bet-group" data-off={!autoOn || undefined}>
-              <button
-                className="auto-toggle"
-                tabIndex={-1}
-                role="switch"
-                aria-checked={autoOn}
-                aria-label={S.aria.autoToggle}
-                onPointerDown={press(() => engine.toggleAuto())}
-              >
-                <span className="hud-label bet-label">{S.auto}</span>
-                <span className="switch">
-                  <span className="switch-knob" />
+            <div className="bet-card ck-chamfer" data-off={!autoOn || undefined}>
+              <div className="bet-card-head">
+                <button
+                  className="auto-toggle"
+                  tabIndex={-1}
+                  role="switch"
+                  aria-checked={autoOn}
+                  aria-label={S.aria.autoToggle}
+                  onPointerDown={press(() => engine.toggleAuto())}
+                >
+                  <span className="bet-card-label">
+                    <span className="label-long">{S.autoCashOut}</span>
+                    <span className="label-short">{S.auto}</span>
+                  </span>
+                  <span className="switch">
+                    <span className="switch-knob" />
+                  </span>
+                  <span className="auto-state">{autoOn ? S.on : S.off}</span>
+                </button>
+                <kbd className="bet-keys">A · ← →</kbd>
+              </div>
+              <div className="bet-card-row">
+                <Step label={S.aria.autoDown} path={MINUS} enabled={ai > 0} onStep={() => engine.stepAuto(-1)} />
+                <span className="bet-value auto-value">
+                  {formatMult(autoValue)}
+                  <span className="auto-x">{S.times}</span>
                 </span>
-              </button>
-              <span className="bet-value auto-value">
-                {formatMult(autoValue)}
-                <span className="auto-x">{S.times}</span>
-              </span>
-              <Steps
-                down={S.aria.autoDown}
-                up={S.aria.autoUp}
-                canDown={ai > 0}
-                canUp={ai < AUTO_LADDER.length - 1}
-                onStep={(d) => engine.stepAuto(d)}
-              />
+                <Step label={S.aria.autoUp} path={PLUS} enabled={ai < AUTO_LADDER.length - 1} onStep={() => engine.stepAuto(1)} />
+              </div>
             </div>
           </motion.div>
         )}

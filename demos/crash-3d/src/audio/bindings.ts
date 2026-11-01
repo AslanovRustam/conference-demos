@@ -9,7 +9,7 @@ export interface SfxApi {
   stage(s: StageId): void
   cashout(): void
   parachute(): void
-  crash(stage: StageId): void
+  crash(stage: StageId, far: boolean): void
   win(payout: number): void
   ui(): void
 }
@@ -33,7 +33,7 @@ export function bindAudio(emitter: Emitter, sfx: SfxApi): () => void {
         sfx.win(e.payout)
         break
       case 'crash':
-        sfx.crash(e.stage)
+        sfx.crash(e.stage, e.cashedOut)
         break
     }
   })

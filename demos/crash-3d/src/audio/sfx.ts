@@ -93,7 +93,13 @@ export function createSfx(bus: Bus): SfxApi {
       noise({ at: 1.3, dur: 1.6, type: 'bandpass', f0: 300, q: 3, gain: 0.05, attack: 0.2 })
     },
     // the boom: a sub drop and a rumbling burst, the world muffled for a moment, then a ringing ear
-    crash(stage) {
+    // far: the player cashed out and watches the capsule, the rocket goes off somewhere above: a soft, dull thud
+    crash(stage, far) {
+      if (far) {
+        tone({ dur: 1.6, f0: 60, f1: 30, gain: 0.25, attack: 0.02 })
+        noise({ dur: 1.2, type: 'lowpass', f0: 500, f1: 90, gain: 0.18, attack: 0.02, send: 0.5 })
+        return
+      }
       const air = stage <= 1
       tone({ dur: 2.8, f0: 85, f1: 24, gain: 0.85, attack: 0.008 })
       noise({ dur: air ? 3.2 : 1.8, type: 'lowpass', f0: 2600, f1: 120, gain: 0.7, attack: 0.004, send: air ? 0.6 : 0.2 })

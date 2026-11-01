@@ -37,6 +37,8 @@ export function Explosion() {
           return
         }
         if (e.type !== 'crash') return
+        // after a cash out the camera stays on the capsule: the rocket goes off far above, out of the picture
+        if (e.cashedOut) return
         const b = blast.current
         b.active = true
         b.x = 0

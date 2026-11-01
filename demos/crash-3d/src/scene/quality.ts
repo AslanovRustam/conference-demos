@@ -11,9 +11,9 @@ const ULTRA = {
   cloudScale: 0.5, cloudSteps: 72, cloudLightSteps: 6, cloudUnderSteps: 3, cloudNoiseSize: 128, cloudWeatherSize: 512,
   smokeParticles: 6000, debrisPieces: 320, starCount: 30000, meteorCount: 60,
   earthTextures: 'textures/earth/8k/', moonTexture: 'textures/moon/moon-4k.jpg',
-  bloomLevels: 8, zoomBlur: true, godRays: true, grain: true, lensFlare: true,
-  // edge smoothing (smaa: three passes, fxaa: one) and the colour fringe of the warp and the blast (its own pass)
-  antialias: 'smaa' as 'smaa' | 'fxaa', chroma: true,
+  bloomLevels: 8, zoomBlur: true, godRays: true, lensFlare: true,
+  // the colour fringe of the warp and the blast (its own pass)
+  chroma: true,
   // rocket: hull atlas width x height (around x along), tile size of the small atlases, logo decal width,
   // per-pixel noise fields (roughness, soot; the mottle is twice as coarse) at 1/n of the atlas, pmrem face size
   rocketHullTexture: [2048, 4096] as [number, number], rocketTileTexture: 512, rocketLogoTexture: 2048,
@@ -39,12 +39,12 @@ export type Quality = typeof ULTRA
 
 const MEDIUM: Quality = {
   ...ULTRA,
-  // an integrated gpu is starved by full-screen passes: fewer pixels for the 3d (the dom hud stays sharp), one-pass
-  // edge smoothing, no fringe pass
-  dpr: [0.7, 0.7], antialias: 'fxaa', chroma: false,
-  cloudScale: 0.25, cloudSteps: 32, cloudLightSteps: 4, cloudUnderSteps: 2,
+  // an integrated gpu is starved by full-screen passes: fewer pixels for the 3d (the dom hud stays sharp), no fringe
+  // pass; the clouds keep enough resolution and samples not to break into blocks
+  dpr: [0.7, 0.7], chroma: false,
+  cloudScale: 0.33, cloudSteps: 44, cloudLightSteps: 4, cloudUnderSteps: 2,
   smokeParticles: 2500, debrisPieces: 160, starCount: 15000, meteorCount: 40,
-  bloomLevels: 4, grain: false,
+  bloomLevels: 4,
   rocketNoiseDownscale: 8, envMapSize: 256, anisotropy: 2,
   plumeSteps: 16, plumeJetSteps: 12,
   floodShadows: 2, floodShadowMap: 1024, distantLights: 260,
@@ -56,7 +56,7 @@ const LOW: Quality = {
   ...MEDIUM,
   // phones have 2-3 device pixels per css pixel: 1-1.25 of them is still sharp enough on a small screen
   dpr: [1, 1.25],
-  cloudScale: 0.2, cloudSteps: 24, cloudLightSteps: 3, cloudUnderSteps: 1,
+  cloudScale: 0.3, cloudSteps: 32, cloudLightSteps: 3, cloudUnderSteps: 1,
   smokeParticles: 1400, debrisPieces: 100, starCount: 8000, meteorCount: 30,
   bloomLevels: 4, godRays: false, lensFlare: false,
   rocketHullTexture: [1024, 2048], rocketLogoTexture: 1024,

@@ -25,7 +25,8 @@ export function Chart() {
     return onSnap((snap) => {
       const el = svg.current
       if (!el || !line.current || !area.current) return
-      const shown = snap.phase === 'flight' || snap.phase === 'ejected' || snap.phase === 'crashed'
+      // after a cash out the camera stays with the capsule: the chart of the rocket bows out
+      const shown = snap.phase === 'flight' || (snap.phase === 'crashed' && snap.cashedAt === null)
       el.dataset.state = shown ? (snap.phase === 'crashed' ? 'crashed' : 'live') : 'off'
       if (!shown) return
       const w = el.clientWidth

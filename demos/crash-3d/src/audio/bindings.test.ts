@@ -43,7 +43,7 @@ test('maps game events to sounds', () => {
   emitter.emit({ type: 'liftoff' })
   emitter.emit({ type: 'cashout', multiplier: 2, payout: 200, stage: 1, auto: false })
   emitter.emit({ type: 'crash', multiplier: 5, cashedOut: true, stage: 3 })
-  expect(calls).toEqual(['countdown:3', 'liftoff', 'cashout', 'parachute', 'win:200', 'crash:3'])
+  expect(calls).toEqual(['countdown:3', 'liftoff', 'cashout', 'parachute', 'win:200', 'crash:3,true'])
 })
 
 test('no parachute sound above stage 1', () => {
@@ -99,4 +99,13 @@ test('hidden tab suspends audio, returning resumes it unless muted', () => {
   doc.setHidden(true)
   doc.setHidden(false)
   expect(calls).toEqual(['suspend', 'resume', 'suspend'])
+})
+
+test('a crash after the cash out is a distant thud: the player is already safe in the capsule', () => {
+  const calls: string[] = []
+  const emitter = new Emitter()
+  bindAudio(emitter, fakeSfx(calls))
+  emitter.emit({ type: 'crash', multiplier: 5, cashedOut: true, stage: 3 })
+  emitter.emit({ type: 'crash', multiplier: 5, cashedOut: false, stage: 3 })
+  expect(calls).toEqual(['crash:3,true', 'crash:3,false'])
 })

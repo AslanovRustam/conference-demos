@@ -1,6 +1,7 @@
 import { expect, test } from 'vitest'
 import { multiplierAt, timeAt } from '../core/curve'
 import { stageAt } from '../core/stages'
+import { telemetry } from '../core/telemetry'
 import type { RoundSnapshot } from '../core/types'
 import { computeRig, downrangeAt, initialRig, TILT_FROM_M, TILT_FULL_M, TILT_MAX, tiltAt } from './rig'
 
@@ -133,4 +134,21 @@ test('the rig carries the lean and the downrange of the climb', () => {
   const r = computeRig(initialRig(), snapAt({ phase: 'flight', t: 5, multiplier: 2.13 }), 1 / 60)
   expect(r.tilt).toBeCloseTo(tiltAt(r.altM), 9)
   expect(r.downrange).toBeCloseTo(downrangeAt(r.altM), 9)
+})
+
+test('a crash after the player cashed out does not slow the world down: the capsule flies on at full speed', () => {
+  const r = computeRig(initialRig(), snapAt({ phase: 'crashed', phaseAge: 0.2, multiplier: 8, crashPoint: 8, cashedAt: 2.5 }), 1 / 60)
+  expect(r.slowmo).toBe(1)
+})
+
+test('after a cash out the world stays at the capsule\'s height while the rocket climbs away above it', () => {
+  const at = computeRig(initialRig(), snapAt({ phase: 'ejected', multiplier: 2.5, cashedAt: 2.5 }), 1 / 60)
+  const later = computeRig(at, snapAt({ phase: 'ejected', multiplier: 6, cashedAt: 2.5 }), 1 / 60)
+  // the scene's world (stage, altitude, offsets, lean) holds at the cash out
+  for (const k of ['stageF', 'altM', 'rocketY', 'nearOffset', 'tilt', 'downrange'] as const) expect(later[k]).toBeCloseTo(at[k], 9)
+  // the rocket itself goes on: it is drawn that much higher
+  expect(at.rocketClimb).toBeCloseTo(0, 6)
+  expect(later.rocketClimb).toBeCloseTo(telemetry(6).altKm * 1000 - telemetry(2.5).altKm * 1000, 3)
+  // before a cash out nothing is held back
+  expect(computeRig(initialRig(), snapAt({ phase: 'flight', multiplier: 3 }), 1 / 60).rocketClimb).toBe(0)
 })

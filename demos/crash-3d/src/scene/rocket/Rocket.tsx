@@ -82,7 +82,7 @@ export function Rocket() {
   // reflections: the night pad until the sun is up, then space; strength and turn from the light state (Lights, -8)
   useFrame(() => {
     if (root.current) {
-      root.current.position.y = rig.rocketY
+      root.current.position.y = rig.rocketY + rig.rocketClimb
       // the gravity turn: leaning towards downrange, screen right in the crash view
       root.current.rotation.z = -rig.tilt
     }

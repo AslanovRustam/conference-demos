@@ -1,6 +1,6 @@
 import { useFrame, useThree } from '@react-three/fiber'
-import { Bloom, ChromaticAberration, EffectComposer, FXAA, Noise, SMAA, ToneMapping, Vignette, wrapEffect } from '@react-three/postprocessing'
-import { BlendFunction, ToneMappingMode, type ChromaticAberrationEffect } from 'postprocessing'
+import { Bloom, ChromaticAberration, EffectComposer, SMAA, ToneMapping, Vignette, wrapEffect } from '@react-three/postprocessing'
+import { ToneMappingMode, type ChromaticAberrationEffect } from 'postprocessing'
 import { use, useEffect, useMemo, useRef } from 'react'
 import { Vector2, type PerspectiveCamera } from 'three'
 import { loadCloudNoise } from '../clouds/noise'
@@ -79,11 +79,12 @@ export function Effects() {
       <Bloom mipmapBlur levels={QUALITY.bloomLevels} luminanceThreshold={2.5} luminanceSmoothing={0.4} intensity={0.9} radius={0.75} />
       {QUALITY.chroma && <ChromaticAberration ref={ca} offset={caOffset} radialModulation modulationOffset={0.2} />}
       <Vignette darkness={0.55} offset={0.3} />
-      {QUALITY.grain && <Noise premultiply blendFunction={BlendFunction.ADD} opacity={0.06} />}
       <ToneMapping mode={ToneMappingMode.AGX} />
       {/* display-referred from here on */}
       <Flash />
-      {QUALITY.antialias === 'smaa' ? <SMAA /> : <FXAA />}
+      {/* smaa runs as its own pass; fxaa got merged into the effect pass above and smoothed the frame from before
+          the bloom and the tone mapping, a ghost of the horizon across the sky */}
+      <SMAA />
     </EffectComposer>
   )
 }

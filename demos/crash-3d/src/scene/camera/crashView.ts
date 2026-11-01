@@ -10,11 +10,13 @@ export interface ViewLayout {
   dist: number // camera distance from the rocket's middle, metres
   fov: number // vertical, degrees
   tickCeiling: number // axis labels stay below this (the big multiplier sits above it on the left)
+  capsule: [number, number] // where the capsule rides after a cash out (the win card sits under it)
+  capsuleZoom: number // its camera distance, as a factor on capsuleDist
 }
 
-export const LANDSCAPE: ViewLayout = { origin: [-0.74, -0.58], anchor: [0.4, 0.4], dist: 340, fov: 40, tickCeiling: -0.1 }
+export const LANDSCAPE: ViewLayout = { origin: [-0.74, -0.58], anchor: [0.4, 0.4], dist: 340, fov: 40, tickCeiling: -0.1, capsule: [0, 0.22], capsuleZoom: 1 }
 // a tall phone: the hud takes the top and the bottom, the rocket rides lower and smaller
-export const PORTRAIT: ViewLayout = { origin: [-0.66, -0.46], anchor: [0.42, 0.28], dist: 480, fov: 46, tickCeiling: 0.2 }
+export const PORTRAIT: ViewLayout = { origin: [-0.66, -0.3], anchor: [0.42, 0.28], dist: 480, fov: 46, tickCeiling: 0.2, capsule: [0, 0.06], capsuleZoom: 1.35 }
 
 export const layoutFor = (aspect: number): ViewLayout => (aspect < 1 ? PORTRAIT : LANDSCAPE)
 
@@ -44,16 +46,17 @@ export function distAt(t: number, L: ViewLayout): number {
   return L.dist * mix(PAD_ZOOM, 1, smooth(t / PULL_S))
 }
 
-// a cash out: the camera punches in on the rocket while the capsule separates (it is a few metres across, a speck at
-// the layout's distance), holds, then eases back. a factor on the distance; age: seconds since the separation
-export const PUNCH = 0.4
-const PUNCH_IN_S = 0.35
-const PUNCH_HOLD_S = 1.6
-const PUNCH_OUT_S = 1.2
-export function punchAt(age: number | null): number {
-  if (age === null) return 1
-  const k = smooth(age / PUNCH_IN_S) * (1 - smooth((age - PUNCH_HOLD_S) / PUNCH_OUT_S))
-  return mix(1, PUNCH, k)
+// after a cash out the camera leaves the rocket to its fate and stays with the crew capsule: it hands over within
+// the first second (age: seconds since the separation), frames the capsule at the layout's capsule point, close,
+// wider under parachutes so the canopy above fits
+const FOLLOW_FROM_S = 0.1
+const FOLLOW_S = 1.1
+export function followAt(age: number | null): number {
+  return age === null ? 0 : smooth((age - FOLLOW_FROM_S) / (FOLLOW_S - FOLLOW_FROM_S))
+}
+
+export function capsuleDist(kind: 'chute' | 'retro'): number {
+  return kind === 'chute' ? 75 : 36
 }
 
 // the chart: n points of (τ, m(τ)) for τ in [0, t], scaled into the box from the origin to the rocket. time runs

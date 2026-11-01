@@ -18,11 +18,12 @@ export interface FlightRig {
   phase: Phase
   m: number // visual multiplier: unfloored in flight, the crash point after the crash
   stageF: number // stageFloat(m), 0..6
-  altM: number // telemetry(m).altKm * 1000
+  altM: number // telemetry(m).altKm * 1000; after a cash out held at the separation (the capsule's world)
   rocketY: number // min(altM, NEAR_CAP_M)
   nearOffset: number // max(0, altM - NEAR_CAP_M)
   tilt: number // the rocket's lean towards downrange (+x, screen right), radians
   downrange: number // ground covered at that lean, metres: the near field slides back by it (-x)
+  rocketClimb: number // after a cash out the world holds at the capsule's height: the rocket is drawn this much higher
   speed: number // 0..1 = clamp(stageF / 5) while flying, eases to 0 after the crash
   thrust: number // 0 in betting, ramps 0→1 over the last 1.5 s of countdown, 1 in flight, 0 after crash
   ejected: boolean // the player cashed out this round (stays true through the crash)
@@ -34,7 +35,7 @@ export interface FlightRig {
 
 export function initialRig(): FlightRig {
   return {
-    phase: 'betting', m: 1, stageF: 0, altM: 0, rocketY: 0, nearOffset: 0, tilt: 0, downrange: 0, speed: 0, thrust: 0,
+    phase: 'betting', m: 1, stageF: 0, altM: 0, rocketY: 0, nearOffset: 0, tilt: 0, downrange: 0, rocketClimb: 0, speed: 0, thrust: 0,
     ejected: false, ejectStage: null, crashAge: null, slowmo: 1, vtime: 0,
   }
 }
@@ -97,10 +98,16 @@ function thrustOf(snap: RoundSnapshot): number {
 // pure: everything but the visual clock and the speed fade comes from the snapshot
 export function computeRig(prev: FlightRig, snap: RoundSnapshot, dt: number): FlightRig {
   const m = visualMultiplier(snap)
-  const stageF = Math.min(6, Math.max(0, stageFloat(Math.max(1, m))))
-  const altM = telemetry(m).altKm * 1000
+  // after a cash out the camera stays with the capsule: the scene's world (sky, earth, clouds, pad) holds at the
+  // height of the separation, and the rocket climbs away above it
+  const view = snap.cashedAt ?? m
+  const stageF = Math.min(6, Math.max(0, stageFloat(Math.max(1, view))))
+  const altM = telemetry(view).altKm * 1000
+  const rocketClimb = snap.cashedAt !== null ? telemetry(m).altKm * 1000 - altM : 0
   const crashAge = crashAgeOf(snap)
-  const slowmo = crashAge === null ? 1 : 1 - (1 - SLOWMO_MIN) * (1 - smooth(clamp01(crashAge / SLOWMO_S)))
+  // the slow motion is for a crash the player rode into; after a cash out the camera stays on the capsule
+  const slowed = crashAge !== null && snap.cashedAt === null
+  const slowmo = slowed ? 1 - (1 - SLOWMO_MIN) * (1 - smooth(clamp01(crashAge / SLOWMO_S))) : 1
   const vdt = dt * slowmo
   const flying = snap.phase === 'flight' || snap.phase === 'ejected'
   const speed = flying ? clamp01(stageF / 5) : crashAge !== null ? prev.speed * Math.exp(-SPEED_FADE * vdt) : 0
@@ -113,6 +120,7 @@ export function computeRig(prev: FlightRig, snap: RoundSnapshot, dt: number): Fl
     nearOffset: Math.max(0, altM - NEAR_CAP_M),
     tilt: tiltAt(altM),
     downrange: downrangeAt(altM),
+    rocketClimb,
     speed,
     thrust: thrustOf(snap),
     ejected: snap.cashedAt !== null,
