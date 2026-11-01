@@ -62,12 +62,14 @@ chrome --kiosk http://localhost:4173
 
 ## Деплой на Vercel
 
-Только после подтверждения заказчика:
+Только после подтверждения заказчика. Проект Vercel `clickable-lobby` (команда «Rustam's projects»), продакшен: https://clickable-lobby.vercel.app
 
 ```bash
 npm run build:all
-npx vercel deploy dist --prod
+npx vercel deploy dist --prod --yes --project clickable-lobby
 ```
+
+`--project` деплоит готовую папку без привязки, поэтому каталог `.vercel` в `dist/` не появляется и пересборка ничего не ломает.
 
 `dist/vercel.json` (из `public/`) задаёт долгий кеш для хешированных ассетов.
 
