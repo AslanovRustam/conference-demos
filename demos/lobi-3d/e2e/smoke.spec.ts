@@ -14,11 +14,11 @@ test('the hall renders without console errors', async ({ page }) => {
   expect(errors).toEqual([])
 })
 
-test('the carousel is filled with at least six cabinets', async ({ page }) => {
+test('the carousel is filled with at least four cabinets', async ({ page }) => {
   await page.goto('/')
   await expect.poll(() => page.evaluate(() => (window as any).__lobby.getState().phase)).toBe('lobby')
   const count = await page.evaluate(() => (window as any).__lobby.getState().slots.length)
-  expect(count).toBeGreaterThanOrEqual(6)
+  expect(count).toBeGreaterThanOrEqual(4)
   await page.waitForTimeout(2500)
   await page.screenshot({ path: 'test-results/carousel.png' })
 })

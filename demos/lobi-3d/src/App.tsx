@@ -17,11 +17,14 @@ const devExtras: GameEntry[] = import.meta.env.DEV
   ? [{ id: 'test-game', title: 'TEST GAME', subtitle: 'Dev stub', url: `test-game/?${params.testGameQuery}` }]
   : []
 
+// the dev stub takes a cabinet of its own, so dev keeps the same number of COMING SOON places
+const devConfig = { ...config, minSlots: config.minSlots + devExtras.length }
+
 // once per page: StrictMode runs the loading effect twice in dev
 let preparing: Promise<void> | null = null
 function prepare() {
   preparing ??= Promise.all([loadManifest(), loadPreviews()]).then(([manifest, previews]) =>
-    lobbyStore.getState().init(applyPreviews(buildSlots(config, manifest, devExtras), previews)),
+    lobbyStore.getState().init(applyPreviews(buildSlots(devConfig, manifest, devExtras), previews)),
   )
   return preparing
 }

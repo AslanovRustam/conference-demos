@@ -1,5 +1,5 @@
 {
-  "minSlots": 6,
+  "minSlots": 4,
   "idleReturnSec": 90,
   "games": [
     { "id": "crash-3d", "title": "ROCKET", "subtitle": "Crash game. Cash out before it blows", "source": "../crash-3d", "waitForReady": true },
