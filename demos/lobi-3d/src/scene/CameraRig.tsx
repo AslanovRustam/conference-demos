@@ -1,24 +1,22 @@
 // Camera flights: into the open cabinet's screen until it covers the viewport, back out, and a
 // slow orbit of the hall in attract mode. The fly-in end pose is recomputed every frame from the
 // screen's live transform, so a carousel that is still settling (or a window resize mid-flight)
-// never leaves a gap at the edges.
+// never leaves a gap at the edges. The home view follows the viewport aspect (cameraMath.homePose),
+// so turning a phone upright restages the hall.
 import { useFrame, useThree } from '@react-three/fiber'
 import gsap from 'gsap'
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
 import { lobbyStore, useLobby } from '../state/store'
-import { coverDistance, orbitPose } from './cameraMath'
+import { coverDistance, homePose, orbitPose } from './cameraMath'
 import { fx } from './fx'
-import { CAMERA_HOME, FOV_HOME, FOV_PLAY, SCREEN } from './layout'
+import { FOV_PLAY, SCREEN } from './layout'
 
 const DURATION = { in: 1.5, out: 1.1, orbit: 9, home: 0.7 } as const
 // a hair closer than an exact fit so no sliver of cabinet shows at the edges
 const OVERSCAN = 0.98
 /** in attract mode every third self-turn of the carousel gets a camera orbit */
 const ORBIT_EVERY = 3
-
-const HOME_POS = new THREE.Vector3(...CAMERA_HOME.position)
-const HOME_TARGET = new THREE.Vector3(...CAMERA_HOME.target)
 
 // The game iframe shares this main thread, and its first frames (asset decode, shader compile)
 // can block for seconds. GSAP's lag smoothing would then crawl at 33 ms per frame and stall the
@@ -33,9 +31,10 @@ export default function CameraRig() {
   const scene = useThree((s) => s.scene)
   const size = useThree((s) => s.size)
   const phase = useLobby((s) => s.phase)
-  const target = useRef(HOME_TARGET.clone())
+  const target = useRef(new THREE.Vector3())
   const flight = useRef<Flight | null>(null)
   const tmp = useRef({ pos: new THREE.Vector3(), normal: new THREE.Vector3(), scale: new THREE.Vector3(), endPos: new THREE.Vector3() })
+  const home = useRef({ pos: new THREE.Vector3(), target: new THREE.Vector3(), fov: 0 })
 
   const start = useRef((kind: Kind) => {
     flight.current?.tween.kill()
@@ -60,11 +59,6 @@ export default function CameraRig() {
     flight.current = f
   })
 
-  useEffect(() => {
-    camera.position.copy(HOME_POS)
-    camera.fov = FOV_HOME
-    camera.updateProjectionMatrix()
-  }, [camera])
 
   useEffect(() => {
     if (phase === 'entering') start.current('in')
@@ -88,12 +82,23 @@ export default function CameraRig() {
 
   useFrame(() => {
     const f = flight.current
-    if (f?.kind === 'orbit') {
-      orbitPose(f.t, camera.position, target.current)
-    } else if (f) {
-      let endTarget = HOME_TARGET
-      let endPos = HOME_POS
-      let endFov = FOV_HOME
+    const aspect = size.width / size.height
+    const h = home.current
+    h.fov = homePose(aspect, h.pos, h.target)
+    if (!f) {
+      // at rest the camera sits at home, wherever a resize or rotation moved home to
+      camera.position.copy(h.pos)
+      target.current.copy(h.target)
+      if (camera.fov !== h.fov) {
+        camera.fov = h.fov
+        camera.updateProjectionMatrix()
+      }
+    } else if (f.kind === 'orbit') {
+      orbitPose(f.t, aspect, camera.position, target.current)
+    } else {
+      let endTarget = h.target
+      let endPos = h.pos
+      let endFov = h.fov
       if (f.kind === 'in') {
         const open = lobbyStore.getState().openSlot
         const screen = open === null ? undefined : scene.getObjectByName(`screen-${open}`)
@@ -102,7 +107,7 @@ export default function CameraRig() {
           screen.getWorldPosition(pos)
           screen.getWorldDirection(normal)
           screen.getWorldScale(scale)
-          const dist = coverDistance(SCREEN.w * scale.x, SCREEN.h * scale.y, FOV_PLAY, size.width / size.height) * OVERSCAN
+          const dist = coverDistance(SCREEN.w * scale.x, SCREEN.h * scale.y, FOV_PLAY, aspect) * OVERSCAN
           endTarget = pos
           endPos = tmp.current.endPos.copy(pos).addScaledVector(normal, dist)
           endFov = FOV_PLAY

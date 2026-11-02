@@ -7,10 +7,15 @@ export function wrapIndex(i: number, n: number): number {
   return ((i % n) + n) % n
 }
 
-/** Slot i on a circle of `radius`; slot 0 sits on +z and every screen faces outward. */
-export function slotTransform(i: number, n: number, radius: number): { position: [number, number, number]; rotationY: number } {
-  const a = (i * TAU) / n
-  return { position: [Math.sin(a) * radius, 0, Math.cos(a) * radius], rotationY: a }
+/**
+ * Slot i on the ring turned by `rotation` (radians): slot 0 sits on +z when the ring is at rest.
+ * `squash` < 1 pulls the sides in (an ellipse, for upright screens). `angle` is the slot's place
+ * on the ring in (-π, π], 0 at the front; a cabinet facing straight out is rotated by it.
+ */
+export function ringSlot(i: number, n: number, rotation: number, radius: number, squash = 1): { position: [number, number, number]; angle: number } {
+  const raw = (i * TAU) / n + rotation
+  const angle = raw - TAU * Math.round(raw / TAU)
+  return { position: [Math.sin(angle) * radius * squash, 0, Math.cos(angle) * radius], angle }
 }
 
 /** Group rotation that brings slot `target` to the front (+z). */

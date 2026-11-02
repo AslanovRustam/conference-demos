@@ -21,22 +21,53 @@ function markGeometry(): THREE.BufferGeometry {
 }
 
 /**
- * A clear shell with studio reflections and a faint iridescent sheen. Real refraction (transmission)
- * re-renders the whole lounge behind the glass and held only ~35 FPS on an integrated GPU, so the
- * spec's fallback is the default: no refraction, the mark is seen straight through.
+ * The sphere is drawn in three passes so it reads as a solid glass ball, not a decal: the far wall
+ * (smoked, darkening whatever orbits behind the ball), then the glowing mark, then the near wall
+ * (clear in the middle, mirror-like at the rim). Chips passing in front are opaque and win the depth
+ * test against both walls; chips behind get the far wall's tint and the near wall's reflections.
+ *
+ * Real refraction (transmission) re-renders the whole lounge behind the glass and held only ~35 FPS
+ * on an integrated GPU, so there is none: the passes fake the depth cue instead.
  */
-function glassMaterial(): THREE.MeshPhysicalMaterial {
-  return new THREE.MeshPhysicalMaterial({
+const ORDER = { back: 1, mark: 2, front: 3 } as const
+
+function backWallMaterial(): THREE.MeshStandardMaterial {
+  return new THREE.MeshStandardMaterial({
+    color: '#1a0d10',
+    roughness: 0.08,
+    metalness: 0.2,
+    side: THREE.BackSide,
+    transparent: true,
+    opacity: 0.72,
+    depthWrite: false,
+    envMapIntensity: 0.5,
+  })
+}
+
+function frontWallMaterial(): THREE.MeshPhysicalMaterial {
+  const m = new THREE.MeshPhysicalMaterial({
     color: '#ffffff',
     roughness: 0.04,
     transparent: true,
-    opacity: 0.2,
+    opacity: 0.06,
     depthWrite: false,
     iridescence: 0.6,
     iridescenceIOR: 1.3,
     clearcoat: 1,
     envMapIntensity: 2,
   })
+  // Fresnel: glass is nearly invisible face-on and turns into a mirror at grazing angles,
+  // which is what draws the ball's outline
+  m.onBeforeCompile = (shader) => {
+    shader.fragmentShader = shader.fragmentShader.replace(
+      '#include <opaque_fragment>',
+      `float rim = pow(1.0 - saturate(dot(geometryNormal, geometryViewDir)), 3.0);
+      diffuseColor.a = mix(diffuseColor.a, 0.9, rim);
+      #include <opaque_fragment>`,
+    )
+  }
+  m.customProgramCacheKey = () => 'glass-front-fresnel'
+  return m
 }
 
 export default function GlassCore() {
@@ -47,9 +78,12 @@ export default function GlassCore() {
     const b = geometry.boundingBox!
     return MARK_WIDTH / (b.max.x - b.min.x)
   }, [geometry])
-  const glass = useMemo(glassMaterial, [])
-  // red-hot, bright enough to bloom, so the mark reads as light rather than red paint
-  const glow = useMemo(() => new THREE.MeshBasicMaterial({ color: CORE_GLOW.clone(), toneMapped: false }), [])
+  const back = useMemo(backWallMaterial, [])
+  const front = useMemo(frontWallMaterial, [])
+  // red-hot, bright enough to bloom, so the mark reads as light rather than red paint; transparent
+  // only to be drawn between the two walls of the glass
+  const glow = useMemo(() => new THREE.MeshBasicMaterial({ color: CORE_GLOW.clone(), toneMapped: false, transparent: true }), [])
+  const sphere = useMemo(() => new THREE.SphereGeometry(CORE.radius, 96, 64), [])
 
   useFrame(({ clock }) => {
     const t = clock.elapsedTime
@@ -63,10 +97,9 @@ export default function GlassCore() {
 
   return (
     <group position-y={CORE.y}>
-      <mesh ref={mark} geometry={geometry} material={glow} />
-      <mesh material={glass}>
-        <sphereGeometry args={[CORE.radius, 64, 64]} />
-      </mesh>
+      <mesh geometry={sphere} material={back} renderOrder={ORDER.back} />
+      <mesh ref={mark} geometry={geometry} material={glow} renderOrder={ORDER.mark} />
+      <mesh geometry={sphere} material={front} renderOrder={ORDER.front} />
       {/* red glow spills onto the ring and cabinets from just below the sphere, not inside the glass */}
       <pointLight position-y={-1.3} color={brandColors.red} intensity={16} distance={7} />
     </group>

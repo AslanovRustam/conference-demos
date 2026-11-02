@@ -13,8 +13,9 @@ import type { GamesManifest } from './lib/games-build.ts'
 
 const PORT = 4293
 const SIZE = { width: 1280, height: 720 }
-// the screen is ~300 px wide in the hall; a small video keeps decode and texture upload cheap
-const VIDEO = { width: 640, height: 360 }
+// the screen is ~300 px wide on a 1080p stand TV but ~500 px on a 3× phone; 960 px keeps the game's
+// text crisp there while decode and texture upload stay cheap (only the active cabinet plays)
+const VIDEO = { width: 960, height: 540 }
 const RECORD_SEC = 15
 /** key that starts a round in each game (spin, launch, drop); Space when not listed */
 const PLAY_KEY: Record<string, string> = {}

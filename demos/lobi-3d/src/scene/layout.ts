@@ -15,6 +15,22 @@ export const CAMERA_HOME = {
   target: [0, 1.25, 1.2] as [number, number, number],
 }
 
+/**
+ * Home view on a phone held upright (blended in by cameraMath.portraitBlend): a taller, wider
+ * frame with the hall in the upper two thirds and dark floor below for the caption.
+ */
+export const CAMERA_PORTRAIT = {
+  position: [0, 3.1, RADIUS + 8.6] as [number, number, number],
+  target: [0, 0.75, 1.0] as [number, number, number],
+  fov: 46,
+}
+
+/**
+ * Upright, the ring is squashed sideways into an ellipse (x × this) so the neighbours of the
+ * front cabinet peek in at the screen edges: a full-width ring would leave them off-screen.
+ */
+export const PORTRAIT_SQUASH = 0.5
+
 /** glass sphere with the glowing Clickable mark, above the middle of the ring */
 export const CORE = { y: 3.65, radius: 0.85 } as const
 

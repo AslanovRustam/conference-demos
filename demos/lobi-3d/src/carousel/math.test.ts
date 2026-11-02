@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { carouselRotation, nearestTarget, ringDistance, slotTransform, snapTarget, wrapIndex } from './math'
+import { carouselRotation, nearestTarget, ringDistance, ringSlot, snapTarget, wrapIndex } from './math'
 
 test('wrapIndex', () => {
   expect(wrapIndex(-1, 6)).toBe(5)
@@ -7,12 +7,27 @@ test('wrapIndex', () => {
   expect(wrapIndex(0, 6)).toBe(0)
 })
 
-test('slotTransform puts slot 0 on +z facing out', () => {
-  const t = slotTransform(0, 6, 4)
+test('ringSlot puts slot 0 on +z facing out', () => {
+  const t = ringSlot(0, 6, 0, 4)
   expect(t.position[0]).toBeCloseTo(0)
   expect(t.position[2]).toBeCloseTo(4)
-  expect(t.rotationY).toBeCloseTo(0)
-  expect(slotTransform(3, 6, 4).position[2]).toBeCloseTo(-4)
+  expect(t.angle).toBeCloseTo(0)
+  expect(ringSlot(3, 6, 0, 4).position[2]).toBeCloseTo(-4)
+})
+
+test('ringSlot follows the ring rotation and wraps the angle', () => {
+  // rotating by -60° brings slot 1 to the front
+  const t = ringSlot(1, 6, carouselRotation(1, 6), 4)
+  expect(t.position[0]).toBeCloseTo(0)
+  expect(t.angle).toBeCloseTo(0)
+  expect(ringSlot(5, 6, 0, 4).angle).toBeCloseTo(-Math.PI / 3)
+})
+
+test('ringSlot squash pulls the sides in, not the front and back', () => {
+  const side = ringSlot(1, 4, 0, 4, 0.5)
+  expect(side.position[0]).toBeCloseTo(2)
+  expect(side.angle).toBeCloseTo(Math.PI / 2)
+  expect(ringSlot(0, 4, 0, 4, 0.5).position[2]).toBeCloseTo(4)
 })
 
 test('carouselRotation brings the target slot to the front', () => {

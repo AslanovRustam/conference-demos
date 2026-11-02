@@ -1,21 +1,20 @@
-import { useFrame } from '@react-three/fiber'
+import { useFrame, useThree } from '@react-three/fiber'
 import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
-import { carouselRotation, ringDistance, slotTransform } from '../carousel/math'
+import { carouselRotation, ringDistance, ringSlot } from '../carousel/math'
 import { lobbyStore, useLobby } from '../state/store'
 import Cabinet from './Cabinet'
-import { RADIUS, TURN_TO_VIEWER } from './layout'
-
-const TAU = Math.PI * 2
-
-/** angle in (-π, π] */
-function wrapAngle(a: number): number {
-  return a - TAU * Math.round(a / TAU)
-}
+import { portraitBlend } from './cameraMath'
+import { PORTRAIT_SQUASH, RADIUS, TURN_TO_VIEWER } from './layout'
 
 export default function Carousel({ onSelect }: { onSelect: (index: number) => void }) {
-  const ref = useRef<THREE.Group>(null)
+  // the ring turns as a whole, but each cabinet is placed on it every frame: upright screens
+  // squash the ring into an ellipse, which a rotating group cannot do
+  const rotation = useRef(0)
+  const places = useRef<(THREE.Group | null)[]>([])
   const turns = useRef<(THREE.Group | null)[]>([])
+  const size = useThree((s) => s.size)
+  const squash = THREE.MathUtils.lerp(1, PORTRAIT_SQUASH, portraitBlend(size.width / size.height))
   const slots = useLobby((s) => s.slots)
   const activeIndex = useLobby((s) => s.activeIndex)
   const snapToken = useLobby((s) => s.snapToken)
@@ -29,18 +28,23 @@ export default function Carousel({ onSelect }: { onSelect: (index: number) => vo
 
   // presenter jumps (openGame) land instantly instead of spinning through the ring
   useEffect(() => {
-    if (ref.current && n) ref.current.rotation.y = carouselRotation(lobbyStore.getState().carouselTarget, n)
+    if (n) rotation.current = carouselRotation(lobbyStore.getState().carouselTarget, n)
   }, [snapToken, n])
 
   useFrame((_, dt) => {
-    const group = ref.current
-    if (!group || !n) return
+    if (!n) return
     const target = carouselRotation(lobbyStore.getState().carouselTarget, n)
-    group.rotation.y = THREE.MathUtils.damp(group.rotation.y, target, 8, dt)
-    // cabinets beside the front one turn partly toward the camera, like a showroom display
-    turns.current.forEach((turn, i) => {
-      if (turn) turn.rotation.y = -wrapAngle((i * TAU) / n + group.rotation.y) * TURN_TO_VIEWER
-    })
+    rotation.current = THREE.MathUtils.damp(rotation.current, target, 8, dt)
+    for (let i = 0; i < n; i++) {
+      const place = places.current[i]
+      const turn = turns.current[i]
+      if (!place || !turn) continue
+      const { position, angle } = ringSlot(i, n, rotation.current, RADIUS, squash)
+      place.position.set(...position)
+      place.rotation.y = angle
+      // cabinets beside the front one turn partly toward the camera, like a showroom display
+      turn.rotation.y = -angle * TURN_TO_VIEWER
+    }
   })
 
   return (
@@ -48,18 +52,13 @@ export default function Carousel({ onSelect }: { onSelect: (index: number) => vo
       {/* the front position is always the active cabinet: one spotlight picks it out */}
       <primitive object={spotTarget} />
       <spotLight name="front-spot" position={[0, 6.2, RADIUS + 1.6]} angle={0.32} penumbra={0.55} intensity={42} color="#fff1e0" target={spotTarget} />
-    <group ref={ref}>
-      {slots.map((slot, i) => {
-        const t = slotTransform(i, n, RADIUS)
-        return (
-          <group key={slot.key} position={t.position} rotation-y={t.rotationY}>
-            <group ref={(g) => void (turns.current[i] = g)}>
-              <Cabinet index={i} slot={slot} active={i === activeIndex} distance={ringDistance(i, activeIndex, n)} onSelect={onSelect} />
-            </group>
+      {slots.map((slot, i) => (
+        <group key={slot.key} ref={(g) => void (places.current[i] = g)}>
+          <group ref={(g) => void (turns.current[i] = g)}>
+            <Cabinet index={i} slot={slot} active={i === activeIndex} distance={ringDistance(i, activeIndex, n)} onSelect={onSelect} />
           </group>
-        )
-      })}
-    </group>
+        </group>
+      ))}
     </>
   )
 }

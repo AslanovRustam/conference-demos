@@ -30,6 +30,7 @@ export default function CabinetScreen({ index, slot, loading, near, dim, flash, 
       posterTex = new THREE.TextureLoader().load(poster, (tex) => {
         if (u.uVideo.value) return
         tex.colorSpace = THREE.SRGBColorSpace
+        tex.anisotropy = 8
         u.uVideo.value = tex
         u.uHasVideo.value = true
       })
@@ -38,6 +39,11 @@ export default function CabinetScreen({ index, slot, loading, near, dim, flash, 
     Object.assign(el, { src: preview, muted: true, loop: true, playsInline: true, preload: 'auto' })
     const videoTex = new THREE.VideoTexture(el)
     videoTex.colorSpace = THREE.SRGBColorSpace
+    // the screen shows the recording at a third of its size or less: without mipmaps the game's
+    // small UI text shimmers; only the active cabinet plays, so one mip chain per frame
+    videoTex.generateMipmaps = true
+    videoTex.minFilter = THREE.LinearMipmapLinearFilter
+    videoTex.anisotropy = 8
     // skip the game's own loading at the head of the recording, also on every loop
     const skipHead = () => {
       if (el.currentTime < previewStart) el.currentTime = previewStart

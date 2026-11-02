@@ -97,6 +97,16 @@ button {
 .hud a {
   pointer-events: auto;
 }
+/* the caption sits over the scene: a soft dark floor under it keeps the title readable whatever the
+   cabinet or the ring behind it is doing */
+.hud::before {
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 42%;
+  background: linear-gradient(to top, rgba(6, 5, 6, 0.86) 0%, rgba(6, 5, 6, 0.6) 45%, rgba(6, 5, 6, 0) 100%);
+  pointer-events: none;
+}
 .hud-logo-link {
   position: absolute;
   top: 2.2rem;
@@ -144,7 +154,67 @@ button {
   right: 3rem;
   bottom: 3rem;
   display: flex;
+  align-items: center;
   gap: 0.8rem;
+}
+.hud-dots {
+  display: flex;
+  align-items: center;
+  padding: 0 0.3rem;
+}
+/* the button is the tap target, the dot inside it is the mark */
+.hud-dot {
+  display: grid;
+  place-items: center;
+  height: 2.4rem;
+  padding: 0 0.32rem;
+}
+.hud-dot i {
+  display: block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.32);
+  transition: width 0.35s cubic-bezier(0.2, 0.7, 0.2, 1), background 0.35s;
+}
+.hud-dot[aria-current='true'] i {
+  width: 1.7rem;
+  background: var(--red);
+  box-shadow: 0 0 0.6rem rgba(255, 25, 35, 0.6);
+}
+.hud-swipe {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: max-content;
+  margin-bottom: 1.4rem;
+  padding: 0.6rem 1.1rem;
+  border-radius: 999px;
+  background: rgba(13, 13, 13, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+  font: 600 0.8rem/1 var(--ck-font-body);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.hud-swipe svg {
+  font-size: 1rem;
+  color: var(--red);
+  animation: swipe-left 1.6s ease-in-out infinite;
+}
+.hud-swipe svg:last-child {
+  animation-name: swipe-right;
+}
+@keyframes swipe-left {
+  50% {
+    transform: translateX(-0.3rem);
+  }
+}
+@keyframes swipe-right {
+  50% {
+    transform: translateX(0.3rem);
+  }
 }
 .hud-caption {
   position: absolute;
@@ -177,11 +247,13 @@ button {
   font: 900 3.4rem/0.95 var(--ck-font-display);
   letter-spacing: -0.01em;
   color: var(--text);
+  text-shadow: 0 0.15rem 1.6rem rgba(0, 0, 0, 0.7), 0 0 0.3rem rgba(0, 0, 0, 0.5);
 }
 .hud-subtitle {
   margin-top: 0.7rem;
   font: 500 1.05rem/1.35 var(--ck-font-body);
-  color: rgba(255, 255, 255, 0.66);
+  color: rgba(255, 255, 255, 0.78);
+  text-shadow: 0 0.1rem 0.8rem rgba(0, 0, 0, 0.8);
 }
 .hud-actions {
   display: flex;
@@ -236,6 +308,54 @@ button {
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
+}
+
+/* a phone held upright: the hall fills the upper part of the screen (cameraMath.homePose), the
+   caption spans the width below it, PLAY and the pager share the bottom row */
+@media (max-aspect-ratio: 4/5) {
+  :root {
+    --u: clamp(11px, 3.1vmin, 20px);
+  }
+  .hud::before {
+    height: 48%;
+  }
+  .hud-logo-link {
+    top: calc(1.8rem + env(safe-area-inset-top));
+    left: 1.8rem;
+  }
+  .hud-mute {
+    top: calc(1.3rem + env(safe-area-inset-top));
+    right: 1.8rem;
+  }
+  .hud-caption {
+    left: 1.8rem;
+    right: 1.8rem;
+    bottom: calc(1.8rem + env(safe-area-inset-bottom));
+    max-width: none;
+  }
+  .hud-title {
+    font-size: 3rem;
+  }
+  .hud-subtitle {
+    font-size: 1.1rem;
+  }
+  .hud-hint {
+    display: none;
+  }
+  .hud-play {
+    height: 3.8rem;
+    padding: 0 2rem;
+  }
+  /* centred on the PLAY row */
+  .hud-nav {
+    right: 1.8rem;
+    bottom: calc(1.9rem + env(safe-area-inset-bottom));
+    gap: 0.4rem;
+  }
+  .hud-nav .hud-round {
+    width: 3.6rem;
+    height: 3.6rem;
+  }
 }
 
 /* open game */

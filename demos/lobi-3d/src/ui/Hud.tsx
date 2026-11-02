@@ -1,7 +1,9 @@
 import { brandLogo } from '@brand/tokens'
 import { AnimatePresence, motion } from 'motion/react'
+import { useEffect, useState } from 'react'
+import { useSwipeNudge } from '../input/swipeNudge'
 import { applyAction } from '../input/useControls'
-import { useLobby } from '../state/store'
+import { lobbyStore, useLobby } from '../state/store'
 import { hudCaption, hudTag } from './hudTag'
 
 const coarse = typeof matchMedia !== 'undefined' && matchMedia('(pointer: coarse)').matches
@@ -23,12 +25,31 @@ function Arrow({ dir }: { dir: 'left' | 'right' }) {
   )
 }
 
+function Chevron({ dir }: { dir: 'left' | 'right' }) {
+  return (
+    <svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d={dir === 'left' ? 'M15 5l-7 7 7 7' : 'M9 5l7 7-7 7'} />
+    </svg>
+  )
+}
+
+/** true once the carousel has moved off its first cabinet, by any means */
+function useBrowsed(): boolean {
+  const [browsed, setBrowsed] = useState(false)
+  useEffect(() => lobbyStore.subscribe((s, prev) => void (s.activeIndex !== prev.activeIndex && setBrowsed(true))), [])
+  return browsed
+}
+
 export default function Hud() {
   const inLobby = useLobby((s) => s.phase === 'lobby')
   const slots = useLobby((s) => s.slots)
   const activeIndex = useLobby((s) => s.activeIndex)
   const muted = useLobby((s) => s.muted)
   const slot = slots[activeIndex]
+  // touch visitors are told, and shown, that there is more than one game until they browse
+  const browsed = useBrowsed()
+  const swipeHint = coarse && !browsed
+  useSwipeNudge(inLobby && swipeHint)
 
   const playable = slot?.kind === 'game'
   const { title, subtitle } = slot ? hudCaption(slot) : { title: '', subtitle: '' }
@@ -45,6 +66,15 @@ export default function Hud() {
           </button>
 
           <div className="hud-caption">
+            <AnimatePresence>
+              {swipeHint && (
+                <motion.div className="hud-swipe" data-testid="swipe-hint" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.8 } }} exit={{ opacity: 0 }}>
+                  <Chevron dir="left" />
+                  <span>Swipe for more games</span>
+                  <Chevron dir="right" />
+                </motion.div>
+              )}
+            </AnimatePresence>
             <motion.div key={slot.key} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: 'easeOut' }}>
               <div className="hud-tag" data-testid="hud-tag">
                 <i />
@@ -70,7 +100,8 @@ export default function Hud() {
                 Play
                 <Arrow dir="right" />
               </button>
-              <span className="hud-hint">{coarse ? 'Swipe to browse' : '← → to browse · Enter to play'}</span>
+              {/* touch screens get the swipe plate above the caption instead */}
+              {!coarse && <span className="hud-hint">← → to browse · Enter to play</span>}
             </div>
           </div>
 
@@ -78,6 +109,14 @@ export default function Hud() {
             <button className="hud-round" data-testid="prev" aria-label="Previous game" onClick={() => applyAction({ type: 'step', dir: -1 })}>
               <Arrow dir="left" />
             </button>
+            {/* one dot per cabinet: how many games there are and which one is in front */}
+            <div className="hud-dots" data-testid="dots">
+              {slots.map((s, i) => (
+                <button key={s.key} className="hud-dot" aria-label={`Cabinet ${i + 1}`} aria-current={i === activeIndex} onClick={() => lobbyStore.getState().focus(i)}>
+                  <i />
+                </button>
+              ))}
+            </div>
             <button className="hud-round" data-testid="next" aria-label="Next game" onClick={() => applyAction({ type: 'step', dir: 1 })}>
               <Arrow dir="right" />
             </button>
